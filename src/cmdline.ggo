@@ -1,0 +1,19 @@
+# -*- compile-command: "gengetopt < cmdline.ggo --long-help --show-required" -*-
+
+package "ztsdb"
+version "0.0"
+purpose "Start ztsdb, a time series database management system."
+versiontext "ztsdb is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under the terms of the
+GNU General Public License versions 3.
+For more information see http://www.gnu.org/licenses/.\n"
+
+option      "log.level"     l  "log level"                   enum    values="TRACE","DEBUG","INFO","ERROR" optional 
+option      "config.path"   C  "config file path"            string  typestr="dirname"             optional
+option      "init.code"     i  "initial code"                string  typestr="ztsdb code"          optional
+
+defmode "server"
+modeoption  "address"       a  "address"                     string  mode="server"  optional
+modeoption  "port"          p  "listen port"                 int     mode="server"  optional
+defmode "eval"
+modeoption  "expression"    e "evaluate expression and exit" string  typestr="expression" mode="eval" required

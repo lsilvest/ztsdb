@@ -1,0 +1,21 @@
+# -*- mode: makefile -*-
+
+BASEOBJS = $(SRCS:.cpp=.o)
+
+OBJS = test.o $(addprefix $(COREDIR)/, $(BASEOBJS))
+
+.PHONY: base
+base: 
+	$(MAKE) -C $(COREDIR) $(BASEOBJS)
+
+test: base test.o
+	pwd
+	$(CPP) $(CPPFLAGS) -o $@ $(OBJS) $(LDFLAGS)
+#	valgrind ./$@ -t -v
+	./$@
+
+.PHONY: clean
+clean:
+	rm -f *.o test
+
+-include test.P

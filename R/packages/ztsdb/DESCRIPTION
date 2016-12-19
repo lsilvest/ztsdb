@@ -1,0 +1,11 @@
+Package: ztsdb
+Type: Package
+Title: Interface to ztsdb
+Version: 0.0
+Date: 2016-12-18
+Author: Leonardo Silvestri
+Maintainer: Leonardo Silvestri <lsilvestri@ztsdb.org>
+Description: This package allows to seamlessly interface to 'ztsdb'.
+License: GPL (>= 2)
+Imports: methods, Rcpp (>= 0.11.5), xts
+LinkingTo: Rcpp

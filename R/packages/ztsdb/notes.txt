@@ -1,0 +1,44 @@
+++a
+@3f75638 06 LANGSXP g0c0 [NAM(2)] 
+  @26bf498 01 SYMSXP g1c0 [MARK,NAM(2),LCK,gp=0x5000] "+" (has value)
+  @3f756a8 06 LANGSXP g0c0 [] 
+    @26bf498 01 SYMSXP g1c0 [MARK,NAM(2),LCK,gp=0x5000] "+" (has value)
+    @2930f60 01 SYMSXP g1c0 [MARK] "a"
+
+In effect:
+[LANGSXP 1:SYMSXP("+") 2:[LISTSXP 1:[LANGSXP 1:SYMSXP("+") 2:SYMSXP("a") ] 2: nil] ]  
+                                      
+
+1 + a
+@3f7c8a0 06 LANGSXP g0c0 [NAM(2)] 
+  @26bf498 01 SYMSXP g1c0 [MARK,NAM(2),LCK,gp=0x5000] "+" (has value)
+  @427ed58 14 REALSXP g0c1 [] (len=1, tl=0) 1
+  @2930f60 01 SYMSXP g1c0 [MARK] "a"
+
+f(a)
+@4026288 06 LANGSXP g0c0 [NAM(2)] 
+  @292d390 01 SYMSXP g1c0 [MARK,NAM(2)] "f"
+  @2930f60 01 SYMSXP g1c0 [MARK] "a"
+
+f(++a)
+@419baf0 06 LANGSXP g0c0 [NAM(2)] 
+  @292d390 01 SYMSXP g1c0 [MARK,NAM(2)] "f"
+  @419bc08 06 LANGSXP g0c0 [] 
+    @26bf498 01 SYMSXP g1c0 [MARK,NAM(2),LCK,gp=0x5000] "+" (has value)
+    @419bc78 06 LANGSXP g0c0 [] 
+      @26bf498 01 SYMSXP g1c0 [MARK,NAM(2),LCK,gp=0x5000] "+" (has value)
+      @2930f60 01 SYMSXP g1c0 [MARK] "a"
+
+++a - ++b
+@41a5858 06 LANGSXP g0c0 [NAM(2)] 
+  @26bf3f0 01 SYMSXP g1c0 [MARK,NAM(2),LCK,gp=0x5000] "-" (has value)
+  @41a4a78 06 LANGSXP g0c0 [] 
+    @26bf498 01 SYMSXP g1c0 [MARK,NAM(2),LCK,gp=0x5000] "+" (has value)
+    @41a4ae8 06 LANGSXP g0c0 [] 
+      @26bf498 01 SYMSXP g1c0 [MARK,NAM(2),LCK,gp=0x5000] "+" (has value)
+      @2930f60 01 SYMSXP g1c0 [MARK] "a"
+  @41a4998 06 LANGSXP g0c0 [] 
+    @26bf498 01 SYMSXP g1c0 [MARK,NAM(2),LCK,gp=0x5000] "+" (has value)
+    @41a4a08 06 LANGSXP g0c0 [] 
+      @26bf498 01 SYMSXP g1c0 [MARK,NAM(2),LCK,gp=0x5000] "+" (has value)
+      @4326660 01 SYMSXP g1c0 [MARK] "b"

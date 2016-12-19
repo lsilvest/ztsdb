@@ -1,0 +1,19 @@
+# -*- mode: cmake -*-
+
+cmake_minimum_required(VERSION 2.8)
+
+ENABLE_TESTING()
+FIND_PACKAGE(LibCRPCUT REQUIRED)
+FIND_PACKAGE(Boost COMPONENTS system filesystem REQUIRED)
+
+SET_SOURCE_FILES_PROPERTIES(../../src/timezone/localtime.cpp
+  PROPERTIES COMPILE_FLAGS "-Wno-address -Wno-maybe-uninitialized")
+
+INCLUDE_DIRECTORIES(
+  ${LIBCRPCUT_INCLUDE_DIRS}
+  ../../src
+  ../../src/main_parser
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}/../../src/main_parser
+  ${LIBDOUBLE_CONVERSION_INCLUDE_DIRS})
+

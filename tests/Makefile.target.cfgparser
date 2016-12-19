@@ -1,0 +1,23 @@
+# -*- mode: makefile -*-
+
+BASEOBJS = $(SRCS:.cpp=.o)
+
+OBJS = test.o $(addprefix $(COREDIR)/, $(BASEOBJS))
+CFGPARSER_OBJS = $(COREDIR)/config_parser/cfglexer.o $(COREDIR)/config_parser/cfgparser.o
+
+.PHONY: base
+base:
+	$(MAKE) -C $(COREDIR)/config_parser cfgparser
+	$(MAKE) -C $(COREDIR)/config_parser cfglexer
+	$(MAKE) -C $(COREDIR) $(BASEOBJS)
+
+test: base test.o
+	$(CPP) $(CPPFLAGS) -o $@ $(OBJS) $(CFGPARSER_OBJS) $(LDFLAGS)
+#	valgrind ./$@ -t -v
+	./$@
+
+.PHONY: clean
+clean:
+	rm -f *.o test
+
+-include test.P

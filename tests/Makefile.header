@@ -1,0 +1,8 @@
+# -*- mode: makefile -*-
+
+include ../../src/Makefile.header
+include ../../src/Makefile.rules
+
+COREDIR =../../src
+LDFLAGS  += -L/usr/local/development-tools/crpcut/lib64 -lcrpcut_basic -ldl
+CPPFLAGS += -I/usr/local/development-tools/crpcut/include -I$(COREDIR) -I$(COREDIR)/main_parser

@@ -1,0 +1,24 @@
+# -*- mode: makefile -*-
+
+.c.o:
+	@$(CMAKEDEPEND); \
+	  cp $*.d $*.P; \
+	  sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+	      -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $*.P; \
+	  rm -f $*.d
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+.cpp.o:
+	@$(MAKEDEPEND); \
+	  cp $*.d $*.P; \
+	  sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+	      -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $*.P; \
+	  rm -f $*.d
+	$(CPP) $(CPPFLAGS) -c -o $@ $<
+
+%.hpp %.cpp: %.l
+	$(FLEX) --outfile=$*.cpp --header-file=$*.hpp $<
+
+%.hpp %.cpp: %.y
+	$(BISON) --output=$*.cpp $<
+#	$(BISON) -Wall --output=$*.cpp $<

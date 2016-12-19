@@ -1,0 +1,4 @@
+useDynLib(ztsdb)
+exportPattern("^[[:alpha:]]+")
+import(methods, Rcpp)
+export("?")

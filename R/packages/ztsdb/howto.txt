@@ -1,0 +1,14 @@
+- make sure shlib is compiled (in src/shlib)
+
+- tell R where to find the shlib:
+export LD_LIBRARY_PATH=/home/lsilvest/repos/ztsdb/src/shlib
+
+- compile and install package:
+R CMD INSTALL ztsdb_1.0.tar.gz 
+R CMD build ztsdb/
+
+- on R command line:
+library(ztsdb)
+library(xts)
+con <- new(Zconnection, "127.0.0.1", 15002)
+con ? 1

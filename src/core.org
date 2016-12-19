@@ -1,0 +1,12 @@
+* Global env shared by all, never popped
+* Each connection gets its env, can assign to top env with <<-
+- at comm level, we keep track of connections (to know if we need to send out or not)
+- at interp level we keep track of connections with environment
+- one to one mapping at these levels ensured through eventfd
+* what is a connection:
+- has it's own frame
+- has it's own continuation: State, shpfrm
+* the issue is: h ? E
+** DB does not block waiting
+** particular context does
+- so the State, shpfrm and additional indicator

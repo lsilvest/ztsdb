@@ -1,0 +1,25 @@
+# -*- mode: makefile -*-
+
+BASEOBJS = $(SRCS:.cpp=.o)
+
+OBJS = test.o $(addprefix $(COREDIR)/, $(BASEOBJS))
+PARSER_OBJS = $(COREDIR)/main_parser/lexer.o $(COREDIR)/main_parser/parser.o
+
+.PHONY: base
+base:
+	$(MAKE) -C $(COREDIR)/main_parser/ parser
+	$(MAKE) -C $(COREDIR)/main_parser/ lexer
+	$(MAKE) -C $(COREDIR) $(BASEOBJS)
+	$(MAKE) test.o
+
+test: base
+	pwd
+	$(CPP) $(CPPFLAGS) -o $@ $(OBJS) $(PARSER_OBJS) $(LDFLAGS)
+#	valgrind ./$@ -t -v
+	./$@ --timeout-multiplier=3
+
+.PHONY: clean
+clean:
+	rm -f *.o test
+
+-include test.P

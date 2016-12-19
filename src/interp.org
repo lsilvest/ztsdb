@@ -1,0 +1,84 @@
+* some evaluations:
+** a <- { b <- 2 * 3; 5 * 3 }
+
+
+a <- { b <- 2 * 3; 5 * 3 }
+switch case decl + assign
+1. set control to ExprList right of A in current env
+2. "say" the result will be assigned to 'a'
+3. "say" continuation is whatever continuation was there before (here halt)
+
+{ b <- 2 * 3; 5 * 3 }
+1. set control to first elem: b <- 2 * 3
+2. say the result will be not be assigned (e.g. it's for side-effect only)
+3. say continuation is ExprList(5 * 3)
+
+b <- 2 * 3
+switch case decl + assign:
+1. eval 2 * 3
+2. say result will be assigned to b
+3. say continuation is prior ExprList(5*3)
+or it's reassign:
+
+
+2*3
+1. it's atom, so res = 6
+2. call apply-kont res = 6
+   result is assigned to b
+   continuation is ExprList(5*3)
+
+ExprList(5*3)
+1. it's ExprList with one member
+2. if it's left assign
+     then set var to x
+     else set var to .Last.value
+3. say continuation is whatever is in k (in this case it's Halt)
+
+5*3
+1. it's atom, so res = 15
+2. call apply-kont res = 15
+
+**  a <- { b <- 2 * 3; 5 * 3 }; f(c=2, d=3*4) { c + d }
+implicitly ExprList
+a <- { b <- 2 * 3; 5 * 3 } is like previously
+
+f(c=2, d=3.4) { c + d }
+NOTE: if f is a complex expression, then normalization has to be done LLL
+1. proc = eval_atom f
+2. map eval_atom f all args
+3. apply_proc: PUSH NEW ENV!!! and do all the var storage
+4. eval the body, continuation with ENV POP!!!
+
+{ c + d }
+1. it's ExprList with one member
+2. else set assign to .Last.value
+3. set continuation to k (Halt)
+
+c + d
+1. it's atomic
+2. lookup and add = 5.4
+3. apply_cont assign result to .Last.Value
+
+Continuation
+Kont
+Assign
+Pop
+Halt
+
+
+* General mechanism
+- When next, it means set control to something specific (sub
+  expression) and resume to whatever was next on the list
+  - ifelse: evaluates cond and choose
+  - if: evalues cond and either gets to NULL or to an expr
+- When apply, it means we've got a reply, go and apply it
+- Apply (var is in the continuation) is either
+  - assign and pop
+  - assign in current env
+- {} evaluates to NULL
+
+* Global env shared by all, never popped
+- stacked when going down through functions
+- reasonable (and configurable) stack depth limit
+- each connection gets its environment, and then can assign to top
+  env with <<-

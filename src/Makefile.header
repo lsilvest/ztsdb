@@ -1,0 +1,20 @@
+# -*- mode: makefile -*-
+
+DOUBLE-CONVERSION-INCLUDE=/usr/local/include/double-conversion
+PARSER-INCLUDE=main_parser
+CC = clang-3.6
+#CPP = /home/lsilvest/repos/ztsdb/src/tclang.sh
+CPP = clang++-3.6
+#CPPFLAGS = -O3 -g -std=c++1y -I $(DOUBLE-CONVERSION-INCLUDE) -I $(PARSER-INCLUDE) -Wall -stdlib=libstdc++ -Wno-deprecated-register
+CPPFLAGS = -g -std=c++1y -I $(DOUBLE-CONVERSION-INCLUDE) -I $(PARSER-INCLUDE) -Wall	\
+-stdlib=libstdc++ -Wno-deprecated-register -fsanitize=address	\
+-fno-omit-frame-pointer
+LDFLAGS = -lstdc++ -lpthread -ldl -ldouble-conversion -lboost_system -lboost_filesystem
+#CC = gcc
+#CPP = g++
+#CPPFLAGS = -g -std=c++1y -Wall -rdynamic -I $(DOUBLE-CONVERSION-INCLUDE) -I $(PARSER-INCLUDE) -fsanitize=address -fno-omit-frame-pointer
+#CPPFLAGS = -g -std=c++1y -Wall -rdynamic -O3 -I $(DOUBLE-CONVERSION-INCLUDE) -I $(PARSER-INCLUDE)
+FLEX = flex
+BISON = bison --verbose 
+MAKEDEPEND = $(CPP) -M $(CPPFLAGS) -o $*.d $<
+CMAKEDEPEND = $(CC) -M -o $*.d $<

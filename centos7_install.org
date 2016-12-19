@@ -1,0 +1,61 @@
+* Getting software to compile ztsdb on CentOS 7:
+** boost
+: sudo yum install boost-devel
+** flex
+: sudo yum install flex
+** cmake
+- a more recent version of cmake is needed in order to compile double-conversion (as of writing 2.8.12):
+- download and compile as recommended (http://www.cmake.org)
+- in the source directory:
+: ./bootstrap && make && make install
+** double-conversion
+: git clone https://github.com/google/double-conversion
+- then in the newly cloned directory:
+: cmake .
+: make 
+: sudo make install
+- this will result in a default installation in:
+/usr/local/lib
+/usr/local/include/double-conversion/
+- make sure Makefile.header has the correct setting for DOUBLE-CONVERSION-INCLUDE
+- create a /etc/ld.so.conf.d/usrlocal.conf or set appropriate environment variable
+- load new config with:
+: sudo ldconfig
+** bison will need a more recent version
+- get  http://ftp.gnu.org/gnu/bison/bison-3.0.4.tar.gz
+- compile and install as indicated
+** we need gcc 4.9 or higher (especially for make_unique), for this we can choose from:
+*** devtoolset-3: gcc 4.9.2
+- see https://www.softwarecollections.org/en/scls/rhscl/devtoolset-3/
+- install like this:
+: sudo yum install centos-release-scl
+: (on readhat: sudo yum-config-manager --enable rhel-server-rhscl-7-rpms)
+: sudo yum install devtoolset-3
+: scl enable devtoolset-3 bash
+- if compilation with asan is desired:
+: sudo yum install libasan
+: sudo yum install devtoolset-3-libasan-devel
+*** devtoolset-4: gcc 5.2.1
+: sudo yum install centos-release-scl
+: (on readhat: sudo yum-config-manager --enable rhel-server-rhscl-7-rpms)
+: sudo yum install devtoolset-4
+: sudo yum install devtoolset-4-libasan-devel
+: scl enable devtoolset-4 bash
+** crpcut (for running unittests)
+- download from http://crpcut.sourceforge.net/ with a web browser or alternatively with _curl_:
+: curl -L https://sourceforge.net/projects/crpcut/files/crpcut/1.9.4/crpcut-1.9.4.tar.bz2/download > crpcut-1.9.4.tar.bz2
+- extract crpcut:
+: tar xvf crpcut-1.9.4.tar.bz2
+- follow installation instructions (uses cmake and installs by default
+  in /usr/local/lib64 /usr/local/include/crpcut), but to summarize:
+  o create build directory
+  o in build directory
+  : cmake <crpcut-directory>
+  : make -j
+  : sudo make install
+  o as for above, make sure /usr/local/lib64 is somwehere in one of
+  the /etc/ld.so.conf.d/ files
+** R (for running some unittests)
+: sudo yum install -y epel-release 
+: sudo yum update -y 
+: sudo yum install R

@@ -1,0 +1,195 @@
+* Current
+** DONE if
+** DONE subset with parser
+** TODO parser conflicts
+** DONE reference in pairs <string, Value&>ooo
+** TODO while loop with backwards pointer
+** DONE subassign dim check
+** TODO performance check of visitors
+** DONE out of bound subassign
+* Interp
+** DONE repeated given arg
+** DONE utest binds
+** DONE utest subsetting
+- all types
+** DONE named vector utest
+** DONE add set of functionality for name handling
+- addprefix
+- find unique dimname (returns "" or the name, needs to go through all dims)
+** DONE add name handling for subset
+- we have it right except in the case where we subset down to an
+  elemnt; in that case if there are no conflicting dim names, a name
+  is given:
+: > a=matrix(1:4,2,2,dimnames=list(c("a","b"), c("w","x")))
+: > a
+:   w x
+: a 1 3
+: b 2 4
+: > a[1,1]
+: [1] 1
+: > b=matrix(1:4,2,2,dimnames=list(NULL, c("w","x")))
+: > b[1,1]
+: w 
+: 1 
+: > d=matrix(1:4,2,2,dimnames=list(c("a","b"), NULL))
+: > d[1,1]
+: a 
+: 1 
+: > 
+** DONE name handling for binds
+- keep column names of first matrix
+: rbind(a=matrix(1:4,2,2,dimnames=list(NULL, c("a","b"))), b=matrix(1:4,2,2,dimnames=list(NULL, c("c","d"))))
+:      a b
+: [1,] 1 3
+: [2,] 2 4
+: [3,] 1 3
+: [4,] 2 4
+- same for cbind
+: cbind(a=matrix(1:4,2,2,dimnames=list(c("a","b"), c("w","x"))), b=matrix(1:4,2,2,dimnames=list(c("c","d"), c("y","z"))))
+:   w x y z
+: a 1 3 1 3
+: b 2 4 2 4
+- handle lists:
+: > rbind(list(a=1,b=2), list(2,3))
+:      a b
+: [1,] 1 2
+: [2,] 2 3
+** DONE name handling for c 
+- c(a=1,b=2,c=3) -> named vector!
+- vector
+: > c(a=c(x=1,y=2,z=3), b=c(x=1,y=2,z=3))
+: a.x a.y a.z b.x b.y b.z 
+:   1   2   3   1   2   3 
+- matrix 
+: c(a=matrix(1:4,2,2,dimnames=list(c("1","2"), c("a","b"))))
+: a1 a2 a3 a4 
+: 1  2  3  4 
+- list
+: > c(b=list(1,2,3))
+: $b1
+: [1] 1
+:
+: $b2
+: [1] 2
+:
+: $b3
+: [1] 3
+** DONE utest c()
+** DONE vector, matrix, array string printout 
+- should be quoted, maybe escape characters not interpreted I believe like in R
+** DONE check out valarray
+** TODO add a templated conversion operator as visitor type with specialization for string
+** DONE figure out what the index type should be... like in C++ full stop?
+- it's size_type for C++ vectors aka long unsigned int
+- would be stupid to have a limit in dimension to 2^32...
+- see also https://stat.ethz.ch/R-manual/R-devel/library/base/html/Memory-limits.html
+** TODO do doxygen documentation format (so go over doxygen tutorial)
+** DONE replace base type int and double with a typedef or alias
+** DONE c(1,2,3) defines col vector of array type
+- in general, we want something more simple than R
+- also figure out a nicer way of handling the silent dimensions
+  (DROP=TRUE stuff)
+- but at the end of the day a vector is a one dim thing... and a
+  number a 0 dim thing, so if Octave can support it we probably should
+-> do like  
+** DONE do like in R for interpreter printout; 
+- and like R don't print anything when running a script
+** TODO debugger
+- browser() like in R
+- tie in to ESS
+** DONE tie in interpreter with ESS
+- "tmsdb" recognized like the "R" command
+- editor (choose filename extension)
+** TODO improve the while with complex condition
+** DONE implement functions
+*** TODO print
+*** TODO paste and paste0
+*** TODO ls
+*** DONE typeof
+- also look at the "invisible" function
+** TODO str operator
+- so we know what shape and type things are
+** DONE fix x <- y <- 10 assign problem
+** TODO array index out of bound should raise error, currently returns 0
+** DONE lists should either be fully named or not; no partial, no dupes, ids same as vars
+- simplifies the handling
+- introduces a sort of new type: associative array, that's how we'll
+  define the non-numeric in the time series
+** TODO left hand side subset
+** TODO time coding
+** TODO interval coding
+** DONE time series coding
+** TODO catch bad_alloc, and in general, figure out a strategy for memory exhaustion
+** DONE set up automated testing
+- built in the interpreter? e.g. read from file and get and check against an expected result?
+- outside the interpreter: provide a file with the result, e.g. as obtained by R?
+** TODO rbind, cbind, abind
+** TODO NaN for double (and int,bool)?
+** DONE global env and <<- operator
+** TODO location in ast (and in values?)
+** DONE out of order parameters check
+** TODO verify function arity, for the moment it crashes
+** TODO check type and generate good error message
+** TODO verify memory leak
+** TODO should { } have a new scope
+- I think it probably should; e.g. when used in if condition, in array
+  subsetting, etc. 
+- But what about the performance impact and the R compatibility?
+** DONE all operators that were forgotten on first pass (e.g. %*% etc.)
+** TODO implement For with Break and Next 
+** TODO implement location in expressions, figure out what happens to that in ANF
+** TODO error handling with messages like clang, gcc, etc.
+** DONE implement true global environment and <<- operator
+** DONE implement [] 
+*** DONE index vector
+*** DONE one element
+*** DONE boolean vector
+** TODO implement [[]]
+** TODO figure out if we want NA_INTEGER as in R
+: find . -name "*.h" -exec grep "R_NaInt" {} \;
+: LibExtern int	 R_NaInt;	/* NA_INTEGER:= INT_MIN currently */
+** TODO matrix, array and c functions need args checking; 
+- can we define general functions for that and then define the functions?
+** DONE dimension names, row/col attribs
+** DONE associate names with list entries 
+** TODO implement first easy version of [[]]
+** DONE display print for lists/array/matrices
+- width and precision need to be params, they'll be fed by the
+  interpreter
+** DONE figure out width and precision params for interpreter
+- look at what R does for the options(width=2) function
+** DONE anf for Subsetlist
+** DONE do we implement a list? yes, we need lists for matrix dims, etc.
+** DONE scalar matrix multiplication
+** DONE figure out why lexer has problems with %*% (was incorrect comment spec)
+** DONE check declare and assign, vs. just assign
+** DONE implement function declaration (i.e. closures)
+** DONE implement function call
+** DONE figure out the extra wrap:
+- ast is: f({(2 + 3), 4}, (4 + 3), 5)
+- ANF is: {t1 <- {(2 + 3), 4}, f({t1, (4 + 3), 5})}
+** DONE implement matrix type
+** DONE play with blitz++; not suitable as every array is a new type
+** DONE figure out syntax to construct a matrix -> for the moment use R
+** DONE command line interpreter - good test for the parser?
+** DONE figure out parser conflict (hopefully not a hand scanner!!!) -> issue to remember is that it's the last token on the line that gets the defined precedence!
+- and once that is figured out, make sure flex is 100% correct on the
+  scanning of doubles, names, etc.
+- concerning names, we might want to reduce the freedom in R though
+** DONE doesn't compile with g++
+** DONE general soundness check so far
+- memory allocation, copying
+- performance
+- code size
+- correctness
+** DONE unary operators
+** DONE implement first easy version of []
+** DONE play with NDArray and see what's available and how 
+- at the end, it's easier to roll out our own matrix class
+** DONE fix this: c(1,2,3) < c(2,1,3) Error: object '?anf5' not found
+** DONE figure out why this doesn't work: c(1.0,2.0) + 2
+** DONE array of string
+** DONE true C++ union + enum instead of variant?
+- it's easier to switch the code for binop -> far less code bloat
+- same for checking parameters (we can 'or'/case fallthrough the enum)
+-> at the end it's easier to just add an enum AND keep the variant
