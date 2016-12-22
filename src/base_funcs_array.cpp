@@ -411,45 +411,27 @@ static Array<T>* bindVector(Array<T>& r,
     switch (getVal(*e).which()) {
     case val::vt_double: {
       const auto& a = get<val::SpVAD>(getVal(*e));
-      if (a->isVector() && dim==0)
-        r.abind(transpose(*a), dim, getName(*e));
-      else
-        r.abind(*a, dim, getName(*e));
+      r.abind(*a, dim, getName(*e));
       break; }
     case val::vt_bool: {
       const auto& a = get<val::SpVAB>(getVal(*e));
-      if (a->isVector() && dim==0)
-        r.abind(transpose(*a), dim, getName(*e));
-      else
-        r.abind(*a, dim, getName(*e));
+      r.abind(*a, dim, getName(*e));
       break; }
     case val::vt_string: {
       const auto& a = get<val::SpVAS>(getVal(*e));
-      if (a->isVector() && dim==0)
-        r.abind(transpose(*a), dim, getName(*e));
-      else
-        r.abind(*a, dim, getName(*e));
-      break; }
+      r.abind(*a, dim, getName(*e));
+        break; }
     case val::vt_time: {
       const auto& a = get<val::SpVADT>(getVal(*e));
-      if (a->isVector() && dim==0)
-        r.abind(transpose(*a), dim, getName(*e));
-      else
-        r.abind(*a, dim, getName(*e));
+      r.abind(*a, dim, getName(*e));
       break; }
     case val::vt_duration: {
       const auto& a = get<val::SpVADUR>(getVal(*e));
-      if (a->isVector() && dim==0)
-        r.abind(transpose(*a), dim, getName(*e));
-      else
-        r.abind(*a, dim, getName(*e));
+      r.abind(*a, dim, getName(*e));
       break; }
     case val::vt_interval: {
       const auto& a = get<val::SpVAIVL>(getVal(*e));
-      if (a->isVector() && dim==0)
-        r.abind(transpose(*a), dim, getName(*e));
-      else
-        r.abind(*a, dim, getName(*e));
+      r.abind(*a, dim, getName(*e));
       break; }
     default:
       throw std::domain_error("bindVector<T> incorrect type");

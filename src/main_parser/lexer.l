@@ -118,6 +118,7 @@ F          { ctx.ignore_nl=false; return yy::parser::make_FALSE(ctx.loc); }
 --    { ctx.ignore_nl=true;  return yy::parser::make_REF(ctx.loc); }
 "++"  { ctx.ignore_nl=true;  return yy::parser::make_ESC(ctx.loc); }
 "/"   { ctx.ignore_nl=true;  return yy::parser::make_DIV(ctx.loc); }
+"%%"  { ctx.ignore_nl=true;  return yy::parser::make_MOD(ctx.loc); }
 "^"   { ctx.ignore_nl=true;  return yy::parser::make_POWER(ctx.loc); }
 "!"   { ctx.ignore_nl=false; return yy::parser::make_NOT(ctx.loc); }
 ">="  { ctx.ignore_nl=true;  return yy::parser::make_GE(ctx.loc); }

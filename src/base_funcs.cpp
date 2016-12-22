@@ -382,18 +382,13 @@ val::Value funcs::quit(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx&
 
 
 val::Value funcs::read_csv(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  enum {CSVFILE, TYPE, ARRAYFILE, HAS_HEADER, SEP};
-  // csvfile, 
-  // type=\"zts\", 
-  // arrayfile
-  // header=TRUE
-  // sep=\",\"
+  enum {CSVFILE, TYPE, ARRAYFILE, HEADER, SEP};
   // row.names: not yet implemented
   // col.names: not yet implemented
-  const string csvfile = get<arr::zstring>(getVal(v[CSVFILE]));
-  const string type = get<arr::zstring>(getVal(v[TYPE]));
-  const string arrayfile = get<arr::zstring>(getVal(v[ARRAYFILE]));
-  auto hasHeader = val::get_scalar<bool>(getVal(v[HAS_HEADER]));
+  const string csvfile = val::get_scalar<arr::zstring>(getVal(v[CSVFILE]));
+  const string type = val::get_scalar<arr::zstring>(getVal(v[TYPE]));
+  const string arrayfile = val::get_scalar<arr::zstring>(getVal(v[ARRAYFILE]));
+  auto hasHeader = val::get_scalar<bool>(getVal(v[HEADER]));
   const string sep = val::get_scalar<arr::zstring>(getVal(v[SEP]));
   // in R:
   // col.names can be:
@@ -407,14 +402,23 @@ val::Value funcs::read_csv(const vector<val::VBuiltinG::arg_t>& v, zcore::Interp
   if (type == "double") {
     return arr::readcsv_array<double>(csvfile, hasHeader, sep[0], arrayfile);
   }
+  else if (type == "zts") {
+    return arr::readcsv_zts(csvfile, hasHeader, sep[0], arrayfile);
+  }
   else if (type == "logical") {
     return arr::readcsv_array<bool>(csvfile, hasHeader, sep[0], arrayfile);
   }
   else if (type == "time") {
     return arr::readcsv_array<Global::dtime>(csvfile, hasHeader, sep[0], arrayfile);
   }
-  else if (type == "time") {
-    return arr::readcsv_zts(csvfile, hasHeader, sep[0], arrayfile);
+  else if (type == "character") {
+    return arr::readcsv_array<arr::zstring>(csvfile, hasHeader, sep[0], arrayfile);
+  }
+  else if (type == "interval") {
+    return arr::readcsv_array<tz::interval>(csvfile, hasHeader, sep[0], arrayfile);
+  }
+  else if (type == "period") {
+    return arr::readcsv_array<tz::period>(csvfile, hasHeader, sep[0], arrayfile);
   }
   else {
     throw range_error("unknown type " + type);
@@ -423,14 +427,19 @@ val::Value funcs::read_csv(const vector<val::VBuiltinG::arg_t>& v, zcore::Interp
 
 
 val::Value funcs::write_csv(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  enum {OBJECT, CSVFILE, DO_HEADER, SEP};
+  enum {OBJECT, CSVFILE, HEADER, SEP};
   const string csvfile = val::get_scalar<arr::zstring>(getVal(v[CSVFILE]));
-  auto doHeader = val::get_scalar<bool>(getVal(v[DO_HEADER]));
+  auto doHeader = val::get_scalar<bool>(getVal(v[HEADER]));
   const string sep = val::get_scalar<arr::zstring>(getVal(v[SEP]));
   if (sep.size() != 1) {
     throw interp::EvalException("separator must be exactly one character long", getLoc(v[SEP]));
   }
   switch (getVal(v[OBJECT]).which()) {
+  case val::vt_zts: {
+    const auto ai = get<const val::SpZts>(getVal(v[OBJECT]));
+    arr::writecsv_zts(*ai, csvfile, doHeader, sep[0]);
+    break;    
+  }
   case val::vt_double: {
     const auto ai = get<const val::SpVAD>(getVal(v[OBJECT]));
     arr::writecsv_array(*ai, csvfile, doHeader, sep[0]);
@@ -446,9 +455,19 @@ val::Value funcs::write_csv(const vector<val::VBuiltinG::arg_t>& v, zcore::Inter
     arr::writecsv_array(*ai, csvfile, doHeader, sep[0]);
     break;    
   }
-  case val::vt_zts: {
-    const auto ai = get<const val::SpZts>(getVal(v[OBJECT]));
-    arr::writecsv_zts(*ai, csvfile, doHeader, sep[0]);
+  case val::vt_string: {
+    const auto ai = get<const val::SpVAS>(getVal(v[OBJECT]));
+    arr::writecsv_array(*ai, csvfile, doHeader, sep[0]);
+    break;    
+  }
+  case val::vt_interval: {
+    const auto ai = get<const val::SpVAIVL>(getVal(v[OBJECT]));
+    arr::writecsv_array(*ai, csvfile, doHeader, sep[0]);
+    break;    
+  }
+  case val::vt_period: {
+    const auto ai = get<const val::SpVAPRD>(getVal(v[OBJECT]));
+    arr::writecsv_array(*ai, csvfile, doHeader, sep[0]);
     break;    
   }
   default:

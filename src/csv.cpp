@@ -35,11 +35,15 @@ static const size_t BUFSZ = 64000;
 
 template<typename T>
 struct ToChar {
-  size_t toChar(T t, char* buf, size_t sz) { ASSERT(false); return 0; };
+  size_t toChar(T t, char* buf, size_t sz) {
+    throw std::out_of_range("csv.write not implemented for type");
+  };
 };
 template<typename T>
 struct FromChar {
-  size_t fromChar(const char* buf, int sz, T& t) { ASSERT(false); return 0; };
+  size_t fromChar(const char* buf, int sz, T& t) {
+    throw std::out_of_range("csv.read not implemented for type");
+  };
 };
 
 // double:
@@ -112,6 +116,23 @@ struct FromChar<Global::dtime> {
   }
 };
 
+// zstring
+template<>
+struct ToChar<arr::zstring> {
+  // grab the format from cfgmap LLL
+  size_t toChar(arr::zstring t, char* buf, size_t sz) {
+    memcpy(buf, t.c_str(), t.length());
+    return t.length();
+  }
+};
+template<>
+struct FromChar<arr::zstring> {
+  size_t fromChar(const char* buf, int sz, arr::zstring& t) {
+    t = t + arr::zstring(buf, buf + sz);
+    return sz;
+  }
+};
+
 
 static std::unique_ptr<arr::AllocFactory> getAllocFactory(const string& mmapfile) {
   if (mmapfile.size()) {
@@ -144,13 +165,11 @@ int readToken(int fd, char buf[], char*& b, char*& e,
       if (bytes_read == 0) return offset ? 0 : -1;
     }
     if (quoted) {
-      if (e < buf + offset - 1 && *e=='"' && (e[1] == sep || e[1] == '\n')) break;
+      if (e < buf + offset - 1 + bytes_read && *e=='"' && (e[1] == sep || e[1] == '\n')) return e[1];
     }
-    else if (*e == sep || *e == '\n') break;
+    else if (*e == sep || *e == '\n') return *e;
     ++e;
   }
-  std::cout << "token: " << std::string(b, e-b) << std::endl;
-  return *e;
 }
 
 
@@ -174,7 +193,7 @@ arr::cow_ptr<arr::Array<T>> arr::readcsv_array(const string& file,
   bool quoted = false;
   
   auto ap = arr::make_cow<arr::Array<T>>(true, 
-                                        arr::Vector<arr::idx_type>{0,0}, 
+                                        arr::Vector<arr::idx_type>{}, 
                                         arr::Vector<T>(), 
                                         vector<arr::Vector<arr::zstring>>(), 
                                         getAllocFactory(mmapfile));
@@ -219,7 +238,6 @@ arr::cow_ptr<arr::Array<T>> arr::readcsv_array(const string& file,
     // (*a->v[col])[row] = strtod(b, &endptr);
     // 1m6s with StringToDouble
     char sep_read;
-    std::cout << "a.ncols: " << a.ncols() << std::endl;
     for (size_t j=0; j<a.ncols(); ++j) {
       sep_read = readToken(fd, buf, b, e, sep, offset, bytes_read,quoted);    
       if (sep_read < 0) break;
@@ -231,7 +249,6 @@ arr::cow_ptr<arr::Array<T>> arr::readcsv_array(const string& file,
       }
       a.getcol(j).push_back(d); 
     }
-    std::cout << "read data sep_read: " << char(sep_read) << std::endl;
     if (sep_read < 0) break;
     if (sep_read >= 0 && sep_read != '\n') {
       throw std::out_of_range("incorrect number of elements in row " + std::to_string(row+1));
@@ -325,7 +342,6 @@ arr::cow_ptr<arr::zts> arr::readcsv_zts(const string& file,
       }
       z->getArrayPtr().get()->getcol(j).push_back(d); 
     }
-    std::cout << "read data sep_read: " << char(sep_read) << std::endl;
     if (sep_read >= 0 && sep_read != '\n') {
       throw std::out_of_range("incorrect number of elements in row " + std::to_string(row+1));
     }
@@ -413,7 +429,6 @@ void arr::writecsv_array(const Array<T>& a, const string& file, bool header, con
 
 
 void arr::writecsv_zts(const zts& z, const string& file, bool header, const char sep) {
-  std::cout << "write_zts" << std::endl; 
   int fd = open(file.c_str(),  O_RDWR | O_CREAT | O_TRUNC
                   , S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
   if (!fd) {
@@ -499,3 +514,18 @@ template
 arr::cow_ptr<arr::Array<Global::dtime>> arr::readcsv_array<Global::dtime>(const string&, bool, const char sep, const string&);
 template 
 void arr::writecsv_array(const Array<Global::dtime>&, const string&, bool, const char);
+// character
+template 
+arr::cow_ptr<arr::Array<arr::zstring>> arr::readcsv_array<arr::zstring>(const string&, bool, const char sep, const string&);
+template 
+void arr::writecsv_array(const Array<arr::zstring>&, const string&, bool, const char);
+// interval
+template 
+arr::cow_ptr<arr::Array<tz::interval>> arr::readcsv_array<tz::interval>(const string&, bool, const char sep, const string&);
+template 
+void arr::writecsv_array(const Array<tz::interval>&, const string&, bool, const char);
+// period
+template 
+arr::cow_ptr<arr::Array<tz::period>> arr::readcsv_array<tz::period>(const string&, bool, const char sep, const string&);
+template 
+void arr::writecsv_array(const Array<tz::period>&, const string&, bool, const char);

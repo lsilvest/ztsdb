@@ -116,7 +116,7 @@ SET(SOURCE_FILES
 
 
 EXECUTE_PROCESS(COMMAND
-  "git" describe --abbrev=4 --dirty --always --tags
+  "git" describe --abbrev=6 --dirty --always --tags
   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
   OUTPUT_VARIABLE GIT_VERSION
   ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)

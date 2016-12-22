@@ -20,7 +20,7 @@ SRCS = main_parser/lexer.cpp main_parser/parser.cpp			\
 CSRCS = cmdline.c
 OBJS =  $(CSRCS:.c=.o) $(SRCS:.cpp=.o)
 
-GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always --tags)
+GIT_VERSION := $(shell git describe --abbrev=6 --dirty --always --tags)
 
 
 .PHONY: ztsdb_inner

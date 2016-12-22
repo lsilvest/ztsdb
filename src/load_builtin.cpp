@@ -337,14 +337,14 @@ void core::loadBuiltinFunctions(interp::BaseFrame* r) {
                  {{"csvfile",   {{val::vt_string }, true}},
                   {"type",      {{val::vt_string }, true}},
                   {"arrayfile", {{val::vt_string }, true}},
-                  {"header",    {{val::vt_string }, true}},
+                  {"header",    {{val::vt_bool   }, true}},
                   {"sep",       {{val::vt_string }, true}}});
   val::VBuiltinG(r,
                  "write.csv",
                  "function(object, file, header=TRUE, sep=\",\") NULL\n",
                  funcs::write_csv, true,
                  {{"file",      {{val::vt_string }, true}},
-                  {"header",    {{val::vt_string }, true}},
+                  {"header",    {{val::vt_bool   }, true}},
                   {"sep",       {{val::vt_string }, true}}});
 
 

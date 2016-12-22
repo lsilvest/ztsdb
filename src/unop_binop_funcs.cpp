@@ -183,6 +183,9 @@ template<typename T, typename U, typename R> struct doop<T, U, R, yy::parser::to
 template<typename T, typename U, typename R> struct doop<T, U, R, yy::parser::token::DIV> {
   static val::Value f(const arr::Array<T>& d1, const arr::Array<U>& d2) { 
     return make_cow<arr::Array<R>>(false, apply<T, U, R, ztsdb::divides<T,U,R>>(d1, d2)); } };
+template<typename T, typename U, typename R> struct doop<T, U, R, yy::parser::token::MOD> {
+  static val::Value f(const arr::Array<T>& d1, const arr::Array<U>& d2) { 
+    return make_cow<arr::Array<R>>(false, apply<T, U, R, ztsdb::modulus<T,U,R>>(d1, d2)); } };
 template<typename T, typename U, typename R> struct doop<T, U, R, yy::parser::token::POWER> {
   static val::Value f(const arr::Array<T>& d1, const arr::Array<U>& d2) { 
     return make_cow<arr::Array<R>>(false, apply<T, U, R, funcs::power<T>>(d1, d2)); } };
@@ -295,6 +298,9 @@ template<typename T, typename U> struct doop_inplace<T, U, yy::parser::token::MU
 template<typename T, typename U> struct doop_inplace<T, U, yy::parser::token::DIV> {
   static void f(arr::Array<T>& d1, const arr::Array<U>& d2) { 
     d1.template apply<ztsdb::divides<T,U,T>, const arr::Array<U>>(d2); } };
+template<typename T, typename U> struct doop_inplace<T, U, yy::parser::token::MOD> {
+  static void f(arr::Array<T>& d1, const arr::Array<U>& d2) { 
+    d1.template apply<ztsdb::modulus<T,U,T>, const arr::Array<U>>(d2); } };
 template<typename T, typename U> struct doop_inplace<T, U, yy::parser::token::POWER> {
   static void f(arr::Array<T>& d1, const arr::Array<U>& d2) { 
     d1.template apply<funcs::power<T>, const arr::Array<U>>(d2); } };
@@ -398,6 +404,8 @@ static val::Value evalbinop_zts(const arr::Array<Global::dtime>& idx,
     return make_cow<arr::zts>(false, idx, apply<double, U, R, ztsdb::multiplies<double, U, R>>(d1, d2));
   case yy::parser::token::DIV  :                                                                      
     return make_cow<arr::zts>(false, idx, apply<double, U, R, ztsdb::divides<double, U, R>>(d1, d2));
+  case yy::parser::token::MOD  :                                                                      
+    return make_cow<arr::zts>(false, idx, apply<double, U, R, ztsdb::modulus<double, U, R>>(d1, d2));
   case yy::parser::token::POWER  :                                                                    
     return make_cow<arr::zts>(false, idx, apply<double, U, R, funcs::power<double>>(d1, d2));
   default: 
@@ -437,6 +445,7 @@ val::Value funcs::evalbinop(val::Value v1, const val::Value& v2, int op, const v
     yy::parser::token::MINUS,
     yy::parser::token::MUL,
     yy::parser::token::DIV, 
+    yy::parser::token::MOD, 
     yy::parser::token::POWER}; 
 
   static std::set<int> arithmetic_colon{
@@ -444,6 +453,7 @@ val::Value funcs::evalbinop(val::Value v1, const val::Value& v2, int op, const v
     yy::parser::token::MINUS,
     yy::parser::token::MUL,
     yy::parser::token::DIV, 
+    yy::parser::token::MOD, 
     yy::parser::token::POWER,
     yy::parser::token::COLON}; 
 
@@ -519,6 +529,7 @@ val::Value funcs::evalbinop(val::Value v1, const val::Value& v2, int op, const v
                                        yy::parser::token::MINUS,
                                        yy::parser::token::MUL,
                                        yy::parser::token::DIV,
+                                       yy::parser::token::MOD,
                                        yy::parser::token::POWER
                                        >(*t1, *t2, op);
         return v1;
@@ -530,6 +541,7 @@ val::Value funcs::evalbinop(val::Value v1, const val::Value& v2, int op, const v
                                       yy::parser::token::MINUS,
                                       yy::parser::token::MUL,
                                       yy::parser::token::DIV,
+                                      yy::parser::token::MOD,
                                       yy::parser::token::POWER,
                                       yy::parser::token::COLON
                                       >(*t1, *t2, op);
@@ -603,6 +615,7 @@ val::Value funcs::evalbinop(val::Value v1, const val::Value& v2, int op, const v
                                        yy::parser::token::MINUS,
                                        yy::parser::token::MUL,
                                        yy::parser::token::DIV,
+                                       yy::parser::token::MOD,
                                        yy::parser::token::POWER
                                        >(*t1->getArrayPtr(), *t2, op);
         return v1;
@@ -637,6 +650,7 @@ val::Value funcs::evalbinop(val::Value v1, const val::Value& v2, int op, const v
                                        yy::parser::token::MINUS,
                                        yy::parser::token::MUL,
                                        yy::parser::token::DIV,
+                                       yy::parser::token::MOD,
                                        yy::parser::token::POWER
                                        >(*t1->getArrayPtr(), t2->getArray(), op);
         return v1;

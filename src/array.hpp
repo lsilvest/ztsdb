@@ -48,6 +48,8 @@ using namespace Juice;
 using namespace std::string_literals;
 
 
+/// Contains the classes and functions that implement a
+/// multidimentional array type.
 namespace arr {
 
   // to disambiguate sequence constructors:

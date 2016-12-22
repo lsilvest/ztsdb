@@ -114,7 +114,7 @@ YY_DECL;
 %token  MINUS    "-" 
 %token  MUL      "*"
 %token  DIV      "/"
-%token  MOD      "%"
+%token  MOD      "%%"
 %token  POWER    "^"
 %token  NOT      "!"
 
@@ -160,7 +160,7 @@ YY_DECL;
 %left           OR OR2
 %nonassoc       EQ NE LT LE GT GE 
 %left           PLUS MINUS
-%left           MUL  DIV
+%left           MUL  DIV  MOD
 %left           COLON
 %nonassoc       UNOT NOT UMINUS UPLUS
 %nonassoc       REF ESC
@@ -259,6 +259,7 @@ expr    :       LPAR expr[e]        RPAR         { $$ = $e;           }
         |       expr[e1] MINUS expr[e2]  { $$ = new Binop(parser::token::MINUS, $e1, $e2, @$); }
         |       expr[e1] MUL   expr[e2]  { $$ = new Binop(parser::token::MUL,   $e1, $e2, @$); }
         |       expr[e1] DIV   expr[e2]  { $$ = new Binop(parser::token::DIV,   $e1, $e2, @$); }
+        |       expr[e1] MOD   expr[e2]  { $$ = new Binop(parser::token::MOD,   $e1, $e2, @$); }
         |       expr[e1] POWER expr[e2]  { $$ = new Binop(parser::token::POWER, $e1, $e2, @$); }
         |       expr[e1] COLON expr[e2]  { $$ = new Binop(parser::token::COLON, $e1, $e2, @$); }
         |       expr[e1] EQ    expr[e2]  { $$ = new Binop(parser::token::EQ,    $e1, $e2, @$); }

@@ -35,6 +35,9 @@
 #include "config.hpp"
 
 
+
+/// Contains the low level network communication: TCP connection
+/// management and buffering.
 namespace net {
 
   // Message format (number are bytes):
@@ -205,7 +208,7 @@ namespace net {
     /// from the mappings and inform the upper layer.
     void disconnect(Global::conn_id_t id);
 
-    static constexpr std::chrono::system_clock::time_point::duration BUF_TIME_TO_LIVE = 60s;
+    static constexpr time_point::duration BUF_TIME_TO_LIVE = 60s;
 
     inline const zcore::NetStats& getNetStats() { return stats; }
     inline void resetNetStats() { stats.reset(); }

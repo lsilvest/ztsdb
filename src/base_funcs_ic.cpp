@@ -238,9 +238,8 @@ val::Value funcs::tryCatch(const vector<val::VBuiltinG::arg_t>& v, zcore::Interp
   // continuation to catchcode and set the next continuation to expr:
   // put a sentinel continuation to make sure fenv is cleared:
   auto ksentinel = make_shared<Kont>(Kont{nullptr, nullptr, r, ic.s->k->next, Kont::END});
-  // don't use 'ksentinel' in the next one as this will mess up stack unwinding:
   r->ec = 
-    make_shared<Kont>(Kont{nullptr, catchcode.expr.get(), r, ic.s->k->next, Kont::NORMAL});
+    make_shared<Kont>(Kont{nullptr, catchcode.expr.get(), r, ksentinel, Kont::NORMAL});
   ic.s->k->next = 
     make_shared<Kont>(Kont{nullptr, expr.expr.get(), r, ksentinel, Kont::NORMAL});
 
