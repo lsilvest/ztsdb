@@ -15,10 +15,10 @@
 ## You should have received a copy of the GNU General Public License
 ## along with ztsdb.  If not, see <http://www.gnu.org/licenses/>.
 
-start <- |.2015-08-06 06:38:01 America/New_York.|
-end   <- |.2016-08-06 06:38:01 America/New_York.|
+get_large_zts <- function(n=527041) {
+    start <- |.2015-08-06 06:38:01 America/New_York.|
+    idx <- seq(from=start, length.out=n, by=as.duration("00:01:00"))
+    data <- 1:(length(idx)*3)
+    zts(idx, data, dimnames=list(NULL, c("one", "two", "three")))
+}
 
-idx  <- seq(from=start, to=end, by=as.duration("00:01:00"))
-data <- 1:(length(idx)*3)
-
-get_large_zts <- function() zts(idx, data, dimnames=list(NULL, c("one", "two", "three")))

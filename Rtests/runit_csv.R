@@ -34,6 +34,17 @@ RUnit_double_to_and_fro_header_sep_space <- function() {
     ar <- read.csv(csvfile, type="double", header=TRUE, sep=" ")
     all.equal(a, ar)
 }
+RUnit_double_to_and_fro_header_no_return_on_last_line <- function() {
+    csvfile <- paste0(dir, "/RUnit_double_to_and_fro_header_no_return_on_last_line")
+    system(paste0("echo '",
+                  "unu,doi,trei\n",
+                  "1,4,7\n",
+                  "2,5,8\n",
+                  "3,6,9",
+                  "' >", csvfile))
+    ar <- read.csv(csvfile, type="double",  header=TRUE)
+    all.equal(matrix(1:9, 3, 3, dimnames=list(NULL, c("unu","doi","trei"))), ar)
+}
 RUnit_double_to_and_fro_no_header <- function() {
     a <- matrix((1:3000)/3, 1000, 3)
     csvfile <- paste0(dir, "/RUnit_double_to_and_fro_no_header")
@@ -65,6 +76,16 @@ RUnit_double_quoted <- function() {
                   "' >", csvfile))
     ar <- read.csv(csvfile, type="double",  header=TRUE)
     all.equal(matrix(1:9, 3, 3, dimnames=list(NULL, c("unu","doi","trei"))), ar)
+}
+
+## zts
+source("zts_large.R")
+RUnit_zts_to_and_fro_header <- function() {
+    z <- get_large_zts(200000)
+    csvfile <- paste0(dir, "/RUnit_zts_to_and_fro_header")
+    write.csv(z, csvfile, TRUE)
+    zr <- read.csv(csvfile, type="zts", header=TRUE)
+    all.equal(z, zr)
 }
 
 ## time
@@ -126,7 +147,7 @@ RUnit_double_incorrect_header_columns <- function() {
                  "7,8,9\n",
                  "' >", csvfile))
     tryCatch(read.csv(csvfile, type="double", header=TRUE),
-             .Last.error == "incorrect number of elements in row 2")
+             .Last.error == "incorrect number of elements on row 2")
 }
 RUnit_double_incorrect_columns <- function() {    
     csvfile <- paste0(dir, "/RUnit_double_incorrect_columns")
@@ -137,7 +158,7 @@ RUnit_double_incorrect_columns <- function() {
                  "7,8,9\n",
                  "' >", csvfile))
     tryCatch(read.csv(csvfile, type="double", header=TRUE),
-             .Last.error == "incorrect number of elements in row 3")
+             .Last.error == "incorrect number of elements on row 3")
 }
 RUnit_double_malformed_elt <- function() {    
     csvfile <- paste0(dir, "/RUnit_double_malformed_elt")
@@ -148,7 +169,7 @@ RUnit_double_malformed_elt <- function() {
                  "7,8,9\n",
                  "' >", csvfile))
     tryCatch(read.csv(csvfile, type="double", header=TRUE),
-             .Last.error == "can't parse '6af' on row 3, col 3")
+             .Last.error == "can't parse '6af', col 3 on row 3")
 }
 RUnit_logical_malformed_elt <- function() {    
     csvfile <- paste0(dir, "/RUnit_double_malformed_elt")
@@ -159,5 +180,5 @@ RUnit_logical_malformed_elt <- function() {
                  "1,1,0\n",
                  "' >", csvfile))
     tryCatch(read.csv(csvfile, type="logical", header=TRUE),
-             .Last.error == "can't parse '0af' on row 3, col 3")
+             .Last.error == "can't parse '0af', col 3 on row 3")
 }

@@ -53,6 +53,54 @@ TEST(csv_array_double) {
   }
   ASSERT_TRUE(remove((dir + file).c_str())==0);
 }
+TEST(csv_double_quoted) {
+  string dir = "./";
+  string file = dir + "array.csv";
+  ofstream f;
+  f.open(file);
+  f << "a,\"b\",c\n";
+  f << "1,\"4\",7\n";
+  f << "2,5,\"8\"\n";
+  f << "3,6,9\n";
+  f.close();
+  auto a = arr::readcsv_array<double>(file, true, ',', "");
+  auto b = arr::Array<double>({3,3}, {1,2,3,4,5,6,7,8,9}, {{}, {"a","b","c"}});
+  std::cout << display(val::Value(a)) << std::endl;
+  ASSERT_TRUE(*a == b);
+  ASSERT_TRUE(remove(file.c_str())==0);
+}
+TEST(csv_double_no_return_at_end) {
+  string dir = "./";
+  string file = dir + "array.csv";
+  ofstream f;
+  f.open(file);
+  f << "a,b,c\n";
+  f << "1,4,7\n";
+  f << "2,5,8\n";
+  f << "3,6,9";
+  f.close();
+  auto a = arr::readcsv_array<double>(file, true, ',', "");
+  auto b = arr::Array<double>({3,3}, {1,2,3,4,5,6,7,8,9}, {{}, {"a","b","c"}});
+  std::cout << display(val::Value(a)) << std::endl;
+  ASSERT_TRUE(*a == b);
+  ASSERT_TRUE(remove(file.c_str())==0);
+}
+TEST(csv_double_no_return_at_end_last_elt_quoted) {
+  string dir = "./";
+  string file = dir + "array.csv";
+  ofstream f;
+  f.open(file);
+  f << "a,b,c\n";
+  f << "1,4,7\n";
+  f << "2,5,8\n";
+  f << "3,6,\"9\"";
+  f.close();
+  auto a = arr::readcsv_array<double>(file, true, ',', "");
+  auto b = arr::Array<double>({3,3}, {1,2,3,4,5,6,7,8,9}, {{}, {"a","b","c"}});
+  std::cout << display(val::Value(a)) << std::endl;
+  ASSERT_TRUE(*a == b);
+  ASSERT_TRUE(remove(file.c_str())==0);
+}
 TEST(csv_array_double_mmap) {
   string dir = "./";
   string file = dir + "array.csv";
@@ -86,6 +134,7 @@ TEST(csv_vector_double) {
   {
     auto a = arr::readcsv_array<double>(file, true, ',', "");
     auto b = arr::Array<double>({4,1}, {1,2,3,4}, {{}, {""}});
+    std::cout << display(val::Value(a)) << std::endl;
     ASSERT_TRUE(*a == b);
   }
   ASSERT_TRUE(remove((dir + file).c_str())==0);
@@ -263,7 +312,7 @@ TEST(csv_read_too_few_cols) {
   f.close();
   ASSERT_THROW(arr::readcsv_array<bool>(file, true, ',', ""),
                std::out_of_range, 
-               "incorrect number of elements in row 4");
+               "incorrect number of elements on row 4");
   ASSERT_TRUE(remove(file.c_str())==0);
 }
 TEST(csv_read_too_many_cols) {
@@ -279,7 +328,7 @@ TEST(csv_read_too_many_cols) {
   f.close();
   ASSERT_THROW(arr::readcsv_array<bool>(file, true, ',', ""),
                std::out_of_range, 
-               "incorrect number of elements in row 4");
+               "incorrect number of elements on row 4");
   ASSERT_TRUE(remove(file.c_str())==0);
 }
 TEST(csv_read_parse_error) {
@@ -295,7 +344,22 @@ TEST(csv_read_parse_error) {
   f.close();
   ASSERT_THROW(arr::readcsv_array<bool>(file, true, ',', ""),
                std::out_of_range, 
-               "can't parse '9.asd' on row 4, col 3");
+               "can't parse '9.asd', col 3 on row 4");
+  ASSERT_TRUE(remove(file.c_str())==0);
+}
+TEST(csv_double_unclosed_quote) {
+  string dir = "./";
+  string file = dir + "array.csv";
+  ofstream f;
+  f.open(file);
+  f << "a,\"b\",c\n";
+  f << "1,\"4,7\n";
+  f << "2,5,\"8\"\n";
+  f << "3,6,9\n";
+  f.close();
+  ASSERT_THROW(arr::readcsv_array<double>(file, true, ',', ""),
+               std::out_of_range,
+               "quote does not terminate token on row 2");
   ASSERT_TRUE(remove(file.c_str())==0);
 }
 

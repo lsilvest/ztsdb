@@ -58,7 +58,7 @@ struct ToChar<double> {
     double_conversion::StringBuilder sb(buf, sz);
     dtosc.ToShortest(t, &sb);
     auto res = sb.position();     // can only be called before finalization
-    sb.Finalize(); // have to call it else it will be done in the descructor!
+    sb.Finalize(); // have to call it else it will be done in the destructor!
     return res;
   }
 private:
@@ -144,31 +144,54 @@ static std::unique_ptr<arr::AllocFactory> getAllocFactory(const string& mmapfile
 }
 
 
+static ssize_t readMore(int fd, char buf[], char*& tb, char*& te) {
+  size_t offset = te - tb;
+  if (offset >= BUFSZ) {
+    throw std::range_error("token larger than buffer size");
+  }
+  memcpy(buf, tb, offset); // copy the remaining bytes of the buffer at the beginning
+  tb = buf;
+  te = buf + offset;
+  ssize_t bytes_read = read(fd, te, BUFSZ - (te - tb));
+  if (bytes_read <  0) return -1;
+  if (bytes_read == 0) return offset ? 0 : -1;
+  return offset + bytes_read;
+}
 
-int readToken(int fd, char buf[], char*& b, char*& e,
-              const char sep, size_t& offset, ssize_t& bytes_read, bool& quoted) {
-  if (quoted) ++e;
-  quoted = *++e=='"';
-  if (quoted) ++e;
-  b = e;
-  for (;;) {
-    // read more if necessary:
-    if (e >= buf + offset + bytes_read) {
-      // copy the remaining bytes of the buffer at the beginning and
-      // set offset for the next read:
-      offset = e - b;
-      memcpy(buf, b, offset);
-      b = buf;
-      e = buf + offset;
-      bytes_read=read(fd, e, BUFSZ - (e - b));
-      if (bytes_read <  0) return -1;
-      if (bytes_read == 0) return offset ? 0 : -1;
-    }
+
+int readToken(int fd,       ///< file descriptor
+              char buf[],   ///< read buffer
+              ssize_t& len, ///< length of buffer
+              char*& tb,    ///< token begin
+              char*& te,    ///< token end
+              const char sep,
+              bool& quoted) {
+  if (te == 0) {
+    if ((len = readMore(fd, buf, tb, te)) <= 0) return -1;
+  }
+  else {
     if (quoted) {
-      if (e < buf + offset - 1 + bytes_read && *e=='"' && (e[1] == sep || e[1] == '\n')) return e[1];
+      if (++te >= buf + len && (len = readMore(fd, buf, tb, te)) <= 0) return -1;
     }
-    else if (*e == sep || *e == '\n') return *e;
-    ++e;
+    if (++te >= buf + len && (len = readMore(fd, buf, tb, te)) <= 0) return -1;
+  }
+  quoted = *te=='"';
+  if (quoted) {
+    if (++te >= buf + len && (len = readMore(fd, buf, tb, te)) <= 0) return -1;
+  }
+
+  tb = te;
+  for (;;) {
+    if (quoted) {
+      if (*te=='"') {
+        if (te+1 >= buf + len && (len = readMore(fd, buf, tb, te)) <= 0) return len;
+        if (te[1] == sep || te[1] == '\n') return te[1];
+        else throw std::out_of_range("quote does not terminate token");
+      }
+    }
+    else if (*te == sep || *te == '\n') return *te;
+    ++te;
+    if (te >= buf + len && (len = readMore(fd, buf, tb, te)) <= 0) return len;
   }
 }
 
@@ -185,79 +208,82 @@ arr::cow_ptr<arr::Array<T>> arr::readcsv_array(const string& file,
   }
 
   arr::idx_type row = 0;
-  char buf[BUFSZ];
-  ssize_t bytes_read = 0;
-  char* b = buf;
-  char* e = buf;
-  size_t offset = 0;
-  bool quoted = false;
-  
-  auto ap = arr::make_cow<arr::Array<T>>(true, 
-                                        arr::Vector<arr::idx_type>{}, 
-                                        arr::Vector<T>(), 
-                                        vector<arr::Vector<arr::zstring>>(), 
-                                        getAllocFactory(mmapfile));
-  auto& a = *ap.get();          // get so we don't make a copy
-  
-  if (header) {
-    for (;;) {
-      auto sep_read = readToken(fd, buf, b, e, sep, offset, bytes_read, quoted);
-      if (sep_read < 0) break;
-      a.cbind(arr::Array<T>({0,1}, arr::Vector<T>(), {{}, {std::string(b, e-b)}}));
-      if (sep_read == '\n') break;
-    }
-  }
-  else {
-    for (;;) {
-      T d;
-      auto sep_read = readToken(fd, buf, b, e, sep, offset, bytes_read, quoted);    
-      if (sep_read < 0) break;
-      int processed_chars = FromChar<T>().fromChar(b, e-b, d);
-      if (processed_chars != e-b) {
-        throw std::out_of_range("can't parse '" + std::string(b, e-b) +
-                                "' on row " + std::to_string(row+1));
-      }
-      a.cbind(arr::Array<T>({1,1}, arr::Vector<T>{d})); 
-      if (sep_read == '\n') break;
-    }
-  }
-  ++row;
 
-  for (;;) {
-    // from earlier measurements:
-    //
-    // char* endptr;
-    // with no opt:
-    // 20s without anything:
-    // 38s with just (*a->v[col])[row] = 1.0
-    // 1m24s with the full line
-    // with opt:
-    // 7s without anything
-    // 11s with just (*a->v[col])[row]
-    // 49s with (*a->v[col])[row] = strtod(b, &endptr);
-    // (*a->v[col])[row] = strtod(b, &endptr);
-    // 1m6s with StringToDouble
-    char sep_read;
-    for (size_t j=0; j<a.ncols(); ++j) {
-      sep_read = readToken(fd, buf, b, e, sep, offset, bytes_read,quoted);    
-      if (sep_read < 0) break;
-      T d;
-      int processed_chars = FromChar<T>().fromChar(b, e-b, d);
-      if (processed_chars != e-b) {
-        throw std::out_of_range("can't parse '" + std::string(b, e-b) + "' on row " +
-                                std::to_string(row+1) + ", col " + std::to_string(j+1));
+  try {
+    char buf[BUFSZ];
+    ssize_t len = 0;
+    char *b = nullptr, *e = nullptr;
+    bool quoted = false;
+  
+    auto ap = arr::make_cow<arr::Array<T>>(true, 
+                                           arr::Vector<arr::idx_type>{}, 
+                                           arr::Vector<T>(), 
+                                           vector<arr::Vector<arr::zstring>>(), 
+                                           getAllocFactory(mmapfile));
+    auto& a = *ap.get();          // get so we don't make a copy
+  
+    if (header) {
+      for (;;) {
+        auto sep_read = readToken(fd, buf, len, b, e, sep, quoted);
+        if (sep_read < 0) break;
+        a.cbind(arr::Array<T>({0,1}, arr::Vector<T>(), {{}, {std::string(b, e-b)}}));
+        if (sep_read == '\n') break;
       }
-      a.getcol(j).push_back(d); 
     }
-    if (sep_read < 0) break;
-    if (sep_read >= 0 && sep_read != '\n') {
-      throw std::out_of_range("incorrect number of elements in row " + std::to_string(row+1));
+    else {
+      for (;;) {
+        T d;
+        auto sep_read = readToken(fd, buf, len, b, e, sep, quoted);    
+        if (sep_read < 0) break;
+        int processed_chars = FromChar<T>().fromChar(b, e-b, d);
+        if (processed_chars != e-b) {
+          throw std::out_of_range("can't parse '" + std::string(b, e-b));
+        }
+        a.cbind(arr::Array<T>({1,1}, arr::Vector<T>{d})); 
+        if (sep_read == '\n') break;
+      }
     }
     ++row;
-  }    
-  a.resize(0, header ? row-1 : row);
 
-  return ap;
+    for (;;) {
+      // from earlier measurements:
+      //
+      // char* endptr;
+      // with no opt:
+      // 20s without anything:
+      // 38s with just (*a->v[col])[row] = 1.0
+      // 1m24s with the full line
+      // with opt:
+      // 7s without anything
+      // 11s with just (*a->v[col])[row]
+      // 49s with (*a->v[col])[row] = strtod(b, &endptr);
+      // (*a->v[col])[row] = strtod(b, &endptr);
+      // 1m6s with StringToDouble
+      char sep_read;
+      for (size_t j=0; j<a.ncols(); ++j) {
+        sep_read = readToken(fd, buf, len, b, e, sep, quoted);    
+        if (sep_read < 0) break;
+        T d;
+        int processed_chars = FromChar<T>().fromChar(b, e-b, d);
+        if (processed_chars != e-b) {
+          throw std::out_of_range("can't parse '" + std::string(b, e-b) +
+                                  "', col " + std::to_string(j+1));
+        }
+        a.getcol(j).push_back(d); 
+      }
+      if (sep_read < 0) break;
+      if (sep_read > 0 && sep_read != '\n') {
+        throw std::out_of_range("incorrect number of elements");
+      }
+      ++row;
+    }    
+    a.resize(0, header ? row-1 : row);
+
+    return ap;
+  }
+  catch (std::exception& e) {
+    throw std::out_of_range(e.what() + " on row "s + std::to_string(row+1));
+  }  
 }
 
 
@@ -265,92 +291,95 @@ arr::cow_ptr<arr::zts> arr::readcsv_zts(const string& file,
                                         bool header,
                                         const char sep,
                                         const string& mmapfile) {
-  int fd = open(file.c_str(), O_RDONLY);
-  if (fd < 0) {
-    throw std::system_error(std::error_code(errno, std::system_category()), "open " + file);
-  }
 
   arr::idx_type row = 0;
-  char buf[BUFSZ];
-  ssize_t bytes_read = 0;
-  char* b = buf;
-  char* e = buf;
-  size_t offset = 0;
-  bool quoted = false;
+
+  try {
+    int fd = open(file.c_str(), O_RDONLY);
+    if (fd < 0) {
+      throw std::system_error(std::error_code(errno, std::system_category()), "open " + file);
+    }
+
+    char buf[BUFSZ];
+    char *b = nullptr, *e = nullptr;
+    ssize_t len = 0;
+    bool quoted = false;
   
-  auto z = arr::make_cow<arr::zts>(true, 
-                                   arr::Vector<arr::idx_type>{0,0}, 
-                                   arr::Vector<Global::dtime>(), 
-                                   arr::Vector<double>(), 
-                                   vector<arr::Vector<arr::zstring>>(), 
-                                   getAllocFactory(mmapfile));
+    auto z = arr::make_cow<arr::zts>(true, 
+                                     arr::Vector<arr::idx_type>{0,0}, 
+                                     arr::Vector<Global::dtime>(), 
+                                     arr::Vector<double>(), 
+                                     vector<arr::Vector<arr::zstring>>(), 
+                                     getAllocFactory(mmapfile));
 
   
-  if (header) {
-    auto sep_read = readToken(fd, buf, b, e, sep, offset, bytes_read, quoted);
-    if (sep_read < 0) return z; // it's an empty file..., throw? LLL
-    for (;;) {
-      auto sep_read = readToken(fd, buf, b, e, sep, offset, bytes_read, quoted);
-      if (sep_read < 0) break;
-      z->abind(arr::Array<double>({0,1}, arr::Vector<double>(), {{}, {std::string(b, e-b)}}), 1);
-      if (sep_read == '\n') break;
+    if (header) {
+      auto sep_read = readToken(fd, buf, len, b, e, sep, quoted);
+      if (sep_read < 0) return z; // it's an empty file..., throw? LLL
+      for (;;) {
+        auto sep_read = readToken(fd, buf, len, b, e, sep, quoted);
+        if (sep_read < 0) break;
+        z->abind(arr::Array<double>({0,1}, arr::Vector<double>(), {{}, {std::string(b, e-b)}}), 1);
+        if (sep_read == '\n') break;
+      }
     }
-  }
-  else {
-    auto sep_read = readToken(fd, buf, b, e, sep, offset, bytes_read, quoted);
-    if (sep_read < 0) return z; // it's an empty file..., throw? LLL
-    Global::dtime dt;
-    int processed_chars = FromChar<Global::dtime>().fromChar(b, e-b, dt);
-    if (processed_chars != e-b) {
-      throw std::out_of_range("can't parse '" + std::string(b, e-b) +
-                              "' on row " + std::to_string(row+1));
-    }
-    z->getIndexPtr()->getcol(0).push_back(dt);
-    for (;;) {
-      double d;
-      auto sep_read = readToken(fd, buf, b, e, sep, offset, bytes_read, quoted);    
-      if (sep_read < 0) break;
-      int processed_chars = FromChar<double>().fromChar(b, e-b, d);
+    else {
+      auto sep_read = readToken(fd, buf, len, b, e, sep, quoted);
+      if (sep_read < 0) return z; // it's an empty file..., throw? LLL
+      Global::dtime dt;
+      int processed_chars = FromChar<Global::dtime>().fromChar(b, e-b, dt);
       if (processed_chars != e-b) {
         throw std::out_of_range("can't parse '" + std::string(b, e-b) +
-                                "' on row " + std::to_string(row));
+                                "' on row " + std::to_string(row+1));
       }
-      z->getArrayPtr()->abind(arr::Array<double>({1,1}, arr::Vector<double>{d}), 1); 
-      if (sep_read == '\n') break;
-    }
-  }
-  ++row;
-    
-  for (;;) {
-    auto sep_read = readToken(fd, buf, b, e, sep, offset, bytes_read, quoted);    
-    if (sep_read < 0) break;
-    Global::dtime dt;
-    int processed_chars = FromChar<Global::dtime>().fromChar(b, e-b, dt);
-    if (processed_chars != e-b) {
-      throw std::out_of_range("can't parse datetime '" + std::string(b, e-b) +
-                              "' on row " + std::to_string(row+1));
-    }
-    z->getIndexPtr()->getcol(0).push_back(dt);
-    for (size_t j=0; j<z->getArray().ncols(); ++j) {
-      sep_read = readToken(fd, buf, b, e, sep, offset, bytes_read,quoted);    
-      if (sep_read < 0) break;
-      double d;
-      int processed_chars = FromChar<double>().fromChar(b, e-b, d);
-      if (processed_chars != e-b) {
-        throw std::out_of_range("can't parse '" + std::string(b, e-b) + "' on row " +
-                                std::to_string(row+1) + ", col " + std::to_string(j+1));
+      z->getIndexPtr()->getcol(0).push_back(dt);
+      for (;;) {
+        double d;
+        auto sep_read = readToken(fd, buf, len, b, e, sep, quoted);    
+        if (sep_read < 0) break;
+        int processed_chars = FromChar<double>().fromChar(b, e-b, d);
+        if (processed_chars != e-b) {
+          throw std::out_of_range("can't parse '" + std::string(b, e-b));
+        }
+        z->getArrayPtr()->abind(arr::Array<double>({1,1}, arr::Vector<double>{d}), 1); 
+        if (sep_read == '\n') break;
       }
-      z->getArrayPtr().get()->getcol(j).push_back(d); 
-    }
-    if (sep_read >= 0 && sep_read != '\n') {
-      throw std::out_of_range("incorrect number of elements in row " + std::to_string(row+1));
     }
     ++row;
-  }    
-  z->getIndexPtr()->resize(0, header ? row-1 : row);
-  z->getArrayPtr()->resize(0, header ? row-1 : row);
+    
+    for (;;) {
+      auto sep_read = readToken(fd, buf, len, b, e, sep, quoted);    
+      if (sep_read < 0) break;
+      Global::dtime dt;
+      int processed_chars = FromChar<Global::dtime>().fromChar(b, e-b, dt);
+      if (processed_chars != e-b) {
+        throw std::out_of_range("can't parse datetime '" + std::string(b, e-b));
+      }
+      z->getIndexPtr()->getcol(0).push_back(dt);
+      for (size_t j=0; j<z->getArray().ncols(); ++j) {
+        sep_read = readToken(fd, buf, len, b, e, sep, quoted);
+        if (sep_read < 0) break;
+        double d;
+        int processed_chars = FromChar<double>().fromChar(b, e-b, d);
+        if (processed_chars != e-b) {
+          throw std::out_of_range("can't parse '" + std::string(b, e-b) +
+                                  "', col " + std::to_string(j+1));
+        }
+        z->getArrayPtr().get()->getcol(j).push_back(d); 
+      }
+      if (sep_read >= 0 && sep_read != '\n') {
+        throw std::out_of_range("incorrect number of elements");
+      }
+      ++row;
+    }    
+    z->getIndexPtr()->resize(0, header ? row-1 : row);
+    z->getArrayPtr()->resize(0, header ? row-1 : row);
 
-  return z;
+    return z;
+  }
+  catch (std::exception& e) {
+    throw std::out_of_range(e.what() + " on row "s + std::to_string(row+1));
+  }  
 }
 
 
@@ -409,7 +438,7 @@ void arr::writecsv_array(const Array<T>& a, const string& file, bool header, con
           p = buf;
         }
         
-        p += tc.toChar((*a.v[j])[i], p, (buf + BSZ) - p);
+        p += tc.toChar(a.getcol(j)[i], p, (buf + BSZ) - p);
         *p++ = j < a.ncols() - 1 ? sep : '\n';
       }
     }
@@ -436,7 +465,7 @@ void arr::writecsv_zts(const zts& z, const string& file, bool header, const char
   }
 
   try {
-    static const size_t FMAX = 32;
+    static const size_t FMAX = 4000;
     static const size_t BSZ = 64000;
     static_assert(BSZ > 10 * arr::zstring::STRING_SIZE, 
                   "for efficiency reasons, csv buf must be at least 10x max zstring");
@@ -449,9 +478,7 @@ void arr::writecsv_zts(const zts& z, const string& file, bool header, const char
 
       for (arr::idx_type j=0; j<z.getArray().ncols(); ++j) {
         if (BSZ - (p - buf) < arr::zstring::STRING_SIZE) {
-          // flush the buffer:
-          auto res = write(fd, buf, p - buf);
-          if (res < 0) {
+          if (write(fd, buf, p - buf) < 0) {
             throw std::system_error(std::error_code(errno, std::system_category()), "write");
           }
           p = buf;              // go back to the start of the buffer
@@ -466,20 +493,23 @@ void arr::writecsv_zts(const zts& z, const string& file, bool header, const char
       }
     }
 
-    if (BSZ - (p - buf) < FMAX && write(fd, buf, p - buf) < 0) {
-      throw std::system_error(std::error_code(errno, std::system_category()), "write");
-      p = buf;
-    }
-
     // now the header is done, continue with the data:
     for (arr::idx_type i=0; i<z.getArray().nrows(); ++i) {
+      if (BSZ - (p - buf) < FMAX) {
+        if (write(fd, buf, p - buf) < 0) {
+          throw std::system_error(std::error_code(errno, std::system_category()), "write");
+        }
+        p = buf;
+      }
+      
       p += ToChar<Global::dtime>().toChar(z.getIndex()[i], p, (buf + BSZ) - p);
       *p++ = z.getArray().ncols() ? sep : '\n';      
 
       for (arr::idx_type j=0; j<z.getArray().ncols(); ++j) {
-
-        if (BSZ - (p - buf) < FMAX && write(fd, buf, p - buf) < 0) {
-          throw std::system_error(std::error_code(errno, std::system_category()), "write");
+        if (BSZ - (p - buf) < FMAX) {
+          if (write(fd, buf, p - buf) < 0) {
+            throw std::system_error(std::error_code(errno, std::system_category()), "write");
+          }
           p = buf;
         }
         
