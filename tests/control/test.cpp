@@ -94,7 +94,7 @@ TEST(control_ifelse_cond_double_false) {
 TEST(control_ifelse_cond_string) {
   auto eout = parse("if (\"\") 1.0 else 2.0 \n");
   ASSERT_THROW(eval(eout), std::range_error, 
-               "conversion not defined for array of string to array of logical");  
+               "conversion not defined for array of character to array of logical");  
 }
 TEST(control_ifelse_cond_matrix) {
   auto eout = parse("if (matrix(TRUE,2,2)) 1.0 else 2.0 \n");

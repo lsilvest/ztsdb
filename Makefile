@@ -80,14 +80,13 @@ comm_append: ztsdb
 .PHONY: comm
 comm: ztsdb
 	cd ./tests/comm          && $(MAKE) -s test
-# add this one to the test dependency list when it's fixed! LLL
 .PHONY: display
 display: ztsdb
 	cd ./tests/display          && $(MAKE) -s test
 
 
 .PHONY: test
-test: anf ast config period cow_ptr zts duration time period zstring vector vector_set vector_bool array array_time array_bool align encode interp_error interp interp_time binds control mmap csv comm_append comm
+test: anf ast config period cow_ptr zts duration time period zstring vector vector_set vector_bool array array_time array_bool align encode interp_error interp interp_time binds control mmap csv comm_append comm display
 
 
 .PHONY: rtest

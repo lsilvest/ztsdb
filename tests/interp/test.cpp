@@ -825,13 +825,13 @@ TEST(interp_subassign_array_string_to_double) {
   auto eout = parse("matrix(1.1, 2, 2)[1,1] <- \"hi\" \n");
   auto a = arr::Array<arr::zstring>({2,2}, {"hi","1.1","1.1","1.1"});
   //  ASSERT_TRUE(eval(eout) == make_cow<val::VArrayS>(false, a));
-  ASSERT_THROW(eval(eout), range_error, "conversion not defined for string to double");
+  ASSERT_THROW(eval(eout), range_error, "conversion not defined for character to double");
 }
 TEST(interp_subassign_array_string_to_bool) {
   auto eout = parse("matrix(TRUE, 2, 2)[1,1] <- c(\"hi\") \n");
   auto a = arr::Array<arr::zstring>({2,2}, {"hi","TRUE","TRUE","TRUE"});
   //  ASSERT_TRUE(eval(eout) == make_cow<val::VArrayS>(false, a));
-  ASSERT_THROW(eval(eout), range_error, "conversion not defined for string to logical");
+  ASSERT_THROW(eval(eout), range_error, "conversion not defined for character to logical");
 }
 // subassign type of a > type of b
 TEST(interp_subassign_vector_bool_to_double) {

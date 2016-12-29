@@ -30,6 +30,9 @@
 #include "timezone/ztime.hpp"
 
 
+using namespace std::string_literals;
+
+
 static const size_t BUFSZ = 64000;
 
 
@@ -38,6 +41,7 @@ struct ToChar {
   size_t toChar(T t, char* buf, size_t sz) {
     throw std::out_of_range("csv.write not implemented for type");
   };
+  static const size_t CMAX = 0; 
 };
 template<typename T>
 struct FromChar {
@@ -61,6 +65,7 @@ struct ToChar<double> {
     sb.Finalize(); // have to call it else it will be done in the destructor!
     return res;
   }
+  static const size_t CMAX = 64; 
 private:
   double_conversion::DoubleToStringConverter dtosc;
 };
@@ -86,6 +91,7 @@ struct ToChar<bool> {
   size_t toChar(bool t, char* buf, size_t sz) {
     return ltostr_r(t, buf, sz);
   }
+  static const size_t CMAX = 7; 
 };
 template<>
 struct FromChar<bool> {
@@ -102,10 +108,13 @@ struct ToChar<Global::dtime> {
   // grab the format from cfgmap LLL
   size_t toChar(Global::dtime t, char* buf, size_t sz) {
     auto s = tz::to_string(t, "", "UTC");
-
+    if (s.length() > CMAX) {
+      throw std::out_of_range("date string too long!");
+    }
     memcpy(buf, s.c_str(), s.length());
     return s.length();
   }
+  static const size_t CMAX = 128; 
 };
 template<>
 struct FromChar<Global::dtime> {
@@ -124,6 +133,7 @@ struct ToChar<arr::zstring> {
     memcpy(buf, t.c_str(), t.length());
     return t.length();
   }
+  static const size_t CMAX = arr::zstring::STRING_SIZE; 
 };
 template<>
 struct FromChar<arr::zstring> {
@@ -282,7 +292,7 @@ arr::cow_ptr<arr::Array<T>> arr::readcsv_array(const string& file,
     return ap;
   }
   catch (std::exception& e) {
-    throw std::out_of_range(e.what() + " on row "s + std::to_string(row+1));
+    throw std::out_of_range(e.what() + string(" on row ") + std::to_string(row+1));
   }  
 }
 
@@ -393,7 +403,6 @@ void arr::writecsv_array(const Array<T>& a, const string& file, bool header, con
   }
 
   try {
-    static const size_t FMAX = 32;
     static const size_t BSZ = 64000;
     static_assert(BSZ > 10 * arr::zstring::STRING_SIZE, 
                   "for efficiency reasons, csv buf must be at least 10x max zstring");
@@ -426,11 +435,10 @@ void arr::writecsv_array(const Array<T>& a, const string& file, bool header, con
     }
 
     // now the header is done, continue with the data:
-    ToChar<T> tc;                              
     for (arr::idx_type i=0; i<a.nrows(); ++i) {
       for (arr::idx_type j=0; j<a.ncols(); ++j) {
 
-        if (BSZ - (p - buf) < FMAX) {
+        if (BSZ - (p - buf) < ToChar<T>::CMAX) {
           auto res = write(fd, buf, p - buf);
           if (res < 0) {
             throw std::system_error(std::error_code(errno, std::system_category()), "write");
@@ -438,7 +446,7 @@ void arr::writecsv_array(const Array<T>& a, const string& file, bool header, con
           p = buf;
         }
         
-        p += tc.toChar(a.getcol(j)[i], p, (buf + BSZ) - p);
+        p += ToChar<T>().toChar(a.getcol(j)[i], p, (buf + BSZ) - p);
         *p++ = j < a.ncols() - 1 ? sep : '\n';
       }
     }
@@ -465,7 +473,6 @@ void arr::writecsv_zts(const zts& z, const string& file, bool header, const char
   }
 
   try {
-    static const size_t FMAX = 4000;
     static const size_t BSZ = 64000;
     static_assert(BSZ > 10 * arr::zstring::STRING_SIZE, 
                   "for efficiency reasons, csv buf must be at least 10x max zstring");
@@ -495,7 +502,7 @@ void arr::writecsv_zts(const zts& z, const string& file, bool header, const char
 
     // now the header is done, continue with the data:
     for (arr::idx_type i=0; i<z.getArray().nrows(); ++i) {
-      if (BSZ - (p - buf) < FMAX) {
+      if (BSZ - (p - buf) < ToChar<Global::dtime>::CMAX) {
         if (write(fd, buf, p - buf) < 0) {
           throw std::system_error(std::error_code(errno, std::system_category()), "write");
         }
@@ -506,7 +513,7 @@ void arr::writecsv_zts(const zts& z, const string& file, bool header, const char
       *p++ = z.getArray().ncols() ? sep : '\n';      
 
       for (arr::idx_type j=0; j<z.getArray().ncols(); ++j) {
-        if (BSZ - (p - buf) < FMAX) {
+        if (BSZ - (p - buf) < ToChar<double>::CMAX) {
           if (write(fd, buf, p - buf) < 0) {
             throw std::system_error(std::error_code(errno, std::system_category()), "write");
           }

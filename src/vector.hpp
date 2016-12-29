@@ -37,14 +37,10 @@ namespace arr {
   TYPE_NAME(double, "double");
   TYPE_NAME(bool, "logical");
   TYPE_NAME(Global::dtime, "time");
-  TYPE_NAME(arr::zstring, "string");
+  TYPE_NAME(arr::zstring, "character");
   TYPE_NAME(Global::duration, "duration");
   TYPE_NAME(tz::interval, "interval");
   TYPE_NAME(tz::period, "period");
-
-
-
-
 }
 
 // #include "vector_bool.hpp"

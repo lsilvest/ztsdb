@@ -20,6 +20,7 @@
 #define DISPLAY_HPP
 
 
+#include <limits>
 #include "array.hpp"
 #include "valuevar.hpp"
 #include "zts.hpp"
@@ -184,9 +185,15 @@ namespace val {
         ss.width(vlnWidth);
         ss << "";
         for (unsigned k=0; k<ncols; ++k) {
-          if (k + j*ncols >= n) break;
-          ss.width(colWidth);
-          ss << right << colstring[k];
+          ss << ' ';
+          if (k+1 + j*ncols < n) {
+            ss.width(colWidth-1);
+            ss << left << colstring[k + j*ncols];
+          }
+          else {
+            ss << left << colstring[k + j*ncols];
+            break;
+          }
         }
         ss << endl;
       }
@@ -194,10 +201,15 @@ namespace val {
       ss.width(vlnWidth);
       ss << right << vln[j];
       for (unsigned k=0; k<ncols; ++k) {
-        if (k + j*ncols >= n) break;
         ss << ' ';
-        ss.width(colWidth-1);
-        ss << left << vs[k + j*ncols];
+        if (k+1 + j*ncols < n) {
+          ss.width(colWidth-1);
+          ss << left << vs[k + j*ncols];
+        }
+        else {
+          ss << left << vs[k + j*ncols];
+          break;
+        }
       }
       if (j<nrows-1) ss << endl; // no trailing line break
     }
@@ -211,11 +223,13 @@ namespace val {
     return ss.str();
   }
 
-  const idx_type MAXIDX = static_cast<idx_type>(-1);
-  inline vector<Index> getFirstVIndex(arr::Vector<idx_type> dim, idx_type maxrows) {
+  // MAXIDX is used to indicate we have a zero index, which needs to
+  // be differentiated so as to display '0' and not '1'!
+  const idx_type MAXIDX = std::numeric_limits<idx_type>::max();
+  inline vector<Index> getFirstVIndex(const arr::Vector<idx_type>& dim, idx_type maxrows) {
     vector<Index> fi;
     if (dim.size() < 2) {
-      // throw LLL
+      throw std::out_of_range("getFirstVIndex(): dim.size() < 2");    
     }
     if (maxrows < dim[0]) {
       Vector<size_t> v(std::max(static_cast<idx_type>(1), maxrows));
@@ -234,12 +248,11 @@ namespace val {
 
   inline bool getNextVIndex(vector<Index>& i, const arr::Vector<idx_type>& dim) {
     if (dim.size() < 2) {
-      // throw LLL
+      throw std::out_of_range("getNextVIndex(): dim.size() < 2");
     }
     if (i.size() != dim.size()) {
-      // throw LLL
+      throw std::out_of_range("getNextVIndex(): index and dim sizes mismatch");
     }
-    // this is too ugly for words LLL
     for (idx_type j=dim.size()-1; j>=2; --j) {
       if (get<IntIndex>(i[j].idx).vi[0] == MAXIDX) {
         continue;
@@ -257,8 +270,8 @@ namespace val {
 
   inline string displaySliceHeader(const vector<Index>& ii, const vector<unique_ptr<Dname>>& names) {
     stringstream ss;
-    if (ii.size() < 3) {
-      // throw LLL
+    if (ii.size() < 2) {
+      throw std::out_of_range("displaySliceHeader(): ii.size() < 3");
     }
     ss << ", ";
     for (idx_type j=2; j<ii.size(); ++j) {
@@ -496,7 +509,7 @@ namespace val {
     idx_type maxrows = min(dim1[0], nleft / dim1[1]);
     auto vi = getFirstVIndex(a.dim, maxrows);
     for (idx_type k=0; k<nslices; ++k) {
-      if (totslices > 1 || hasZeros) {
+      if (totslices > 1) {
         ss << displaySliceHeader(vi, a.names) << endl;
       }
       if (hasZeros) {
