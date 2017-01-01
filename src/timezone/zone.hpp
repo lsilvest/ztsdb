@@ -30,6 +30,7 @@
 #include "../globals.hpp"
 
 
+/// Timezone handling and temporal types and functions depending on timezones.
 namespace tz {
 
   namespace fsys = boost::filesystem;

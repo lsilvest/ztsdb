@@ -36,8 +36,7 @@
 
 
 
-/// Contains the low level network communication: TCP connection
-/// management and buffering.
+/// Low level network communication: TCP connection management and buffering.
 namespace net {
 
   // Message format (number are bytes):

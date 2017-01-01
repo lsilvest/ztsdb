@@ -59,7 +59,7 @@ namespace interp {
   struct ClosureFrame;            // to avoid dependency with env.hpp
 }
 
-/// Contains all the types that constitute the output of an evaluation by the interpreter.
+/// Contains the types that constitute the output of an evaluation by the interpreter.
 namespace val {
 
   struct VList;
