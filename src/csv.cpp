@@ -118,11 +118,13 @@ struct ToChar<Global::dtime> {
 };
 template<>
 struct FromChar<Global::dtime> {
+  FromChar(const std::string& tz_p="") : tz(tz_p) { }
   size_t fromChar(const char* buf, int sz, Global::dtime& t) {
     // not efficient to pass by string, LLL
-    t = tz::dtime_from_string(string(buf, sz));
+    t = tz::dtime_from_string(string(buf, sz), "%Y-%m-%d %H:%M:%S[.%s] %Z"s, tz);
     return sz;
   }
+  const std::string tz;
 };
 
 // zstring
@@ -300,7 +302,8 @@ arr::cow_ptr<arr::Array<T>> arr::readcsv_array(const string& file,
 arr::cow_ptr<arr::zts> arr::readcsv_zts(const string& file,
                                         bool header,
                                         const char sep,
-                                        const string& mmapfile) {
+                                        const string& mmapfile,
+                                        const string& tz) {
 
   arr::idx_type row = 0;
 
@@ -337,7 +340,7 @@ arr::cow_ptr<arr::zts> arr::readcsv_zts(const string& file,
       auto sep_read = readToken(fd, buf, len, b, e, sep, quoted);
       if (sep_read < 0) return z; // it's an empty file..., throw? LLL
       Global::dtime dt;
-      int processed_chars = FromChar<Global::dtime>().fromChar(b, e-b, dt);
+      int processed_chars = FromChar<Global::dtime>(tz).fromChar(b, e-b, dt);
       if (processed_chars != e-b) {
         throw std::out_of_range("can't parse '" + std::string(b, e-b) +
                                 "' on row " + std::to_string(row+1));
@@ -361,7 +364,7 @@ arr::cow_ptr<arr::zts> arr::readcsv_zts(const string& file,
       auto sep_read = readToken(fd, buf, len, b, e, sep, quoted);    
       if (sep_read < 0) break;
       Global::dtime dt;
-      int processed_chars = FromChar<Global::dtime>().fromChar(b, e-b, dt);
+      int processed_chars = FromChar<Global::dtime>(tz).fromChar(b, e-b, dt);
       if (processed_chars != e-b) {
         throw std::out_of_range("can't parse datetime '" + std::string(b, e-b));
       }

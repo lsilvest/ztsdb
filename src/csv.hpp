@@ -37,7 +37,11 @@ namespace arr {
   void writecsv_array(const Array<T>& a, const string& file, bool header, const char sep);
 
   // zts:
-  cow_ptr<zts> readcsv_zts(const string& file, bool header, const char sep, const string& mmapfile);
+  cow_ptr<zts> readcsv_zts(const string& file,
+                           bool header,
+                           const char sep,
+                           const string& mmapfile,
+                           const string& tz="");
   void writecsv_zts(const zts& z, const string& file, bool header, const char sep);
 
 }

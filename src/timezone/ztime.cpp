@@ -233,7 +233,7 @@ using timetuple = std::tuple<int, unsigned, unsigned, unsigned,
                              unsigned, unsigned, unsigned, std::string>;
 
 static inline timetuple readDtime(const char*& sp, const char* const se, 
-                                      const char*& fp, const char* const fe) 
+                                  const char*& fp, const char* const fe) 
 {
   auto y = 0, m = 0, d = 0, h = 0, mn = 0, sec = 0, nsec = 0;
   std::string tz = "";
@@ -362,13 +362,14 @@ Global::dtime tz::dtime_from_numbers(int y,
 }
 
 
-static Global::dtime dtime_from_timetuple(const timetuple& tpl) {
+static Global::dtime dtime_from_timetuple(const timetuple& tpl, const std::string& tz_given="") {
   enum { Y, M, D, H, MN, SEC, NSEC, TZ };
 
-  if (std::get<TZ>(tpl) == "") {
+  const std::string& tz_read = std::get<TZ>(tpl);
+  if (!tz_read.size() && !tz_given.size()) {
     throw std::range_error("timezone must be specified");
   }
-  const auto& tz = tzones.find(std::get<TZ>(tpl));
+  const auto& tz = tzones.find(tz_read.size() ? tz_read : tz_given);
   
   return tz::dtime_from_numbers(std::get<Y>(tpl),
                                 std::get<M>(tpl),
@@ -380,11 +381,13 @@ static Global::dtime dtime_from_timetuple(const timetuple& tpl) {
                                 tz);
 }
 
-Global::dtime tz::dtime_from_string(const std::string& s, const std::string &f) {
+Global::dtime tz::dtime_from_string(const std::string& s,
+                                    const std::string& fmt,
+                                    const std::string& tz) {
   // check we consumed all chars LLL
   auto sp = s.c_str();
-  auto fp = f.c_str();
-  return dtime_from_timetuple(readDtime(sp, sp + s.size(), fp, fp + f.size()));
+  auto fp = fmt.c_str();
+  return dtime_from_timetuple(readDtime(sp, sp + s.size(), fp, fp + fmt.size()), tz);
 }
 
 
@@ -403,7 +406,9 @@ std::string tz::to_string(const tz::interval& i,
 }
 
 
-tz::interval tz::interval_from_string(const std::string& s, const std::string &f) {
+tz::interval tz::interval_from_string(const std::string& s,
+                                      const std::string &f,
+                                      const std::string& tz) {
   const char* sp = s.c_str();
   const char* se = sp + s.size();
   const char* fp = f.c_str();
@@ -427,7 +432,7 @@ tz::interval tz::interval_from_string(const std::string& s, const std::string &f
   ++sp;
 
   skipWhitespace(sp, se);
-  const auto is = dtime_from_timetuple(readDtime(sp, se, fp, fe));
+  const auto is = dtime_from_timetuple(readDtime(sp, se, fp, fe), tz);
   skipWhitespace(sp, se);
 
   if (*sp++ != '-' || *sp++ != '>') {
@@ -436,7 +441,7 @@ tz::interval tz::interval_from_string(const std::string& s, const std::string &f
   
   skipWhitespace(sp, se);
   fp = f.c_str();
-  const auto ie = dtime_from_timetuple(readDtime(sp, se, fp, fe));
+  const auto ie = dtime_from_timetuple(readDtime(sp, se, fp, fe), tz);
   skipWhitespace(sp, se);
                  
   if (*sp == '-') {

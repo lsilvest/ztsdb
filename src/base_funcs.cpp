@@ -382,7 +382,7 @@ val::Value funcs::quit(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx&
 
 
 val::Value funcs::read_csv(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  enum {CSVFILE, TYPE, ARRAYFILE, HEADER, SEP};
+  enum {CSVFILE, TYPE, ARRAYFILE, HEADER, SEP, TZ};
   // row.names: not yet implemented
   // col.names: not yet implemented
   const string csvfile = val::get_scalar<arr::zstring>(getVal(v[CSVFILE]));
@@ -390,6 +390,7 @@ val::Value funcs::read_csv(const vector<val::VBuiltinG::arg_t>& v, zcore::Interp
   const string arrayfile = val::get_scalar<arr::zstring>(getVal(v[ARRAYFILE]));
   auto hasHeader = val::get_scalar<bool>(getVal(v[HEADER]));
   const string sep = val::get_scalar<arr::zstring>(getVal(v[SEP]));
+  const string tz = val::get_scalar<arr::zstring>(getVal(v[TZ]));
   // in R:
   // col.names can be:
   // -- NULL
@@ -403,7 +404,7 @@ val::Value funcs::read_csv(const vector<val::VBuiltinG::arg_t>& v, zcore::Interp
     return arr::readcsv_array<double>(csvfile, hasHeader, sep[0], arrayfile);
   }
   else if (type == "zts") {
-    return arr::readcsv_zts(csvfile, hasHeader, sep[0], arrayfile);
+    return arr::readcsv_zts(csvfile, hasHeader, sep[0], arrayfile, tz);
   }
   else if (type == "logical") {
     return arr::readcsv_array<bool>(csvfile, hasHeader, sep[0], arrayfile);

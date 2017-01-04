@@ -332,13 +332,15 @@ void core::loadBuiltinFunctions(interp::BaseFrame* r) {
                   {"catch", {{val::vt_double }, false}}});  // don't eval
   val::VBuiltinG(r,
                  "read.csv",
-                 "function(csvfile, type=\"zts\", arrayfile=\"\", header=TRUE, sep=\",\") NULL\n",
+                 "function(csvfile, type=\"zts\", "
+                 "arrayfile=\"\", header=TRUE, sep=\",\", tz=\"\") NULL\n",
                  funcs::read_csv, true,
                  {{"csvfile",   {{val::vt_string }, true}},
                   {"type",      {{val::vt_string }, true}},
                   {"arrayfile", {{val::vt_string }, true}},
                   {"header",    {{val::vt_bool   }, true}},
-                  {"sep",       {{val::vt_string }, true}}});
+                  {"sep",       {{val::vt_string }, true}},
+                  {"tz",        {{val::vt_string }, true}}});
   val::VBuiltinG(r,
                  "write.csv",
                  "function(object, file, header=TRUE, sep=\",\") NULL\n",
