@@ -36,13 +36,13 @@
 
 ## create a couple of zts of size 0 x 3
 
-data  <-  matrix(0, 0, 3, dimnames=list(NULL, c("a","b","c")))
+data  <-  matrix(0, 0, 3)
 idx   <-  as.time(NULL)
 ## we create 'z' here and suppose sub-minute granularity updates
-z     <<- zts(idx, data)
+z     <<- zts(idx, data, dimnames=list(NULL, c("a","b","c")))
 
 ## the calculated minute-means 'mmean':
-mmean <<- zts(idx, data)
+mmean <<- zts(idx, data, dimnames=list(NULL, c("a","b","c")))
 
 
 ten_ms <- as.duration(1e7)
