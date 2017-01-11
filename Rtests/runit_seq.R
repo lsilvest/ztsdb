@@ -1,4 +1,4 @@
-## Copyright (C) 2015 Leonardo Silvestri
+## Copyright (C) 2016,2017 Leonardo Silvestri
 ##
 ## This file is part of ztsdb.
 ##
@@ -172,3 +172,34 @@ RUnit_seq_interval_period_neg <- function() {
            |+2011-10-01 09:00:00 America/New_York -> 2011-10-01 10:00:00 America/New_York-|)
     all(a == b) && all(b == d)
 }
+RUnit_seq_nan <- function() {
+    tryCatch(seq(from=NaN, to=1, by=1),    .Last.error == "argument cannot be 'NaN' or 'Inf'") &
+    tryCatch(seq(from=1,   to=NaN, by=1),  .Last.error == "argument cannot be 'NaN' or 'Inf'") &
+    tryCatch(seq(from=1,   to=2,  by=NaN), .Last.error == "argument cannot be 'NaN' or 'Inf'") &
+    tryCatch(seq(from=1, length.out=NaN),
+             .Last.error == "argument cannot be converted to an integer") &
+    tryCatch(1:NaN,   .Last.error == "argument cannot be 'NaN' or 'Inf'") &
+    tryCatch(NaN:NaN, .Last.error == "argument cannot be 'NaN' or 'Inf'") &
+    tryCatch(NaN:1,   .Last.error == "argument cannot be 'NaN' or 'Inf'")
+}
+RUnit_seq_inf <- function() {
+    tryCatch(seq(from=Inf, to=1, by=1),    .Last.error == "argument cannot be 'NaN' or 'Inf'") &
+    tryCatch(seq(from=1,   to=Inf, by=1),  .Last.error == "argument cannot be 'NaN' or 'Inf'") &
+    tryCatch(seq(from=1,   to=2,  by=Inf), .Last.error == "argument cannot be 'NaN' or 'Inf'") &
+    tryCatch(seq(from=1, length.out=Inf),
+             .Last.error == "argument cannot be converted to an integer") &
+    tryCatch(1:Inf,   .Last.error == "argument cannot be 'NaN' or 'Inf'") &
+    tryCatch(Inf:Inf, .Last.error == "argument cannot be 'NaN' or 'Inf'") &
+    tryCatch(Inf:1,   .Last.error == "argument cannot be 'NaN' or 'Inf'")
+}
+RUnit_seq_minus_inf <- function() {
+    tryCatch(seq(from=-Inf, to=1, by=1),    .Last.error == "argument cannot be 'NaN' or 'Inf'") &
+    tryCatch(seq(from=1,   to=-Inf, by=1),  .Last.error == "argument cannot be 'NaN' or 'Inf'") &
+    tryCatch(seq(from=1,   to=2,  by=-Inf), .Last.error == "argument cannot be 'NaN' or 'Inf'") &
+    tryCatch(seq(from=1, length.out=-Inf),
+             .Last.error == "argument cannot be negative") &
+    tryCatch(1:-Inf,    .Last.error == "argument cannot be 'NaN' or 'Inf'") &
+    tryCatch(-Inf:-Inf, .Last.error == "argument cannot be 'NaN' or 'Inf'") &
+    tryCatch(-Inf:1,    .Last.error == "argument cannot be 'NaN' or 'Inf'")
+}
+                           

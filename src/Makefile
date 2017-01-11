@@ -12,8 +12,8 @@ SRCS = main_parser/lexer.cpp main_parser/parser.cpp			\
 	encode.cpp misc.cpp zts.cpp display.cpp base_funcs.cpp		\
 	base_funcs_math.cpp base_funcs_array.cpp			\
 	base_funcs_array_idx.cpp base_funcs_set.cpp base_funcs_ic.cpp	\
-	conversion_funcs.cpp csv.cpp string.cpp base_types.cpp		\
-	timezone/ztime.cpp timezone/zone.cpp				\
+	base_funcs_roll.cpp conversion_funcs.cpp csv.cpp string.cpp	\
+	base_types.cpp timezone/ztime.cpp timezone/zone.cpp		\
 	timezone/ztime_vector.cpp timezone/localtime.cpp		\
 	unop_binop_funcs.cpp config_ctx.cpp config.cpp			\
 	interp_error.cpp zcpp.cpp period.cpp

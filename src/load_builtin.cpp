@@ -396,6 +396,32 @@ void core::loadBuiltinFunctions(interp::BaseFrame* r) {
                  funcs::rotate, true,
                  {{"x", {{val::vt_double, val::vt_zts }, true}},
                   {"n", {{val::vt_double              }, true}}});
+  val::VBuiltinG(r, "cumsum", 
+                 "function(x, rev=FALSE) NULL \n", 
+                 funcs::cumsum, true,
+                 {{"x",   {{val::vt_double, val::vt_zts }, true}},
+                  {"rev", {{val::vt_bool                }, true}}});
+  val::VBuiltinG(r, "cumprod", 
+                 "function(x, rev=FALSE) NULL \n", 
+                 funcs::cumprod, true,
+                 {{"x",   {{val::vt_double, val::vt_zts }, true}},
+                  {"rev", {{val::vt_bool                }, true}}});
+  val::VBuiltinG(r, "cumdiv", 
+                 "function(x, rev=FALSE) NULL \n", 
+                 funcs::cumdiv, true,
+                 {{"x",   {{val::vt_double, val::vt_zts }, true}},
+                  {"rev", {{val::vt_bool                }, true}}});
+  val::VBuiltinG(r, "cummax", 
+                 "function(x, rev=FALSE) NULL \n", 
+                 funcs::cummax, true,
+                 {{"x",   {{val::vt_double, val::vt_zts }, true}},
+                  {"rev", {{val::vt_bool                }, true}}});
+  val::VBuiltinG(r, "cummin", 
+                 "function(x, rev=FALSE) NULL \n", 
+                 funcs::cummin, true,
+                 {{"x",   {{val::vt_double, val::vt_zts }, true}},
+                  {"rev", {{val::vt_bool                }, true}}});
+  val::VBuiltinG(r, "rev", "function(x) NULL \n", funcs::rev, true);
 
   val::VBuiltinG(r, "system", 
                  "function(command, intern=FALSE, ignore.stdout=FALSE," 
@@ -482,6 +508,12 @@ void core::loadBuiltinFunctions(interp::BaseFrame* r) {
                   {"start",  {{val::vt_duration,val::vt_period}, true}},
                   {"end",    {{val::vt_duration,val::vt_period}, true}},
                   {"tz",     {{val::vt_string,val::vt_null }, true}}});
+  val::VBuiltinG(r, "op.zts",
+        	 "function(x, y, method) NULL \n", 
+        	 funcs::op_zts, true,
+        	 {{"x",      {{val::vt_zts}, true}},
+                  {"y",      {{val::vt_zts}, true}},
+                  {"method", {{val::vt_string}, true}}});
   
   val::VBuiltinG(r, "time",
         	 "function(year, month, day, hour=NULL, min=NULL, sec=NULL, nsec=NULL, tz) NULL \n", 

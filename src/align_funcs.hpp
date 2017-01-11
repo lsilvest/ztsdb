@@ -108,6 +108,14 @@ namespace ztsdb {
     }
   };
 
+
+  template <typename FIter, typename F>
+  struct applyd {
+    static void f(double d, FIter b, FIter e) { 
+      std::for_each(b, e, [d](double &n){ n = F()(n, d); });
+    }
+  };
+
 } // end namespace ztsdb
 
 

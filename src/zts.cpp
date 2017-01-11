@@ -35,7 +35,12 @@ arr::zts::zts(const arr::Vector<arr::idx_type>& dim_p,
   a(std::make_shared<arr::Array<double>>(dim_p, v_p, cnames, std::move(allocf_a))),
   idx(std::make_shared<arr::Array<Global::dtime>>(idx_p, std::move(allocf_idx)))
 {
-  // check dims LLL
+  if (cnames.size() == 0 && a->getdim().size() == v_p.getdim().size()) {
+    for (idx_type j=1; j<a->getdim().size(); ++j) {
+      // this doesn't work then a is a vector
+      *a->names[j] = v_p.getNames(j);        
+    }
+  }
   if (!idx->isOrdered()) {
     throw range_error("index is not in ascending order");
   }

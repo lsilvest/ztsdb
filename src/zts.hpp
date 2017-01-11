@@ -201,6 +201,15 @@ namespace arr {
     return arr::zts(y, std::move(a));    
   }
 
+  template <typename F>
+  void op(const zts& x, zts& y)
+  {
+    for (size_t i=0; i<y.getArray().ncols(); ++i) {
+      arr::op_zts<double, F>(x.getIndex().getcol(0), y.getIndex().getcol(0),
+                             x.getArray().getcol(0), y.getArrayPtr()->getcol(i));
+    }
+  }
+
   struct LengthMismatch : std::invalid_argument {
     LengthMismatch(const std::string& s) : std::invalid_argument(s) { }
   };

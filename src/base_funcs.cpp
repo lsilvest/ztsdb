@@ -493,128 +493,6 @@ val::Value funcs::substr(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCt
 }
 
 
-// rolling functions:
-
-static void checkParams(const arr::Array<double>& a, double window, double nbvalid) {
-  if (a.size() == 0) {
-    throw std::out_of_range("matrix has 0 elements");    
-  }
-  if (window <= 0 || window > a.dim[0]) {
-    throw std::out_of_range("'window' must be >= 0 and <= dim[0]");
-  }
-  if (nbvalid <= 1 || nbvalid > window) {
-    throw std::out_of_range("'nbvalid' must be >= 1 and <= window");
-  }
-}
-
-
-template <arr::Array<double>& (*rollfunc3)(arr::Array<double>&, arr::idx_type, arr::idx_type)>
-static inline val::Value doroll(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  const double window  = val::get_scalar<double>(getVal(v[1]));
-  const double nbvalid = val::get_scalar<double>(getVal(v[2]));
-  
-  switch (getVal(v[0]).which()) {
-  case val::vt_double: {
-    const auto& aconst = get<val::SpVAD>(getVal(v[0]));
-    checkParams(*aconst, window, nbvalid);
-    auto a = get<val::SpVAD>(getVal(v[0]));
-    rollfunc3(*a, window, nbvalid); // copy when not ref
-    return a;
-  }
-  case val::vt_zts: {
-    const auto& zconst = get<val::SpZts>(getVal(v[0]));
-    checkParams(zconst->getArray(), window, nbvalid);
-    auto z = get<val::SpZts>(getVal(v[0]));
-    rollfunc3(*z->getArrayPtr(), window, nbvalid); // copy when not ref
-    return z;
-  }
-  default:
-    throw out_of_range("invalid argument type");
-  }
-}
-
-
-val::Value funcs::rollmean(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  return doroll<rollmean_inplace>(v, ic);
-}
-
-val::Value funcs::rollmin(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  return doroll<rollmin_inplace>(v, ic);
-}
-
-val::Value funcs::rollmax(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  return doroll<rollmax_inplace>(v, ic);
-}
-
-val::Value funcs::rollvar(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  return doroll<rollvar_inplace>(v, ic);
-}
-
-val::Value funcs::rollcov(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  enum {X, Y, WINDOW, NVALID};
-  const double window  = val::get_scalar<double>(getVal(v[WINDOW]));
-  const double nbvalid = val::get_scalar<double>(getVal(v[NVALID]));
-
-  bool isXdouble = getVal(v[X]).which() == val::vt_double;
-  bool isYdouble = getVal(v[Y]).which() == val::vt_double;
-  
-  const auto& xconst = isXdouble ?
-    *static_cast<const val::SpVAD>(get<val::SpVAD>(getVal(v[X]))) :
-    get<val::SpZts>(getVal(v[X]))->getArray();
-  const auto& yconst = isYdouble ? 
-    *static_cast<const val::SpVAD>(get<val::SpVAD>(getVal(v[Y]))) :
-    get<val::SpZts>(getVal(v[Y]))->getArray();
-    checkParams(xconst, window, nbvalid);
-    checkParams(yconst, window, nbvalid);
-
-  if (isXdouble && isYdouble) {
-    return arr::make_cow<val::VArrayD>(false, rollcov(xconst, yconst, window, nbvalid));
-  }
-  else if (!isXdouble) {
-    return arr::make_cow<arr::zts>(false,
-                                   get<val::SpZts>(getVal(v[X]))->getIndex(),
-                                   rollcov(xconst, yconst, window, nbvalid));
-  }
-  else {
-    return arr::make_cow<arr::zts>(false,
-                                   get<val::SpZts>(getVal(v[Y]))->getIndex(),
-                                   rollcov(xconst, yconst, window, nbvalid));
-  }
-}
-
-
-template <arr::Array<double>& (*rollfunc2)(arr::Array<double>&, ssize_t)>
-static inline val::Value doroll2(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  const double n  = val::get_scalar<double>(getVal(v[1]));
-  
-  switch (getVal(v[0]).which()) {
-  case val::vt_double: {
-    val::SpVAD a = get<val::SpVAD>(getVal(v[0]));
-    rollfunc2(*a, n);           // potentially a copy when not ref
-    return a;
-  }
-  case val::vt_zts: {
-    auto& z = get<val::SpZts>(getVal(v[0]));
-    rollfunc2(*z->getArrayPtr(), n); // potentially a copy when not ref
-    return z;
-  }
-  default:
-    throw out_of_range("invalid argument type");
-  }
-}
-
-
-val::Value funcs::locf(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  return doroll2<arr::locf_inplace>(v, ic);
-}
-
-val::Value funcs::move(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  return doroll2<arr::move_inplace>(v, ic);
-}
-
-val::Value funcs::rotate(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  return doroll2<arr::rotate_inplace>(v, ic);
-}
 
 val::Value funcs::sys_time(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   return val::make_array(std::chrono::system_clock::now());
@@ -629,7 +507,18 @@ template <>
 constexpr Global::duration getDefaultIncValue() { return Global::duration(1000000000); }
 
 
-// the internals of these functions should be in vector_ztime or somewhere like that LLL
+template<typename T>
+void checkSeqArg(const T& arg, const yy::location& loc) {
+  ;
+}
+template<>
+void checkSeqArg(const double& arg, const yy::location& loc) {
+  if (std::isinf(arg) || std::isnan(arg)) {
+    throw interp::EvalException("argument cannot be 'NaN' or 'Inf'", loc);
+  }
+}
+
+
 template<typename F, typename B, val::ValType F_T, val::ValType B_T>
 static val::Value seq_helper_numeric(const vector<val::VBuiltinG::arg_t>& v) {
   enum { FROM, TO, BY, LENGTH_OUT };
@@ -639,6 +528,7 @@ static val::Value seq_helper_numeric(const vector<val::VBuiltinG::arg_t>& v) {
   auto length_out_t = getVal(v[LENGTH_OUT]).which();
 
   auto from = val::get_scalar<F>(getVal(v[FROM]));
+  checkSeqArg<F>(from, getLoc(v[FROM]));
   // get out of the way all the invalid type situations:
   if (to_t != F_T && to_t != val::vt_null) 
     throw interp::EvalException("invalid type for argument", getLoc(v[TO]));
@@ -647,23 +537,26 @@ static val::Value seq_helper_numeric(const vector<val::VBuiltinG::arg_t>& v) {
   if (by_t != B_T && by_t != val::vt_null) 
     throw interp::EvalException("invalid type for argument", getLoc(v[BY]));
 
-  size_t length_out =
-    length_out_t == val::vt_double ? val::get_scalar<double>(getVal(v[LENGTH_OUT])) : 0;
   B by = by_t != val::vt_null ? val::get_scalar<B>(getVal(v[BY])) : getDefaultIncValue<B>();
+  checkSeqArg<B>(by, getLoc(v[BY]));
 
   // the logic itself:
   if (to_t != val::vt_null) {
     F to = val::get_scalar<F>(getVal(v[TO]));
+    checkSeqArg<F>(to, getLoc(v[TO]));
     if (by_t == val::vt_null && to < from) {
       // if we are taking a default value for by, we need to follow
       // the direction set by 'from' and 'to':
       by *= -1;
     }
     if (length_out_t != val::vt_null) {
+      auto length_out = funcs::getUint(val::get_scalar<double>(getVal(v[LENGTH_OUT])),
+                                             getLoc(v[LENGTH_OUT]));
       by = (to - from) / (length_out - 1);
+      checkSeqArg<B>(by, getLoc(v[BY]));
     }
     if (by == getInitValue<B>())
-      throw interp::EvalException("by cannot be 0", getLoc(v[BY]));
+      throw interp::EvalException("'by' cannot be 0", getLoc(v[BY]));
 
     auto sameSign = ((to - from) >= getInitValue<B>() && by >= getInitValue<B>())
       || ((to - from) <  getInitValue<B>() && by <  getInitValue<B>());
@@ -674,7 +567,9 @@ static val::Value seq_helper_numeric(const vector<val::VBuiltinG::arg_t>& v) {
     return arr::make_cow<arr::Array<F>>(false, arr::seq_to, from, to, to >= from ? by : -by);
   }
   else {                 // no 'to' argument
-    if (!std::isnan(length_out)) {
+    if (length_out_t != val::vt_null) {
+      auto length_out = funcs::getUint(val::get_scalar<double>(getVal(v[LENGTH_OUT])),
+                                             getLoc(v[LENGTH_OUT]));
       return arr::make_cow<arr::Array<F>>(false, arr::seq_n, from, by, length_out);    
     }
     else
@@ -793,8 +688,7 @@ static arr::zts align_wrapper(const arr::zts& ts,
       (ts, y, start, end);
   }
 
-  throw std::out_of_range("unknown align method");
-    throw interp::EvalException("unknown align method", methodloc);
+  throw interp::EvalException("unknown align method", methodloc);
 }
   
 
@@ -1016,4 +910,31 @@ val::Value funcs::year(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx&
   return make_cow<arr::Array<double>>
     (false, arr::applyf<Global::dtime, double>
      (*dt, [&tz](Global::dtime u) { return static_cast<double>(ztsdb::year(u,tz)); }));
+}
+
+
+val::Value funcs::op_zts(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  enum { X, Y, METHOD };
+  const auto& x = get<val::SpZts>(getVal(v[X]));
+  auto y = get<val::SpZts>(getVal(v[Y]));
+  const auto& method = val::get_scalar<arr::zstring>(getVal(v[METHOD]));
+
+  using FIter = Vector<double>::iterator;
+  if (method == "*") {
+    arr::op<ztsdb::applyd<FIter, ztsdb::multiplies<double,double,double>>>(*x, *y);
+    return y;
+  }
+  if (method == "/") {
+    arr::op<ztsdb::applyd<FIter, ztsdb::divides<double,double,double>>>(*x, *y);
+    return y;
+  }
+  if (method == "+") {
+    arr::op<ztsdb::applyd<FIter, ztsdb::plus<double,double,double>>>(*x, *y);
+    return y;
+  }
+  if (method == "-") {
+    arr::op<ztsdb::applyd<FIter, ztsdb::minus<double,double,double>>>(*x, *y);
+    return y;
+  }
+  throw interp::EvalException("unknown align method", getLoc(v[METHOD]));
 }

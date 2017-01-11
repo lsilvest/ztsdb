@@ -19,6 +19,8 @@
 #ifndef ARRAY_OPS
 #define ARRAY_OPS
 
+
+#include "valuevector.hpp"
 #include "functional"
 #include "array.hpp"
 #include "globals.hpp"
@@ -203,7 +205,7 @@ namespace arr {
       for (idx_type r=1; r<a.dim[0]; ++r) {
         if (std::isnan((*a.v[c])[r])) {
           if (last_idx < 0) {
-            last_idx = (*a.v[c])[r];
+            last_idx = r - 1;
           }
           setv(a.getcol(c), r, (r - last_idx <= static_cast<idx_type>(n)) ? (*a.v[c])[r-1] : Global::ZNAN);
         } else {
@@ -220,7 +222,7 @@ namespace arr {
     if (n > 0 ) {
       for (idx_type c=0; c<a.v.size(); c++) {
         for (idx_type r=a.dim[0]-1; r >= static_cast<idx_type>(n); --r) {
-          setv(a.getcol(c), r, (*a.v[c])[r] - n);
+          setv(a.getcol(c), r, (*a.v[c])[r - n]);
         }
         for (idx_type r=0; r<static_cast<idx_type>(n); ++r) {
           setv(a.getcol(c), r, Global::ZNAN);
@@ -230,7 +232,7 @@ namespace arr {
     else {
       for (idx_type c=0; c<a.v.size(); c++) {
         for (idx_type r=0; r<a.dim[0] + n; ++r) {
-          setv(a.getcol(c), r, (*a.v[c])[r] - n);
+          setv(a.getcol(c), r, (*a.v[c])[r - n]);
         }
         for (idx_type r=a.dim[0]+n; r<a.dim[0]; ++r) {
           setv(a.getcol(c), r, Global::ZNAN);
@@ -346,7 +348,39 @@ namespace arr {
     }
     return z;    
   }
-  
+
+
+  template<typename T, typename F>
+  Array<T>& cumul_inplace(Array<T>& a, bool rev) {
+    if (!rev) {
+      for (idx_type c=0; c < a.ncols(); c++) {
+        for (idx_type r=1; r < a.getcol(c).size(); ++r) {
+          setv(a.getcol(c), r, F()(a.getcol(c)[r], a.getcol(c)[r-1]));
+        }
+      }
+    }
+    else {
+      for (idx_type c=0; c < a.ncols(); c++) {
+        for (idx_type r=a.getcol(c).size()-1; r >= 1 ; --r) {
+          setv(a.getcol(c), r-1, F()(a.getcol(c)[r-1], a.getcol(c)[r]));
+        }
+      }      
+    }
+    return a;
+  } 
+
+  template<typename T>
+  Array<T>& rev_inplace(Array<T>& a) {
+    for (idx_type c=0; c < a.ncols(); c++) {
+      auto iter_start = a.getcol(c).begin();
+      auto iter_end   = a.getcol(c).end();
+      for (arr::idx_type j=0; j<a.getcol(c).size() / 2; j++) {
+        std::iter_swap(iter_start++, --iter_end);
+      }
+    }
+    return a;
+  }
+    
 } // namespace arr
 
 

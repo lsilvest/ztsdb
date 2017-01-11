@@ -46,6 +46,7 @@ SET(SOURCE_FILES
   base_funcs_ic.cpp
   base_funcs_math.cpp
   base_funcs_set.cpp
+  base_funcs_roll.cpp
   base_types.cpp
   base_types.hpp
   ${CMAKE_CURRENT_BINARY_DIR}/cmdline.h

@@ -189,9 +189,10 @@ template<typename T, typename U, typename R> struct doop<T, U, R, yy::parser::to
 template<typename T, typename U, typename R> struct doop<T, U, R, yy::parser::token::POWER> {
   static val::Value f(const arr::Array<T>& d1, const arr::Array<U>& d2) { 
     return make_cow<arr::Array<R>>(false, apply<T, U, R, funcs::power<T>>(d1, d2)); } };
-template<typename T, typename U, typename R> struct doop<T, U, R, yy::parser::token::COLON> {
-  static val::Value f(const arr::Array<T>& d1, const arr::Array<U>& d2) { 
-    return make_cow<arr::Array<R>>(false, arr::seq_to, d1[0], d2[0], 1.0); } };
+// COLON is now transformed by the parser into a call to 'seq'
+// template<typename T, typename U, typename R> struct doop<T, U, R, yy::parser::token::COLON> {
+//   static val::Value f(const arr::Array<T>& d1, const arr::Array<U>& d2) { 
+//     return make_cow<arr::Array<R>>(false, arr::seq_to, d1[0], d2[0], 1.0); } };
 template<typename T, typename U> struct doop<T, U, bool, yy::parser::token::LE> {
   static val::Value f(const arr::Array<T>& d1, const arr::Array<U>& d2) { 
     return make_cow<val::VArrayB>(false, apply<T, U, bool, std::less_equal<T>>(d1, d2)); } };
@@ -454,8 +455,9 @@ val::Value funcs::evalbinop(val::Value v1, const val::Value& v2, int op, const v
     yy::parser::token::MUL,
     yy::parser::token::DIV, 
     yy::parser::token::MOD, 
-    yy::parser::token::POWER,
-    yy::parser::token::COLON}; 
+    yy::parser::token::POWER
+    // yy::parser::token::COLON
+  }; 
 
   static std::set<int> plus_minus{
     yy::parser::token::PLUS, 
@@ -542,8 +544,8 @@ val::Value funcs::evalbinop(val::Value v1, const val::Value& v2, int op, const v
                                       yy::parser::token::MUL,
                                       yy::parser::token::DIV,
                                       yy::parser::token::MOD,
-                                      yy::parser::token::POWER,
-                                      yy::parser::token::COLON
+                                      yy::parser::token::POWER
+                                      // yy::parser::token::COLON
                                       >(*t1, *t2, op);
       }
       else if (boolean.find(op) != boolean.end()) {

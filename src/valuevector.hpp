@@ -152,6 +152,7 @@ namespace arr {
     }
 
     size_t size() const { return c.size(); }
+    void forceUnOrdered() { ; } // only here for template compatibility reasons
 
     Vector<val::Value>& assign(size_t count, const val::Value& value) {
       c.assign(count, value);

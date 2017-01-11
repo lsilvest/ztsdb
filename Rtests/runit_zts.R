@@ -25,7 +25,11 @@ source("utils.R")
 
 
 RUnit_zts_constructor <- function() {
-    all.equal(z2, zts(idx2, 1:27, dimnames=dimnames(z2)))
+    a <- zts(idx1, 1:27, dim=c(9, 3), dimnames=list(NULL, c("one", "two", "three")))
+    b <- zts(idx1, 1:27, dimnames=list(NULL, c("one", "two", "three")))
+    c_data <- matrix(1:27, 9, 3, dimnames=list(NULL, c("one", "two", "three")))
+    c <- zts(idx1, c_data)
+    all.equal(a, b) & all.equal(b, c)
 }
 
 

@@ -188,6 +188,25 @@ namespace ztsdb {
     }
   }; 
 
+  template<typename T>
+  struct max {
+    inline T operator()(const T& t, const T& u) const {
+      if (std::isnan(t) || std::isnan(u)) {
+        return Global::ZNAN;
+      }
+      return std::max(t, u);
+    }
+  }; 
+
+  template<typename T>
+  struct min {
+    inline T operator()(const T& t, const T& u) const {
+      if (std::isnan(t) || std::isnan(u)) {
+        return Global::ZNAN;
+      }
+      return std::min(t, u);
+    }
+  }; 
 }
 
 

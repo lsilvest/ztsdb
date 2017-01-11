@@ -733,7 +733,7 @@ val::Value funcs::make_zts(const vector<val::VBuiltinG::arg_t>& v, zcore::Interp
   const auto& filename = fsys::path(std::string(val::get_scalar<arr::zstring>(getVal(v[FILE]))));
   const auto& filename_idx = filename.string().size() ? filename / "idx" : filename;
   try {
-    unsigned flags = filename.string().size() ? arr::LOCKED | arr::TMP: 0; // with TMP instaed of 0, avoid a copy? LLL
+    unsigned flags = filename.string().size() ? arr::LOCKED | arr::TMP: 0; // with TMP instead of 0, avoid a copy? LLL
     auto allocf = getAllocFactoryZts(filename);
     auto allocf_idx = getAllocFactoryZts(filename_idx);
     return arr::make_cow<arr::zts>(flags, 

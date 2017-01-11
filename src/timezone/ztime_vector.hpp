@@ -1,4 +1,4 @@
-// (C) 2016 Leonardo Silvestri
+// (C) 2016,2017 Leonardo Silvestri
 //
 // This file is part of ztsdb.
 //
@@ -155,7 +155,9 @@ namespace arr {                 // should be in tz? LLL
     
       // advance until we have a point in x that is in the interval
       // defined around yi:
-      while (ix < x.size() && x[ix] < ystart) ++ix; // implement dichotomic search for this LLL
+      auto iter = std::lower_bound(x.begin() + ix, x.end(), ystart);
+      ix = iter - x.begin();
+      
       if (ix >= x.size() || x[ix] >= yend) {
         ydata.push_back(F::f(xdata.end(), xdata.end())); // empty interval
         continue;
@@ -164,7 +166,8 @@ namespace arr {                 // should be in tz? LLL
       auto first_ix = ix;
 
       // find the last point in the interval:
-      while (ix < x.size() && x[ix] < yend) ++ix;
+      auto iter = std::lower_bound(x.begin() + ix, x.end(), yend);
+      ix = iter - x.begin();while (ix < x.size() && x[ix] < yend) ++ix;
       typename arr::Vector<T>::const_iterator iend(xdata, ix);
 
       ydata.push_back(F::f(istart, iend));
@@ -172,6 +175,31 @@ namespace arr {                 // should be in tz? LLL
       // reset ix to the first ix found, because the intervals
       // specified could overlap:
       ix = first_ix;
+    }
+  }
+
+  template <typename T, typename F>
+  void op_zts(const arr::Vector<Global::dtime>& x, 
+              const arr::Vector<Global::dtime>& y, 
+              const arr::Vector<T>& xdata, 
+              arr::Vector<T>& ydata) 
+  {
+    size_t ix = 0;
+
+    if (xdata.size() != x.size()) throw std::out_of_range("'xdata' must have same size as 'x'");   
+
+    // for each point in x, we try to find a matching point or set of
+    // points in y:
+    auto from_yiter = y.begin();
+    for (ix=0; ix<x.size(); ix++) {
+      auto to_yiter = std::lower_bound(from_yiter, y.end(), x[ix]);
+      if (to_yiter == y.end()) continue;
+
+      auto iy_s = from_yiter-y.begin();
+      auto iy_e = to_yiter-y.begin();
+      F::f(xdata[ix], ydata.begin() + iy_s, ydata.begin() + iy_e);
+      
+      from_yiter = to_yiter;
     }
   }
 

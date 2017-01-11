@@ -20,6 +20,8 @@
 #define BASE_FUNCS
 
 #include <vector>
+#include <cmath>
+#include <cfenv>
 #include "valuevar.hpp"
 #include "interp_error.hpp"
 
@@ -168,7 +170,13 @@ namespace funcs {
   val::Value locf(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value move(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value rotate(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
-  
+  val::Value cumsum(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
+  val::Value cumprod(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
+  val::Value cumdiv(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
+  val::Value cummax(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
+  val::Value cummin(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
+  val::Value rev(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
+
   // system and general utilities
   val::Value system(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
 
@@ -187,6 +195,7 @@ namespace funcs {
 
   val::Value align(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value align_idx(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
+  val::Value op_zts(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
 
   // time
   val::Value dayweek(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
@@ -247,8 +256,30 @@ namespace funcs {
   // Makes accessing the tuples of 'val::VBuiltinG::arg_t' clearer.
 #define getName(x) get<0>(x)
 #define getVal(x)  get<1>(x) 
-#define getLoc(x)  get<2>(x) 
+#define getLoc(x)  get<2>(x)
 
+  /// Transforms a double into a an ssize_t, raising an exception if it's not possible.
+  inline ssize_t getInt(double d, const yy::location& l) {
+    std::feclearexcept(FE_ALL_EXCEPT);
+    static_assert(sizeof(ssize_t)==sizeof(long long), "sizeof(ssize_t)==sizeof(long long)");
+    auto res = llrint(d);
+    if (std::fetestexcept(FE_INVALID)) {
+      throw interp::EvalException("argument cannot be converted to an integer", l);
+    }
+    if (std::fetestexcept(FE_INEXACT)) {
+      throw interp::EvalException("argument is not an integer", l);
+    }
+    return res;
+  }
+
+  /// Transforms a double into a a size_t, raising an exception if it's not possible.
+  inline size_t getUint(double d, const yy::location& l) {
+    if (d < 0) {
+      throw interp::EvalException("argument cannot be negative", l);
+    }
+    return getInt(d, l);
+  }
+  
 }
 
 #endif

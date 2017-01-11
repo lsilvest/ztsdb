@@ -78,10 +78,27 @@ namespace arr {
   inline size_t growCapacity(size_t n) {
     static_assert(VECTOR_ALLOC_GROWTH::num > VECTOR_ALLOC_GROWTH::den, 
                   "vector alloc growth multiplier must be > 1.0");
-    return n < VECTOR_INITIAL_ALLOC/2 ? VECTOR_INITIAL_ALLOC : 
-      n * VECTOR_ALLOC_GROWTH::num / VECTOR_ALLOC_GROWTH::den;
+    if (n > 0 && n > std::numeric_limits<size_t>::max() / VECTOR_ALLOC_GROWTH::num) {
+      // check for overflow and return the max (which of course will later fail allocation)
+      return std::numeric_limits<size_t>::max();
+    }
+    else {
+      return n < VECTOR_INITIAL_ALLOC/2 ? VECTOR_INITIAL_ALLOC : 
+        n * VECTOR_ALLOC_GROWTH::num / VECTOR_ALLOC_GROWTH::den;
+    }
   }
 
+
+  template<typename T>
+  inline size_t getTotalSize(size_t n) {
+    if (n > 0 && n > std::numeric_limits<size_t>::max() / sizeof(T) - sizeof(RawVector<T>)) {
+      // check for overflow
+      return std::numeric_limits<size_t>::max();
+    }
+    return n*sizeof(T) + sizeof(RawVector<T>);
+  }
+
+  
   template<typename T, typename O=std::less<T>>
   struct Vector {
     typedef T value_type;
@@ -119,7 +136,7 @@ namespace arr {
       if (!alloc) {
         throw std::invalid_argument("Vector<T>: null allocator");
       }
-      c = new (alloc->allocate(capacity*sizeof(T) + sizeof(RawVector<T>))) RawVector<T>;
+      c = new (alloc->allocate(getTotalSize<T>(capacity))) RawVector<T>;
       memcpy(c, v.c, sizeof(RawVector<T>));
       for (size_t j=0; j<v.c->n; ++j) {
         c->v[j] = v.c->v[j];
@@ -136,7 +153,7 @@ namespace arr {
         throw std::invalid_argument("Vector<T>: null allocator");
       }
       capacity = growCapacity(n);
-      c = new (alloc->allocate(capacity*sizeof(T) + sizeof(RawVector<T>))) RawVector<T>;
+      c = new (alloc->allocate(getTotalSize<T>(capacity))) RawVector<T>;
       c->typenumber = TypeNumber<T>::n;
       c->n = n;
       for (size_t i=0; i<n; ++i) {
@@ -154,7 +171,7 @@ namespace arr {
         throw std::invalid_argument("Vector<T,O>: null allocator");
       }
       capacity = growCapacity(n);
-      c = new (alloc->allocate(capacity*sizeof(T) + sizeof(RawVector<T>))) RawVector<T>;
+      c = new (alloc->allocate(getTotalSize<T>(capacity))) RawVector<T>;
       c->typenumber = TypeNumber<T>::n;
       c->n = 0;
       c->ordered = true;
@@ -170,7 +187,7 @@ namespace arr {
         throw std::invalid_argument("Vector<T,O>: null allocator");
       }
       capacity = growCapacity(n);
-      c = new (alloc->allocate(capacity*sizeof(T) + sizeof(RawVector<T>))) RawVector<T>;
+      c = new (alloc->allocate(getTotalSize<T>(capacity))) RawVector<T>;
       c->typenumber = TypeNumber<T>::n;
       c->n = n;
       c->ordered = true;
@@ -188,7 +205,7 @@ namespace arr {
       }
       size_t n = e - b;
       capacity = growCapacity(n);
-      c = new (alloc->allocate(capacity*sizeof(T) + sizeof(RawVector<T>))) RawVector<T>;    
+      c = new (alloc->allocate(getTotalSize<T>(capacity))) RawVector<T>;    
       c->typenumber = TypeNumber<T>::n;
       c->n = n;
       size_t i = 0;
@@ -214,7 +231,7 @@ namespace arr {
       }
       size_t n = l.size();
       capacity = growCapacity(n);
-      c = new (alloc->allocate(capacity*sizeof(T) + sizeof(RawVector<T>))) RawVector<T>; 
+      c = new (alloc->allocate(getTotalSize<T>(capacity))) RawVector<T>; 
       c->typenumber = TypeNumber<T>::n;
       c->n = n;
       size_t i = 0;
@@ -271,7 +288,7 @@ namespace arr {
           throw std::range_error("vector::push_back: cannot reallocate with null allocator");
         }
         capacity = growCapacity(c->n);
-        auto mem = alloc->reallocate(c, capacity*sizeof(T) + sizeof(RawVector<T>));
+        auto mem = alloc->reallocate(c, getTotalSize<T>(capacity));
         c = static_cast<RawVector<T>*>(mem);
       }
       new (&c->v[c->n]) T(value);
@@ -620,11 +637,11 @@ namespace arr {
     }
 
     reference operator*() const {
-      v.c->ordered = false;
+      v.forceUnOrdered();
       return v.at(pos); 
     }
     pointer operator->() const { 
-      v.c->ordered = false;
+      v.forceUnOrdered();
       return &v.at(pos); 
     }
 
