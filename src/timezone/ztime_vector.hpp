@@ -166,7 +166,7 @@ namespace arr {                 // should be in tz? LLL
       auto first_ix = ix;
 
       // find the last point in the interval:
-      auto iter = std::lower_bound(x.begin() + ix, x.end(), yend);
+      iter = std::lower_bound(x.begin() + ix, x.end(), yend);
       ix = iter - x.begin();while (ix < x.size() && x[ix] < yend) ++ix;
       typename arr::Vector<T>::const_iterator iend(xdata, ix);
 

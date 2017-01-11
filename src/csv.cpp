@@ -271,7 +271,7 @@ arr::cow_ptr<arr::Array<T>> arr::readcsv_array(const string& file,
       // 49s with (*a->v[col])[row] = strtod(b, &endptr);
       // (*a->v[col])[row] = strtod(b, &endptr);
       // 1m6s with StringToDouble
-      char sep_read;
+      char sep_read = -1;
       for (size_t j=0; j<a.ncols(); ++j) {
         sep_read = readToken(fd, buf, len, b, e, sep, quoted);    
         if (sep_read < 0) break;
