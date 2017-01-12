@@ -5,7 +5,7 @@ build:
 
   before_script: 
     - apt update
-    - apt -y install curl make cmake libboost-filesystem-dev flex bison gcc g++ git gengetopt
+    - apt -y install curl make cmake libboost-filesystem-dev flex bison gcc g++ git gengetopt bzip2
     - git clone https://github.com/google/double-conversion
     - cd double-conversion
     - cmake -D BUILD_SHARED_LIBS=ON .
