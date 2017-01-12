@@ -10,6 +10,7 @@ build:
     - cd double-conversion
     - cmake -D BUILD_SHARED_LIBS=ON .
     - make && make install
+    - cd ..
     - curl -L https://sourceforge.net/projects/crpcut/files/crpcut/1.9.4/crpcut-1.9.4.tar.bz2/download > crpcut-1.9.4.tar.bz2
     - tar xvf crpcut-1.9.4.tar.bz2
     - cd crpcut-1.9.4
