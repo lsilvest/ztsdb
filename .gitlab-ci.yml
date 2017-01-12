@@ -1,19 +1,23 @@
-# use the official gcc image, based on debian
-# can use versions as well, like gcc:5.2
-# see https://hub.docker.com/_/gcc/
 image: ubuntu:16.04
 
 build:
   stage: build
 
   before_script: 
-    - apt update && apt -y install make cmake libboost-filesystem-dev flex bison gcc g++ git
+    - apt update
+    - apt -y install curl make cmake libboost-filesystem-dev flex bison gcc g++ git gengetopt
     - git clone https://github.com/google/double-conversion
     - cd double-conversion
     - cmake -D BUILD_SHARED_LIBS=ON .
     - make && make install
+    - curl -L https://sourceforge.net/projects/crpcut/files/crpcut/1.9.4/crpcut-1.9.4.tar.bz2/download > crpcut-1.9.4.tar.bz2
+    - tar xvf crpcut-1.9.4.tar.bz2
+    - cd crpcut-1.9.4
+    - cmake -D LIBRARY_OUTPUT_PATH=/usr/local/lib .
+    - make && make install
 
-  script: 
+  script:
+    - cd ..
     - mkdir build
     - cd build
     - cmake ..
@@ -31,4 +35,4 @@ build:
 test:
   stage: test
   script:
-    - ctest
+    - ctest && make rtest
