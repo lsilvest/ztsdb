@@ -3,7 +3,7 @@ INCLUDE(../CMakeList.Header.txt)
 set(SOURCE_FILES test.cpp)
 
 ADD_EXECUTABLE(test_encode $<TARGET_OBJECTS:ztsdb_lib> ${SOURCE_FILES})
-ADD_TEST(test_encode ${CMAKE_CURRENT_BINARY_DIR}/test_encode)
+ADD_TEST(test_encode ${CMAKE_CURRENT_BINARY_DIR}/test_encode --timeout-multiplier=3)
 
 SET_SOURCE_FILES_PROPERTIES(test.cpp PROPERTIES COMPILE_FLAGS "-Wno-strict-overflow")
 

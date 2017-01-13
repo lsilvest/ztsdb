@@ -9,7 +9,7 @@ SET_SOURCE_FILES_PROPERTIES(timezone/localtime.cpp
   PROPERTIES COMPILE_FLAGS "-Wno-address -Wno-maybe-uninitialized")
 
 ADD_EXECUTABLE(test_vector ${SOURCE_FILES})
-ADD_TEST(test_vector ${CMAKE_CURRENT_BINARY_DIR}/test_vector)
+ADD_TEST(test_vector ${CMAKE_CURRENT_BINARY_DIR}/test_vector --timeout-multiplier=3)
 
 TARGET_LINK_LIBRARIES(test_vector
   pthread 

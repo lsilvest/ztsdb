@@ -10,7 +10,7 @@ set(SOURCE_FILES
 )
 
 ADD_EXECUTABLE(test_array_bool ${SOURCE_FILES})
-ADD_TEST(test_array_bool ${CMAKE_CURRENT_BINARY_DIR}/test_array_bool)
+ADD_TEST(test_array_bool ${CMAKE_CURRENT_BINARY_DIR}/test_array_bool --timeout-multiplier=3)
 
 TARGET_LINK_LIBRARIES(test_array_bool 
   pthread 

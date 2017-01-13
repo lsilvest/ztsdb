@@ -3,7 +3,7 @@ INCLUDE(../CMakeList.Header.txt)
 set(SOURCE_FILES test.cpp)
 
 ADD_EXECUTABLE(test_binds $<TARGET_OBJECTS:ztsdb_lib> ${SOURCE_FILES})
-ADD_TEST(test_binds ${CMAKE_CURRENT_BINARY_DIR}/test_binds)
+ADD_TEST(test_binds ${CMAKE_CURRENT_BINARY_DIR}/test_binds --timeout-multiplier=3)
 
 TARGET_LINK_LIBRARIES(test_binds
   pthread 

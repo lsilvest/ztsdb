@@ -15,7 +15,7 @@ set(SOURCE_FILES
 )
 
 ADD_EXECUTABLE(test_config ${SOURCE_FILES})
-ADD_TEST(test_config ${CMAKE_CURRENT_BINARY_DIR}/test_config)
+ADD_TEST(test_config ${CMAKE_CURRENT_BINARY_DIR}/test_config --timeout-multiplier=3)
 
 TARGET_LINK_LIBRARIES(test_config
   pthread 

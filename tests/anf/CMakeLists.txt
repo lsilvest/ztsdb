@@ -32,7 +32,7 @@ SET_SOURCE_FILES_PROPERTIES(../../src/timezone/localtime.cpp
   PROPERTIES COMPILE_FLAGS "-Wno-address -Wno-maybe-uninitialized")
 
 ADD_EXECUTABLE(test_anf ${SOURCE_FILES})
-ADD_TEST(test_anf ${CMAKE_CURRENT_BINARY_DIR}/test_anf)
+ADD_TEST(test_anf ${CMAKE_CURRENT_BINARY_DIR}/test_anf --timeout-multiplier=3)
 
 TARGET_LINK_LIBRARIES(test_anf
   pthread 

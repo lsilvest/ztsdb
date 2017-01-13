@@ -17,7 +17,7 @@ set(SOURCE_FILES
 )
 
 ADD_EXECUTABLE(test_display ${SOURCE_FILES})
-ADD_TEST(test_display ${CMAKE_CURRENT_BINARY_DIR}/test_display)
+ADD_TEST(test_display ${CMAKE_CURRENT_BINARY_DIR}/test_display --timeout-multiplier=3)
 
 TARGET_LINK_LIBRARIES(test_display
   pthread 

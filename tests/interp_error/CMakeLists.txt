@@ -6,7 +6,7 @@ set(SOURCE_FILES
 )
 
 ADD_EXECUTABLE(test_interp_error ${SOURCE_FILES})
-ADD_TEST(test_interp_error ${CMAKE_CURRENT_BINARY_DIR}/test_interp_error)
+ADD_TEST(test_interp_error ${CMAKE_CURRENT_BINARY_DIR}/test_interp_error --timeout-multiplier=3)
 
 TARGET_LINK_LIBRARIES(test_interp_error
   pthread 

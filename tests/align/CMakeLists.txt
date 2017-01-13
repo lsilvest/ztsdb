@@ -12,7 +12,7 @@ set(SOURCE_FILES
   ../../src/timezone/localtime.cpp)
 
 ADD_EXECUTABLE(test_align ${SOURCE_FILES})
-ADD_TEST(test_align ${CMAKE_CURRENT_BINARY_DIR}/test_align)
+ADD_TEST(test_align ${CMAKE_CURRENT_BINARY_DIR}/test_align --timeout-multiplier=3)
 
 TARGET_LINK_LIBRARIES(test_align
   pthread 

@@ -22,7 +22,7 @@ set(SOURCE_FILES
 )
 
 ADD_EXECUTABLE(test_csv ${SOURCE_FILES})
-ADD_TEST(test_csv ${CMAKE_CURRENT_BINARY_DIR}/test_csv)
+ADD_TEST(test_csv ${CMAKE_CURRENT_BINARY_DIR}/test_csv --timeout-multiplier=3)
 
 TARGET_LINK_LIBRARIES(test_csv
   pthread 

@@ -3,39 +3,42 @@ cmake_minimum_required(VERSION 2.8)
 SET(SRC "${CMAKE_CURRENT_SOURCE_DIR}/../../src")
 
 ENABLE_TESTING()
+
 FIND_PACKAGE(Boost COMPONENTS system filesystem REQUIRED)
+FIND_PACKAGE(LibDOUBLE_CONVERSION REQUIRED)
+
 INCLUDE_DIRECTORIES(
   ${LIBCRPCUT_INCLUDE_DIRS}
   ../../src
   ../../src/main_parser
-  ${CMAKE_CURRENT_BINARY_DIR}/../../src/main_parser
   ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}/../../src/main_parser
   ${LIBDOUBLE_CONVERSION_INCLUDE_DIRS})
 
 set(SOURCE_FILES
   test.cpp
-  ${SRC}/array.cpp 
-  ${SRC}/dname.cpp 
-  ${SRC}/ast.cpp 
   ${SRC}/anf.cpp 
-  ${SRC}/misc.cpp 
+  ${SRC}/array.cpp 
+  ${SRC}/ast.cpp 
+  ${SRC}/dname.cpp 
   ${SRC}/parser_ctx.cpp 
+  ${SRC}/misc.cpp
+  ${SRC}/timezone/ztime.cpp
   ${SRC}/timezone/zone.cpp 
-  ${SRC}/timezone/ztime.cpp 
-  ${SRC}/timezone/localtime.cpp 
+  ${SRC}/timezone/localtime.cpp
 )
 
 SET_SOURCE_FILES_PROPERTIES(../../src/timezone/localtime.cpp
   PROPERTIES COMPILE_FLAGS "-Wno-address -Wno-maybe-uninitialized")
 
-ADD_EXECUTABLE(test_parser ${SOURCE_FILES})
-ADD_TEST(test_parser ${CMAKE_CURRENT_BINARY_DIR}/test_parser --timeout-multiplier=3)
+ADD_EXECUTABLE(test_ast ${SOURCE_FILES})
+ADD_TEST(test_ast ${CMAKE_CURRENT_BINARY_DIR}/test_ast --timeout-multiplier=3)
 
-TARGET_LINK_LIBRARIES(test_parser 
+TARGET_LINK_LIBRARIES(test_ast
   pthread 
-  double-conversion
+  double-conversion 
   ${LIBCRPCUT_LIBRARIES}
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
-  main_parser
-  dl)
+  dl
+  main_parser)
