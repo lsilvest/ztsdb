@@ -22,8 +22,9 @@ build:
     - mkdir build
     - cd build
     - cmake ..
+    - make -j4 -O
     - tests/encode/test_encode
     - tests/encode/test_comm
     - tests/encode/test_comm_append
-    - make && ctest && make rtest
+    - ctest && make rtest
     

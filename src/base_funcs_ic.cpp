@@ -46,7 +46,7 @@ static function<string(string)> gensym = GensymFun();
 /// parsing is inserted as the next continuation.
 val::Value funcs::source(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   ParserCtx pctx;
-#if 1 //def DEBUG
+#if 0 //def DEBUG
   pctx.trace_scanning = true;
   pctx.trace_parsing  = true;
 #else

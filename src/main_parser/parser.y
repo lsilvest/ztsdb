@@ -220,9 +220,13 @@ expr    :       LPAR expr[e]        RPAR         { $$ = $e;           }
 
 // control structures
         |       IF LPAR expr[c] RPAR expr[e] %prec IF                { $$ = new IfElse($c, $e, new Null(yy::missing_loc()), @$); }
+        |       IF LPAR expr[c] RPAR STT expr[e] %prec IF            { $$ = new IfElse($c, $e, new Null(yy::missing_loc()), @$); }
         |       IF LPAR expr[c] RPAR expr[e1] ELSE expr[e2]          { $$ = new IfElse($c, $e1, $e2, @$); }
+        |       IF LPAR expr[c] RPAR STT expr[e1] ELSE expr[e2]      { $$ = new IfElse($c, $e1, $e2, @$); }
         |       FOR LPAR SYMBOL[s] IN expr[i] RPAR expr[b] %prec FOR { $$ = new For(new Symbol($s, @s), $i, $b, @$); }
+        |       FOR LPAR SYMBOL[s] IN expr[i] RPAR STT expr[b] %prec FOR { $$ = new For(new Symbol($s, @s), $i, $b, @$); }
         |       WHILE LPAR expr[c] RPAR expr[b] %prec WHILE          { $$ = new While($c, $b, @$); }
+        |       WHILE LPAR expr[c] RPAR STT expr[b] %prec WHILE      { $$ = new While($c, $b, @$); }
         |       NEXT                                                 { $$ = new Next(@$);  }
         |       BREAK                                                { $$ = new Break(@$); }
 
