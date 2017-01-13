@@ -22,18 +22,4 @@ build:
     - mkdir build
     - cd build
     - cmake ..
-    - make
-    
-  # artifacts:
-  #   paths:
-  #     - ztsdb
-  # depending on your build setup it's most likely a good idea to cache outputs to reduce the build time
-  # cache:
-  #   paths:
-  #     - "*.o"
-
-# run tests using the binary built before
-test:
-  stage: test
-  script:
-    - ctest && make rtest
+    - make && ctest && make rtest
