@@ -1,4 +1,4 @@
-// (C) 2016 Leonardo Silvestri
+// (C) 2016,2017 Leonardo Silvestri
 //
 // This file is part of ztsdb.
 //
@@ -621,18 +621,10 @@ static void convertFromList(const val::Value& val,
 
   dim = *get<val::SpVI>(lst->a[0]);
 
-  const auto& namesList = get<val::SpVList>(lst->a[1]);
+  const auto namesList = get<val::SpVList>(lst->a[1]).get();
   names.resize(namesList->size());
   for (size_t j=0; j<namesList->size(); ++j) {
-    auto nla = namesList->a[j];
-    const auto subl = get<val::SpVList>(nla);
-    // with gcc 4.9, if we write the above like this:
-    // const auto subl = get<val::SpVList>(namesList->a[j]);
-    //
-    // we end up damaging namesList (size goes from 1 to 3 with
-    // uninitialized 2,3 would like to get to the end of this) LLL 
-    //
-    // works with Clang...
+    const auto subl = get<val::SpVList>(namesList->a[j]);
     for (size_t k=0; k<subl->size(); ++k) {
       names[j].push_back(zstring(get<std::string>(subl->a[k])));
     }

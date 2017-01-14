@@ -1,4 +1,4 @@
-// (C) 2016 Leonardo Silvestri
+// (C) 2016,2017 Leonardo Silvestri
 //
 // This file is part of ztsdb.
 //
@@ -472,7 +472,7 @@ namespace arr {
 
     /// address the Array as if it were a column vector
     inline T operator[](idx_type i) const { 
-      if (dim[0] == 0) {
+      if (size() == 0) {
         throw range_error("subscript out of bounds");
       }
       idx_type col = i / dim[0];
@@ -825,7 +825,7 @@ namespace arr {
 
 
     /// Get the total number of elements in the array.
-    inline idx_type size() const { return v.size() * dim[0]; }
+    inline idx_type size()  const { return v.size() * nrows(); }
     inline idx_type ncols() const { return v.size(); }
     inline idx_type nrows() const { return dim.size() ? dim[0] : 0; }
 
