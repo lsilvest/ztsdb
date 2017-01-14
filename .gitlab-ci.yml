@@ -16,12 +16,14 @@ build:
     - cd crpcut-1.9.4
     - cmake -D LIBRARY_OUTPUT_PATH=/usr/local/lib .
     - make && make install
-
+    - ldconfig
+    - ldconfig -p | grep double-conversion
+    
   script:
     - cd ..
     - mkdir build
     - cd build
     - cmake ..
-    - make -j4 -O
+    - make
     - ctest && make rtest
     
