@@ -16,6 +16,7 @@
 
 
 #include "zcpp.hpp"
+#include "net_handler.hpp"
 
 
 size_t arr::getHeaderLength(const std::string& name) {

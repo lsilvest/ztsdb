@@ -17,7 +17,9 @@ ENDIF()
 
 BISON_TARGET(parser
   parser.y
-  ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp)
+  ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp
+  VERBOSE dummy.txt
+  )
 
 FLEX_TARGET(lexer
   lexer.l
@@ -33,4 +35,4 @@ set(SOURCE_FILES
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_BINARY_DIR}/main_parser)
 
 # create the library
-ADD_LIBRARY(main_parser STATIC ${SOURCE_FILES})
+ADD_LIBRARY(main_parser OBJECT ${SOURCE_FILES})

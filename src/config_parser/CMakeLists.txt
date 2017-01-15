@@ -26,4 +26,4 @@ set(SOURCE_FILES
   ${FLEX_cfglexer_OUTPUTS})
 
 # create the library
-ADD_LIBRARY(config_parser STATIC ${SOURCE_FILES})
+ADD_LIBRARY(config_parser OBJECT ${SOURCE_FILES})

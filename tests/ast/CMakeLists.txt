@@ -31,7 +31,7 @@ set(SOURCE_FILES
 SET_SOURCE_FILES_PROPERTIES(../../src/timezone/localtime.cpp
   PROPERTIES COMPILE_FLAGS "-Wno-address -Wno-maybe-uninitialized")
 
-ADD_EXECUTABLE(test_ast ${SOURCE_FILES})
+ADD_EXECUTABLE(test_ast $<TARGET_OBJECTS:main_parser> ${SOURCE_FILES})
 ADD_TEST(test_ast ${CMAKE_CURRENT_BINARY_DIR}/test_ast --timeout-multiplier=3)
 
 TARGET_LINK_LIBRARIES(test_ast
@@ -40,5 +40,4 @@ TARGET_LINK_LIBRARIES(test_ast
   ${LIBCRPCUT_LIBRARIES}
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
-  dl
-  main_parser)
+  dl)

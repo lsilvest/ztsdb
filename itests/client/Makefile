@@ -1,11 +1,10 @@
 include ../../src/Makefile.header
 
 CPP = clang++-3.6
-#CPPFLAGS = -g -std=c++1y -I $(DOUBLE-CONVERSION-INCLUDE) -Wall -stdlib=libstdc++ -Wno-deprecated-register -fPIC
 LDFLAGS += -L/home/lsilvest/repos/ztsdb/src/shlib -lztsdb
 
 COREDIR =../../src
-CPPFLAGS += -I$(COREDIR)
+CPPFLAGS += -I$(COREDIR) -I$(COREDIR)/main_parser
 
 .cpp.o :
 	@$(MAKEDEPEND); \

@@ -43,8 +43,6 @@ OBJS = append.o $(BASEOBJS)
 
 append: $(OBJS)
 	$(CPP) $(CPPFLAGS) -o $@ $(OBJS) $(LDFLAGS)
-#	valgrind ./$@ -t -v
-#	./$@
 
 .PHONY: clean
 clean:

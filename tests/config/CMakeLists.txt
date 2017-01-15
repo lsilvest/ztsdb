@@ -14,7 +14,10 @@ set(SOURCE_FILES
   ${SRC}/timezone/localtime.cpp 
 )
 
-ADD_EXECUTABLE(test_config ${SOURCE_FILES})
+ADD_EXECUTABLE(test_config
+  $<TARGET_OBJECTS:config_parser>
+  ${SOURCE_FILES})
+
 ADD_TEST(test_config ${CMAKE_CURRENT_BINARY_DIR}/test_config --timeout-multiplier=3)
 
 TARGET_LINK_LIBRARIES(test_config
@@ -23,7 +26,5 @@ TARGET_LINK_LIBRARIES(test_config
   ${LIBCRPCUT_LIBRARIES}
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
-  dl
-  main_parser
-  config_parser)
+  dl)
 

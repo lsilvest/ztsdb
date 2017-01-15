@@ -12,10 +12,10 @@ set(SOURCE_FILES
 )
 
 ADD_EXECUTABLE(test_cow_ptr ${SOURCE_FILES})
+
 ADD_TEST(test_cow_ptr ${CMAKE_CURRENT_BINARY_DIR}/test_cow_ptr --timeout-multiplier=3)
 
 TARGET_LINK_LIBRARIES(test_cow_ptr
   pthread 
   ${LIBCRPCUT_LIBRARIES}
-  dl
-  main_parser)
+  dl)

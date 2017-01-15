@@ -25,7 +25,6 @@
 #include "misc.hpp"
 #include "zts.hpp"
 #include "globals.hpp"
-#include "net_handler.hpp"
 
 
 /// Provides a C++ interface to append data to arrays and time

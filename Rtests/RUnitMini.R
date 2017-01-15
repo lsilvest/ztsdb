@@ -2,6 +2,8 @@
 ## 
 runTestFile <- function(absFileName, verbose=FALSE)
 {
+    retval <- 0
+    
     cat(paste0("------ ", absFileName, "\n"))
 
     ## LLL make these lists and test that each test returns a boolean scalar, if not, flag!!!
@@ -68,6 +70,8 @@ runTestFile <- function(absFileName, verbose=FALSE)
                             "PASSED: ", passed, ", ",
                             "ERRORS: ", error,  ", ",
                             "FAILED: ", failed, "\n"))
+
+        retval <- error + failed
     }
 
     ## run .tearDown() if it exists
@@ -78,4 +82,6 @@ runTestFile <- function(absFileName, verbose=FALSE)
         }
         i <- i + 1
     }
+
+    retval
 }

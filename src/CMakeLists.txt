@@ -12,8 +12,6 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_SOURCE_DIR}/main_parser) # for location.hpp
 
 SET(SOURCE_FILES
-  ${BisonOutput}
-  ${FlexOutput}
   juice/mpl.hpp
   juice/variant.hpp
   juice/variant_binary.hpp
@@ -139,7 +137,12 @@ SET_SOURCE_FILES_PROPERTIES(timezone/localtime.cpp
 ADD_SUBDIRECTORY(main_parser)
 ADD_SUBDIRECTORY(config_parser)
 
-ADD_EXECUTABLE(ztsdb ztsdb.cpp $<TARGET_OBJECTS:ztsdb_lib>)
+ADD_EXECUTABLE(ztsdb
+  ztsdb.cpp
+  $<TARGET_OBJECTS:ztsdb_lib>
+  $<TARGET_OBJECTS:main_parser>
+  $<TARGET_OBJECTS:config_parser>)
+
 ADD_LIBRARY(ztsdb_lib OBJECT ${SOURCE_FILES})
 ADD_DEPENDENCIES(ztsdb_lib main_parser config_parser)
 
@@ -150,5 +153,51 @@ TARGET_LINK_LIBRARIES(
   double-conversion 
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
-  main_parser 
-  config_parser)
+  )
+
+
+SET(HEADER_FILES
+  main_parser/location.hpp
+  main_parser/position.hpp
+  ast.hpp
+  anf.hpp
+  display.hpp
+  globals.hpp
+  timezone/interval.hpp
+  timezone/zone.hpp
+  timezone/tz.hpp
+  timezone/tzfile.h
+  timezone/ztime_vector.hpp
+  timezone/ztime.hpp
+  cow_ptr.hpp
+  string.hpp
+  dname.hpp
+  array.hpp
+  juice/variant.hpp
+  juice/mpl.hpp
+  allocator_factory.hpp
+  allocator.hpp
+  misc.hpp
+  vector.hpp
+  vector_base.hpp
+  period.hpp
+  type_utils.hpp
+  base_types.hpp
+  logging.hpp
+  net_client.hpp
+  encode.hpp
+  valuevar.hpp
+  juice/variant_binary.hpp
+  juice/variant.hpp
+  zts.hpp
+  valuevar_ic.hpp
+  valuevector.hpp
+  net_handler.hpp
+  stats.hpp
+  info.hpp
+  config.hpp
+  index.hpp
+)
+
+INSTALL(TARGETS ztsdb DESTINATION bin)
+INSTALL(FILES ${HEADER_FILES} DESTINATION include/ztsdb)

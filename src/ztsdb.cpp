@@ -253,11 +253,17 @@ int main(int argc, char *argv[]) {
           throw std::system_error(std::error_code(errno, std::system_category()),
                                   "write pipe_here_ir");
         }
-        ir.run();
+        auto retval = EXIT_SUCCESS;
+        try {
+          ir.run();
+        }
+        catch (const Global::QuitException& e) {
+          retval = e.status;
+        }
         stop = true;
         pthread_join(t1, nullptr);
         cmdline_parser_free(&args_info);
-        return EXIT_SUCCESS;
+        return retval;
       }
     }
     catch (std::exception& e) {

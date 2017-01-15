@@ -8,6 +8,6 @@ file(GLOB runit_files
 add_custom_target(rtest)
 foreach(f ${runit_files})
   add_custom_command(TARGET rtest
-                     COMMAND ${zscript} -e "'source(\"${CMAKE_CURRENT_SOURCE_DIR}/RUnitMini.R\");dummy<-runTestFile(\"${f}\")'"
+                     COMMAND ${zscript} -e "'source(\"${CMAKE_CURRENT_SOURCE_DIR}/RUnitMini.R\");q(runTestFile(\"${f}\"))'"
                      WORKING_DIRECTORY "../../Rtests")
 endforeach()
