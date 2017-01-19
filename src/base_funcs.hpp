@@ -154,13 +154,6 @@ namespace funcs {
   val::Value _floor(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value _ceiling(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
 
-  // arithmetic with nocopy operator possibility:
-  val::Value add(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
-  val::Value sub(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
-  val::Value mul(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
-  val::Value div(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
-  val::Value pow(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
-
   // rolling functions:
   val::Value rollmean(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value rollmin(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
@@ -176,6 +169,8 @@ namespace funcs {
   val::Value cummax(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value cummin(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value rev(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
+  val::Value sum(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
+  val::Value prod(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
 
   // system and general utilities
   val::Value system(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);

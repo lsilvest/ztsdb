@@ -24,15 +24,17 @@
 #include "misc.hpp"
 
 
-static void checkParams(const arr::Array<double>& a, double window, double nbvalid) {
+static void checkParams(const arr::Array<double>& a, double window, double nbvalid,
+                        const yy::location& a_loc, const yy::location& window_loc,
+                        const yy::location& nbvalid_loc) {
   if (a.size() == 0) {
-    throw std::out_of_range("matrix has 0 elements");    
+    throw interp::EvalException("matrix has 0 elements", a_loc);
   }
   if (window <= 0 || window > a.dim[0]) {
-    throw std::out_of_range("'window' must be >= 0 and <= dim[0]");
+    throw interp::EvalException("'window' must be >= 0 and <= dim[0]", window_loc);
   }
   if (nbvalid <= 1 || nbvalid > window) {
-    throw std::out_of_range("'nbvalid' must be >= 1 and <= window");
+    throw interp::EvalException("'nbvalid' must be >= 1 and <= window", nbvalid_loc);
   }
 }
 
@@ -48,14 +50,15 @@ static inline val::Value doroll(const vector<val::VBuiltinG::arg_t>& v) {
   switch (getVal(v[0]).which()) {
   case val::vt_double: {
     const auto& aconst = get<val::SpVAD>(getVal(v[X]));
-    checkParams(*aconst, window, nbvalid);
+    checkParams(*aconst, window, nbvalid, getLoc(v[X]), getLoc(v[WINDOW]),  getLoc(v[NVALID]));
     auto a = get<val::SpVAD>(getVal(v[X]));
     rollfunc3(*a, window, nbvalid); // copy when not ref
     return a;
   }
   case val::vt_zts: {
     const auto& zconst = get<val::SpZts>(getVal(v[X]));
-    checkParams(zconst->getArray(), window, nbvalid);
+    checkParams(zconst->getArray(), window, nbvalid,
+                getLoc(v[X]), getLoc(v[WINDOW]),  getLoc(v[NVALID]));
     auto z = get<val::SpZts>(getVal(v[X]));
     rollfunc3(*z->getArrayPtr(), window, nbvalid); // copy when not ref
     return z;
@@ -98,8 +101,8 @@ val::Value funcs::rollcov(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpC
   const auto& yconst = isYdouble ? 
     *static_cast<const val::SpVAD>(get<val::SpVAD>(getVal(v[Y]))) :
     get<val::SpZts>(getVal(v[Y]))->getArray();
-    checkParams(xconst, window, nbvalid);
-    checkParams(yconst, window, nbvalid);
+  checkParams(xconst, window, nbvalid, getLoc(v[X]), getLoc(v[WINDOW]),  getLoc(v[NVALID]));
+  checkParams(yconst, window, nbvalid, getLoc(v[Y]), getLoc(v[WINDOW]),  getLoc(v[NVALID]));
 
   if (isXdouble && isYdouble) {
     return arr::make_cow<val::VArrayD>(false, rollcov(xconst, yconst, window, nbvalid));
@@ -229,5 +232,50 @@ val::Value funcs::rev(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& 
                           val::vt_string, 
                           val::vt_duration, 
                           val::vt_interval>(getVal(v[0]), getLoc(v[0]));
+  }
+}
+
+
+template <typename T, typename F>
+struct Aggr {
+  Aggr(T i): res{i} { }
+  void operator()(T n) { res = F()(res, n); }
+  T res;
+};
+
+val::Value funcs::sum(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  if (getVal(v[0]).which() == val::vt_zts) {
+    const auto& z = get<val::SpZts>(getVal(v[0]));
+    auto s = z->getArray().for_each(Aggr<double, std::plus<double>>(0.0));
+    return val::make_array(s.res);
+  }
+  else if (getVal(v[0]).which() == val::vt_double) {
+    const auto& a = get<val::SpVAD>(getVal(v[0]));
+    auto s = a->for_each(Aggr<double, std::plus<double>>(0.0));
+    return val::make_array(s.res);
+  }
+  else if (getVal(v[0]).which() == val::vt_duration) {
+    const auto& a = get<val::SpVADUR>(getVal(v[0]));
+    auto s = a->for_each(Aggr<Global::duration, std::plus<Global::duration>>(0s));
+    return val::make_array(s.res);
+  }
+  else {
+    throw interp::EvalException("invalid type", getLoc(v[0]));
+  }
+}
+
+val::Value funcs::prod(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  if (getVal(v[0]).which() == val::vt_zts) {
+    const auto& z = get<val::SpZts>(getVal(v[0]));
+    auto s = z->getArray().for_each(Aggr<double, std::multiplies<double>>(1.0));
+    return val::make_array(s.res);
+  }
+  else if (getVal(v[0]).which() == val::vt_double) {
+    const auto& a = get<val::SpVAD>(getVal(v[0]));
+    auto s = a->for_each(Aggr<double, std::multiplies<double>>(1.0));
+    return val::make_array(s.res);
+  }
+  else {
+    throw interp::EvalException("invalid type", getLoc(v[0]));
   }
 }

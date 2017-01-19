@@ -347,3 +347,52 @@ RUnit_cummin_zts <- function() {
     exp[,"three"] <- 19
     all.equal(cummin(z1), exp)
 }
+
+## sum/prod
+RUnit_sum_vector <- function() {
+    sum(1:10) == 55
+}
+RUnit_sum_matrix <- function() {
+    sum(matrix(1, 10, 10)) == 100
+}
+RUnit_sum_array <- function() {
+    sum(array(1, c(10,11,12))) == 1320
+}
+RUnit_sum_zts <- function() {
+    sum(z1) == 378
+}
+RUnit_sum_duration <- function() {
+    sum(as.duration(c(1:10))) == as.duration(55)
+}
+RUnit_sum_0_array <- function() {
+    sum(as.double(NULL)) == 0           # like in R
+}
+RUnit_sum_NaN <- function() {
+    all.equal(sum(as.double(NaN)), NaN)
+}
+RUnit_sum_vector_invalid_arg <- function() {
+    tryCatch(sum(NULL),
+             .Last.error == "invalid argument type: 'x' should be any of 'double','duration','zts' but is 'NULL'")
+}
+RUnit_prod_vector <- function() {
+    prod(1:10) == 3628800
+}
+RUnit_prod_matrix <- function() {
+    prod(matrix(2, 3, 4)) == 2^12
+}
+RUnit_prod_array <- function() {
+    prod(array(2, c(2, 3, 4))) == 2^24
+}
+RUnit_prod_zts <- function() {
+    prod(z1[,1]) == 362880
+}
+RUnit_prod_0_array <- function() {
+    prod(as.double(NULL)) == 1           # like in R
+}
+RUnit_prod_NaN <- function() {
+    all.equal(prod(as.double(NaN)), NaN)
+}
+RUnit_prod_vector_invalid_arg <- function() {
+    tryCatch(prod(NULL),
+             .Last.error == "invalid argument type: 'x' should be any of 'double','zts' but is 'NULL'")
+}

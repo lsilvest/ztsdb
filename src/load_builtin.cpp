@@ -422,6 +422,10 @@ void core::loadBuiltinFunctions(interp::BaseFrame* r) {
                  {{"x",   {{val::vt_double, val::vt_zts }, true}},
                   {"rev", {{val::vt_bool                }, true}}});
   val::VBuiltinG(r, "rev", "function(x) NULL \n", funcs::rev, true);
+  val::VBuiltinG(r, "sum", "function(x) NULL \n", funcs::sum, true,
+                 {{"x",   {{val::vt_double, val::vt_duration, val::vt_zts }, true}}});
+  val::VBuiltinG(r, "prod", "function(x) NULL \n", funcs::prod, true,
+                 {{"x",   {{val::vt_double, val::vt_zts }, true}}});
 
   val::VBuiltinG(r, "system", 
                  "function(command, intern=FALSE, ignore.stdout=FALSE," 

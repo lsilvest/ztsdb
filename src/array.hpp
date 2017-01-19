@@ -1240,6 +1240,14 @@ namespace arr {
       return *this;
     } 
 
+    template<class UnaryFunction>
+    UnaryFunction for_each(UnaryFunction f) const {
+      for (auto& vi : v) {
+        f = std::for_each(vi->begin(), vi->end(), f);
+      }
+      return f;
+    }
+    
     // We would want to enforce that U has to be numeric and
     // convertible to an idx_type.    
     template<typename U, typename AO=O>
