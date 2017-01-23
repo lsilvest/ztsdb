@@ -1324,8 +1324,16 @@ namespace arr {
     if (t.dim.size() == 1) {
       return Array<T,O>({1, t.dim[0]}, static_cast<Vector<T,O>>(*t.v[0]), {{}, t.names[0]->names});
     } 
+    else if (t.dim.size() == 2) {
+      Array<T,O> a(noinit_tag,
+                   {t.getdim(1), t.getdim(0)}, {{t.getnames(1).names}, t.getnames(0).names});
+      for (idx_type j=0; j<a.getdim(1); ++j)
+        for (idx_type k=0; k<a.getdim(0); ++k)
+          setv_checkbefore(a.getcol(j), k, t.getcol(k)[j]);
+      return a;
+    }
     else {
-      throw range_error("transpose not implemented for dim > 1");
+      throw range_error("argument is not a matrix");
     }
   }
 

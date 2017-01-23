@@ -93,7 +93,7 @@ static Array<T> makeVector(const vector<val::VBuiltinG::arg_t>& v) {
     case val::vt_null:          // like in R, NULLs are just ignored in 'c'
       break;
     default:
-      throw std::domain_error("make_vector<T> incorrect type"); // need to unify also this LLL
+      throw interp::EvalException("invalid type", getLoc(e));
     }
   }
   return r;
@@ -131,7 +131,7 @@ val::Value funcs::c(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic
   case val::vt_null:
     return val::VNull();
   default:
-    throw std::domain_error("c incorrect type"); // need to unify also this LLL
+    throw interp::EvalException("invalid type", getLoc(v[0]));
   }
 }
 
@@ -142,8 +142,6 @@ val::Value funcs::length(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCt
 
 
 val::Value funcs::t(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  // auto vf = dynamic_cast<const val::VArrayD&>(*v[0]);
-  // return arr::make_cow<val::VArrayD>(false, vf.a.transpose());
   switch (getVal(v[0]).which()) {
   case val::vt_double:
     return arr::make_cow<val::VArrayD>(false, arr::transpose(*get<val::SpVAD>(getVal(v[0]))));
@@ -167,7 +165,7 @@ val::Value funcs::t(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic
     return arr::make_cow<val::VArrayIVL>(false, arr::transpose(*get<val::SpVAIVL>(getVal(v[0]))));
     break;
   default: 
-    throw range_error("argument is not a matrix");
+    throw interp::EvalException("argument is not a matrix", getLoc(v[0]));
   }
 }
   
