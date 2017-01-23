@@ -25,5 +25,5 @@ build:
     - cd build
     - cmake ..
     - make
-    - ctest && make rtest
+    - make CTEST_OUTPUT_ON_FAILURE=1 test && make rtest
     
