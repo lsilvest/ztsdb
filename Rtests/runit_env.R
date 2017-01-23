@@ -95,3 +95,14 @@ RUnit_assign_global <- function() {
     assign("a_get_global", 2300, "global")
     get("a_get_global", "global") == 2300
 }
+
+## test that the same variable name can reference an object or a function
+RUnit_access_builtin <- function() {
+    t <- 2
+    t(3) == 3 & t == 2
+}
+RUnit_access_function <- function() {
+    f <- function(x) x
+    g <- function() { f <- 2; f(3) }
+    g() == 3
+}

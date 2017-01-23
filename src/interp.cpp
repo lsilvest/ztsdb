@@ -134,7 +134,11 @@ static val::Value copyIfRefAndSetRef(val::Value& v, bool refValue) {
 }
 
 
-static val::Value evalAtom(const E* e, const shared_ptr<BaseFrame> r, zcore::InterpCtx& ic) {
+static val::Value evalAtom(const E* e,
+                           const shared_ptr<BaseFrame> r,
+                           zcore::InterpCtx& ic,
+                           bool funcall=false)
+{
 #ifdef DEBUG
   cout << "evalAtom with e : " << to_string(*e) << endl;
   cout << "| control type :  " << et_to_string[e->etype] << endl;
@@ -147,11 +151,10 @@ static val::Value evalAtom(const E* e, const shared_ptr<BaseFrame> r, zcore::Int
   case etsymbol: {
     const auto s = static_cast<const Symbol*>(e);
     try {
-      auto& val = r->findR(s->data);        // will throw  
+      auto& val = r->findR(s->data, funcall); // will throw  
       if (val.which() == val::vt_future) {
         throw interp::FutureException(s->data);
       }
-      // std::cout << "handling symbol: " << s->data << std::endl;
       return copyIfRefAndSetRef(val, s->ref);
     }
     catch (interp::FutureException) {
@@ -207,8 +210,8 @@ static val::Value evalAtom(const E* e, const shared_ptr<BaseFrame> r, zcore::Int
     const auto inv = static_cast<const Invoke*>(e);
     val::Value bval;
     try {
-      bval = r->up->find(inv->data); // get it from up or we could get
-                                     // the name of a named parameter
+      bval = r->up->findR(inv->data, true); // get it from up or we could get
+                                            // the name of a named parameter
     }
     catch (std::out_of_range& e) {
       throw interp::EvalException(e.what(), inv->loc);
@@ -817,7 +820,7 @@ shared_ptr<Kont> interp::step(shared_ptr<Kont>& k, vector<shpfrm>& fstack, zcore
     // ExprSublist - function invocation -----
     case etfuncall: {
       auto es = static_cast<const Funcall*>(k->control);
-      auto proc = evalAtom(es->e, k->r, ic);
+      auto proc = evalAtom(es->e, k->r, ic, true); // tell evalAtom we're looking for a funcall
       if (proc.which() == val::vt_clos) {
         return applyProc(*get<shared_ptr<val::VClos>>(proc), 
                          k->r->shared_from_this(), 

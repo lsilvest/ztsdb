@@ -133,8 +133,8 @@ namespace val {
 
   // these are the values that will be given back by Value::which:
   enum ValType {
-    vt_std_int,
     vt_std_string,
+    vt_std_int,
 
     vt_double,
     vt_bool,
@@ -158,10 +158,10 @@ namespace val {
 
 
   const map<int, string> vt_to_string = { 
-    {0,  "encode_std_int"},
-    {1,  "encode_std_string"},
+    {0,  "encode_std_string"},
+    {1,  "encode_std_int"},
     {2,  "double"},
-    {3,  "bool"},               // LLL call it logical
+    {3,  "logical"},
     {4,  "datetime"},
     {5,  "duration"},
     {6,  "interval"},
@@ -216,8 +216,8 @@ namespace val {
 
   typedef int64_t integer_t;
 
-  typedef Variant<SpVI
-                  ,std::string
+  typedef Variant<std::string
+                  ,SpVI
                   ,SpVAD
                   ,SpVAB
                   ,SpVADT

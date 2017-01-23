@@ -69,7 +69,7 @@ namespace interp {
   
     virtual val::Value  find(const string& s) const = 0; 
     virtual val::Value  findLocal(const string& s) const = 0; 
-    virtual val::Value& findR(const string& s) = 0; 
+    virtual val::Value& findR(const string& s, bool funcall=false) = 0; 
 
     virtual val::SpVAS  getNames() = 0;
 
@@ -149,14 +149,15 @@ namespace interp {
       throw std::out_of_range("object '" + s + "' not found");
     }
 
-    val::Value& findR(const string& s) { 
+    val::Value& findR(const string& s, bool funcall=false) { 
       map_type& ml = s[0] != '?' ? m : mtmp;
       auto elt = ml.find(s);
-      if (elt != ml.end()) {
+      if (elt != ml.end() &&
+          (!funcall || ml[s].which() == val::vt_clos || ml[s].which() == val::vt_builting)) {
         return ml[s];
       } else {
         if (up) {
-          return up->findR(s);
+          return up->findR(s, funcall);
         } else {
           throw std::out_of_range("object '" + s + "' not found");
         }
@@ -274,6 +275,7 @@ namespace interp {
     static const size_t MAX_ARGS = 5096;
     typedef std::tuple<string, val::Value, yy::location> arg_t;
 
+    /// Construct a buitin frame. After construction, the vector of arguments has a size of n
     BuiltinFrame(shpfrm u, shared_ptr<interp::Kont> ec, int nargs) :
       Frame("native", u->global, u, nullptr, ec, nullptr), 
       currentPos(0), mv(nargs)
@@ -282,8 +284,8 @@ namespace interp {
     }
 
     val::Value& addArg(string s, val::Value&& val, const yy::location& loc) {
-      mv[currentPos++] = make_tuple(s, std::move(val), loc);
-      return get<1>(mv[currentPos-1]);
+      mv[currentPos] = make_tuple(s, std::move(val), loc);
+      return get<1>(mv[currentPos++]);
     }
 
     val::Value& addEllipsis(string s, val::Value&& val, const yy::location& loc) {
@@ -313,21 +315,25 @@ namespace interp {
       }
     }
 
-    val::Value& findR(const string& s) {
+    val::Value& findR(const string& s, bool funcall=false) {
       // this is not very efficient, but it will work for now:
       auto res = std::find_if(mv.begin(), mv.end(), [s](const arg_t& x) { return get<0>(x) == s; });
-      if (res != mv.end()) {
+      const auto res_t = get<1>(*res).which();
+      if (res != mv.end() && (!funcall || res_t == val::vt_clos || res_t == val::vt_builting)) {
         return get<1>(*res);
       }
       else {
-        return Frame::findR(s);
+        return Frame::findR(s, funcall);
       }
     }
 
     operator string() const { 
-      stringstream ss;    
-      for (auto t : mv) {
-        ss << get<0>(t) << ":" << val::to_string(get<1>(t)) << " ";
+      stringstream ss;
+      for (const auto& t : mv) { 
+        const auto& v = get<1>(t);
+        if (v.which() != 0) {   // test if the argument was ever initialized
+          ss << get<0>(t) << ":" << val::to_string(v) << " ";
+        }
       }
       return ss.str();
     }
@@ -378,16 +384,15 @@ namespace interp {
       }
     }
 
-    val::Value& findR(const string& s) { 
+    val::Value& findR(const string& s, bool funcall=false) { 
       if (s[0] == '?') {
-        return Frame::findR(s);
+        return Frame::findR(s, funcall);
       }
       else {
-        return up->findR(s);
+        return up->findR(s, funcall);
       }
     }
 
- 
     virtual val::SpVAS getNames() {
       return up->getNames();
     }
