@@ -83,6 +83,7 @@ zcore::MsgHandler::MsgHandler(net::NetHandler& com_p,
     
   // now setup on both keyboard and port:
   epoll_event ev;
+  memset(&ev, 0, sizeof(epoll_event));
 
   ev.events = EPOLLIN;
   ev.data.fd = fd_read_sig;  // tells us signalling available for reading
@@ -559,6 +560,7 @@ void MsgHandler::suspendKeyboardPoll() {
 void MsgHandler::enableKeyboardPoll() {
   if (fd_input >= 0) {
     epoll_event ev;
+    memset(&ev, 0, sizeof(epoll_event));
     ev.events = EPOLLIN;
     ev.data.fd = fd_input;   // keyboard
     if (epoll_ctl(epollfd, EPOLL_CTL_ADD, fd_input, &ev) == -1) {

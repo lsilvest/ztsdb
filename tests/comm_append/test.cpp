@@ -50,12 +50,14 @@
 tz::Zones tzones("/usr/share/zoneinfo");
 cfg::CfgMap cfg::cfgmap;
 
+using tpl_t = std::pair<std::reference_wrapper<net::NetHandler>, 
+                        std::reference_wrapper<volatile bool>>;
 
 interp::shpfrm base    = make_shared<interp::Frame>("base"s);
 interp::shpfrm global  = make_shared<interp::Frame>("global"s,  global, base);
 
 static void* executeNet(void* args_p) {
-  auto args = static_cast<std::pair<net::NetHandler&, volatile bool&>*>(args_p);
+  auto args = static_cast<tpl_t*>(args_p);
   auto& c = static_cast<net::NetHandler&>(args->first);
   c.run(args->second);
   return nullptr;
@@ -96,7 +98,7 @@ queryAndRun(const string& query)
   auto ir1 = new zcore::MsgHandler(*com1, global, data_com1_ir1, sig_com1_ir1, pipe_here_ir1[0]);
 
   // run the tcp comm thread:
-  auto args1 = std::pair<net::NetHandler&, volatile bool&>{*com1, stop};
+  static auto args1 = tpl_t{*com1, stop};
   pthread_t t1;
   pthread_create(&t1, NULL, executeNet, &args1); 
 

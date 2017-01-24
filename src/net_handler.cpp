@@ -280,6 +280,8 @@ net::NetHandler::NetHandler(const std::string ip_addr,
   std::cout << "| port:" << port << std::endl;
 #endif
 
+  memset(&ev, 0, sizeof(epoll_event));
+
   if (port > 0) {
     // open and bind socket
     bzero(&addr,sizeof(addr));
