@@ -117,25 +117,37 @@ queryAndRun(const string& query)
 
 static val::Value 
 cancelAndReturnResult(std::tuple<zcore::MsgHandler*,pthread_t,pthread_t,net::NetHandler*>& t,
-                      const std::string& varname) 
+                      const std::string& varname, int fd) 
 {
   // grab local context in order to get to the result:
   zcore::MsgHandler* ir = get<0>(t);
   const auto& localCtx = ir->getLocalCtx();
-  const auto& lv = localCtx.r->find(varname);
+  const auto lv = localCtx.r->find(varname);
+
+  stop = true;
+
   pthread_cancel(get<1>(t));
   pthread_cancel(get<2>(t));
   delete ir;
   delete get<3>(t);
 
+  // Note that we have to close after the pthread_cancel; that's
+  // because otherwise the close will cause the thread to get out of
+  // the epoll_wait and the pthread_cancel might then be called
+  // outside of a cancellation point, in which case we get "FATAL:
+  // exception not rethrown".
+  if (close(fd) < 0) {
+    throw std::system_error(std::error_code(errno, std::system_category()), "close");
+  }
+  
   return lv;       // copy
 }
 
 
-static void open_send_close(const arr::buflen_pair& msg) {
+static int open_send_close(const arr::buflen_pair& msg) {
   // pause before sending anything to make sure any previously issued
   // command has been executed:
-  const timespec pausetime{0, 50000000L};
+  const timespec pausetime{0, 100000000L};
   nanosleep(&pausetime, NULL);
 
   // open TCP connection:
@@ -148,21 +160,28 @@ static void open_send_close(const arr::buflen_pair& msg) {
   if (fd == -1) {
     throw std::system_error(std::error_code(errno, std::system_category()), "socket");
   }
-  int cres = connect(fd, (sockaddr *) &addr, sizeof(struct sockaddr_in));
-  if (cres == -1) {
-    close(fd);
-    throw std::system_error(std::error_code(errno, std::system_category()), "connect");
+  const unsigned attempts = 10;
+  for (unsigned i=0; i<attempts; ++i) {
+    int cres = connect(fd, (sockaddr *) &addr, sizeof(struct sockaddr_in));
+    if (cres == -1) {
+      if (i == attempts - 1) {
+        close(fd);
+        throw std::system_error(std::error_code(errno, std::system_category()), "connect");
+      }
+    }
+    else {
+      break;
+    }
   }
   ssize_t wres = write(fd, msg.first.get(), msg.second);
   if (wres < 0) {
     throw std::system_error(std::error_code(errno, std::system_category()), "write");
   }
-  if (close(fd) < 0) {
-    throw std::system_error(std::error_code(errno, std::system_category()), "close");
-  }
 
   // pause again to make sure data has been appended:
   nanosleep(&pausetime, NULL);
+
+  return fd;
 }
 
 // test vector, 2D, 3D and the allowed types
@@ -176,10 +195,10 @@ TEST(comm_append_array_double) {
 
   // create and send the append message (we just append 'a' to 'a'):
   auto msg = arr::make_append_msg("a", *a);
-  open_send_close(msg);
+  int fd = open_send_close(msg);
   
   // get the result in and cleanup:
-  auto res = cancelAndReturnResult(tpl, "a");
+  auto res = cancelAndReturnResult(tpl, "a", fd);
 
   // append to 'a' a copy of the the original 'a' (can't append to oneself):
   auto b = *a;
@@ -199,9 +218,9 @@ TEST(comm_append_array_1D_double) {
   auto a = make_cow<val::VArrayD>(false, Vector<arr::idx_type>{9}, data);
 
   auto msg = arr::make_append_msg("a", *a);
-  open_send_close(msg);
+  auto fd = open_send_close(msg);
   
-  auto res = cancelAndReturnResult(tpl, "a");
+  auto res = cancelAndReturnResult(tpl, "a", fd);
 
   auto b = *a;
   a->concat(b);
@@ -219,14 +238,17 @@ TEST(comm_append_array_bool) {
 
   // create and send the append message (we just append 'a' to 'a'):
   auto msg = arr::make_append_msg("a", *a);
-  open_send_close(msg);
+  auto fd = open_send_close(msg);
   
   // get the result in  and cleanup:
-  auto res = cancelAndReturnResult(tpl, "a");
+  auto res = cancelAndReturnResult(tpl, "a", fd);
 
   // append to 'a' a copy of the the original 'a' (can't append to oneself):
   auto b = *a;
   a->rbind(b);
+
+  cout << val::display(res) << std::endl;
+  cout << val::display(a) << std::endl;
 
   ASSERT_TRUE(res == a);
 }
@@ -244,14 +266,17 @@ TEST(comm_append_array_duration) {
 
   // create and send the append message (we just append 'a' to 'a'):
   auto msg = arr::make_append_msg("a", *a);
-  open_send_close(msg);
+  auto fd = open_send_close(msg);
   
   // get the result in  and cleanup:
-  auto res = cancelAndReturnResult(tpl, "a");
+  auto res = cancelAndReturnResult(tpl, "a", fd);
 
   // append to 'a' a copy of the the original 'a' (can't append to oneself):
   auto b = *a;
   a->rbind(b);
+
+  cout << val::display(res) << std::endl;
+  cout << val::display(a) << std::endl;
 
   ASSERT_TRUE(res == a);
 }
@@ -269,14 +294,17 @@ TEST(comm_append_array_time) {
 
   // create and send the append message (we just append 'a' to 'a'):
   auto msg = arr::make_append_msg("a", *a);
-  open_send_close(msg);
+  auto fd = open_send_close(msg);
   
   // get the result in  and cleanup:
-  auto res = cancelAndReturnResult(tpl, "a");
+  auto res = cancelAndReturnResult(tpl, "a", fd);
 
   // append to 'a' a copy of the the original 'a' (can't append to oneself):
   auto b = *a;
   a->rbind(b);
+
+  cout << val::display(res) << std::endl;
+  cout << val::display(a) << std::endl;
 
   ASSERT_TRUE(res == a);
 }
@@ -297,14 +325,17 @@ TEST(comm_append_array_interval) {
   
   // create and send the append message (we just append 'a' to 'a'):
   auto msg = arr::make_append_msg("a", *a);
-  open_send_close(msg);
+  auto fd = open_send_close(msg);
   
   // get the result in  and cleanup:
-  auto res = cancelAndReturnResult(tpl, "a");
+  auto res = cancelAndReturnResult(tpl, "a", fd);
 
   // append to 'a' a copy of the the original 'a' (can't append to oneself):
   auto b = *a;
   a->rbind(b);
+
+  cout << val::display(res) << std::endl;
+  cout << val::display(a) << std::endl;
 
   ASSERT_TRUE(res == a);
 }
@@ -340,9 +371,9 @@ TEST(comm_append_zts) {
                                            std::move(ee));
 
   auto msg = arr::make_append_msg("z", az);
-  open_send_close(msg);
+  auto fd = open_send_close(msg);
   
-  auto res = cancelAndReturnResult(tpl, "z");
+  auto res = cancelAndReturnResult(tpl, "z", fd);
   const auto& p = get<val::SpZts>(res);
   for (unsigned i=0;i<p->size();++i) std::cout << p->getArray()[i] << std::endl;
   ASSERT_TRUE(res == expected);
@@ -362,9 +393,9 @@ TEST(comm_append_zts_not_ascending, log_to_file) {
   const arr::zts az(arr::Array<Global::dtime>({dt1,dt2,dt3}), std::move(aa));
 
   auto msg = arr::make_append_msg("z", az);
-  open_send_close(msg);
+  auto fd = open_send_close(msg);
   
-  auto res = cancelAndReturnResult(tpl, "z");
+  auto res = cancelAndReturnResult(tpl, "z", fd);
 
   ASSERT_TRUE(matchLog("index not ascending"));
 }
@@ -378,10 +409,10 @@ TEST(comm_append_array_incorrect_dimension, log_to_file) {
   auto aa = val::VArrayD({9}, data);
 
   auto msg = arr::make_append_msg("a", aa); // append incorrect size
-  open_send_close(msg);
+  auto fd = open_send_close(msg);
   
   // get the result in  and cleanup:
-  auto res = cancelAndReturnResult(tpl, "a");
+  auto res = cancelAndReturnResult(tpl, "a", fd);
   
   ASSERT_TRUE(matchLog("incorrect dimensions for append"));
 }
@@ -400,10 +431,10 @@ TEST(comm_append_array_missing_data, log_to_file) {
   auto newMsgSz = hton64(msg.second);
   memcpy(msg.first.get() + 8, &newMsgSz, sizeof(msg.second));
          
-  open_send_close(msg);
+  auto fd = open_send_close(msg);
   
   // get the result in  and cleanup:
-  auto res = cancelAndReturnResult(tpl, "a");
+  auto res = cancelAndReturnResult(tpl, "a", fd);
   
   ASSERT_TRUE(matchLog("missing data"));
 }
@@ -415,10 +446,10 @@ TEST(comm_append_array_incorrect_type, log_to_file) {
 
   auto msg = arr::make_append_msg("a", *a);
 
-  open_send_close(msg);
+  auto fd = open_send_close(msg);
   
   // get the result in  and cleanup:
-  auto res = cancelAndReturnResult(tpl, "a");
+  auto res = cancelAndReturnResult(tpl, "a", fd);
   
   ASSERT_TRUE(matchLog("incorrect type"));
 }
@@ -432,10 +463,10 @@ TEST(comm_append_vector_double) {
 
   // create and send the append message (we just append 'a' to 'a'):
   auto msg = arr::make_append_msg("a", Vector<double>{1,2,3,4,5,6,7,8,9});
-  open_send_close(msg);
+  auto fd = open_send_close(msg);
   
   // get the result in  and cleanup:
-  auto res = cancelAndReturnResult(tpl, "a");
+  auto res = cancelAndReturnResult(tpl, "a", fd);
 
   // append to 'a' a copy of the the original 'a' (can't append to oneself):
   auto b = *a;
@@ -479,8 +510,8 @@ TEST(comm_append_vector_zts) {
                                   Vector<double>{1,2,3,4,5,6,7,8,9});
 
 
-  open_send_close(msg);
-  auto res = cancelAndReturnResult(tpl, "z");
+  auto fd = open_send_close(msg);
+  auto res = cancelAndReturnResult(tpl, "z", fd);
 
   cout << val::display(res) << std::endl;
   cout << val::display(expected) << std::endl;
@@ -526,8 +557,8 @@ TEST(comm_append_vector_zts_idx_unsorted_receive_msg, log_to_file) {
   // tweek this message by copying dt5 on dt4: 
   memcpy(msg.first.get()+8*8, msg.first.get()+9*8, sizeof(Global::dtime));
   
-  open_send_close(msg);
-  cancelAndReturnResult(tpl, "z");
+  auto fd = open_send_close(msg);
+  cancelAndReturnResult(tpl, "z", fd);
 
   ASSERT_TRUE(matchLog("index not ascending"));
 }
@@ -547,8 +578,8 @@ TEST(comm_append_vector_zts_idx_not_increasing_receive_msg, log_to_file) {
                                   Vector<Global::dtime>{dt1,dt2,dt3},
                                   Vector<double>{1,2,3,4,5,6,7,8,9});
 
-  open_send_close(msg);
-  cancelAndReturnResult(tpl, "z");
+  auto fd = open_send_close(msg);
+  cancelAndReturnResult(tpl, "z", fd);
 
   ASSERT_TRUE(matchLog("append index not ascending"));
 }

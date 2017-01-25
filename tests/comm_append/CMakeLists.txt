@@ -8,7 +8,7 @@ ADD_EXECUTABLE(test_comm_append
   $<TARGET_OBJECTS:config_parser>
   ${SOURCE_FILES})
 
-ADD_TEST(test_comm_append ${CMAKE_CURRENT_BINARY_DIR}/test_comm_append --timeout-multiplier=3)
+ADD_TEST(test_comm_append ${CMAKE_CURRENT_BINARY_DIR}/test_comm_append --timeout-multiplier=5)
 
 TARGET_LINK_LIBRARIES(test_comm_append
   pthread 

@@ -193,6 +193,8 @@ namespace net {
          size_t datalist_max_size=1e5,
          size_t siglist_max_size=10);
 
+    ~NetHandler();
+    
     void run(volatile bool& stop);
 
     ssize_t send(Global::conn_id_t id, char*  buf, size_t  len);

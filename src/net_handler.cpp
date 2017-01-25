@@ -327,6 +327,11 @@ net::NetHandler::NetHandler(const std::string ip_addr,
 }
 
 
+net::NetHandler::~NetHandler() {
+  close(fd);
+}
+
+
 void net::NetHandler::run(volatile bool& stop) {
 #ifdef DEBUG
   std::cout << "NetHandler[" << port << "]::run()" << std::endl;
