@@ -45,7 +45,7 @@ ADD_SUBDIRECTORY(itests/append)
 
 ENABLE_TESTING()
 
-FIND_PACKAGE(LibCRPCUT REQUIRED FATAL_ERROR)
+FIND_PACKAGE(LibCRPCUT QUIET)
 
 if (LIBCRPCUT_FOUND)
   ADD_SUBDIRECTORY(tests/cow_ptr)
@@ -76,7 +76,8 @@ if (LIBCRPCUT_FOUND)
   ADD_SUBDIRECTORY(tests/comm_append)
   ADD_SUBDIRECTORY(tests/binds)
   ADD_SUBDIRECTORY(tests/align)
-  
+elseif (NOT LIBCRPCUT_FOUND)
+  MESSAGE(WARNING "crpcut not found, utests will not be generated")
 endif (LIBCRPCUT_FOUND)
 
 ADD_SUBDIRECTORY(Rtests)
