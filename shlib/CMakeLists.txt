@@ -64,7 +64,7 @@ SET_SOURCE_FILES_PROPERTIES(${SRC_TZ_DIR}/localtime.cpp
   PROPERTIES COMPILE_FLAGS "-Wno-address -Wno-maybe-uninitialized")
 
 SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp
-  PROPERTIES COMPILE_FLAGS "-Wno-unused-function")
+  PROPERTIES COMPILE_FLAGS "-Wno-unused-function -Wno-sign-compare")
 
 # create the shared library; -fPIC is the default which is what we
 # want (besides winning the lottery)

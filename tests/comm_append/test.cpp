@@ -122,7 +122,7 @@ cancelAndReturnResult(std::tuple<zcore::MsgHandler*,pthread_t,pthread_t,net::Net
   // grab local context in order to get to the result:
   zcore::MsgHandler* ir = get<0>(t);
   const auto& localCtx = ir->getLocalCtx();
-  const auto lv = localCtx.r->find(varname);
+  auto lv = localCtx.r->find(varname); // Clang 4.0 doesn't like const auto here...
 
   stop = true;
 
