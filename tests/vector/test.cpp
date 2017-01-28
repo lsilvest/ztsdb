@@ -324,7 +324,9 @@ TEST(vector_insert_middle) {
   Vector<double> v1{1,2,3,4,5,6,7,8,9,10};
   std::vector<double> v2{7,6,5};
   v1.insert(v1.begin()+4, v2.cbegin(), v2.cend());
-  for (size_t i=0; i<v1.size(); ++i) std::cout << v1[i] << ", " ; std::cout << std::endl;
+  for (size_t i=0; i<v1.size(); ++i) 
+    std::cout << v1[i] << ", " ; 
+  std::cout << std::endl;
   ASSERT_TRUE((v1 == Vector<double>{1,2,3,4,7,6,5,5,6,7,8,9,10}));
 }
 TEST(vector_insert_end) {
@@ -466,14 +468,18 @@ TEST(vector_insert_start_ordered_lt) {
   Vector<double> v1{1,2,3,4,5,6,7,8,9,10};
   std::vector<double> v2{0.1,0.2,0.3};
   v1.insert(v1.begin(), v2.cbegin(), v2.cend());
-  for (size_t i=0; i<v1.size(); ++i) std::cout << v1[i] << ", " ; std::cout << std::endl;
+  for (size_t i=0; i<v1.size(); ++i) 
+    std::cout << v1[i] << ", " ; 
+  std::cout << std::endl;
   ASSERT_TRUE(v1.isOrdered());
 }
 TEST(vector_insert_middle_ordered_lt) {
   Vector<double> v1{1,2,3,4,5,6,7,8,9,10};
   std::vector<double> v2{4.1,4.2,4.3};
   v1.insert(v1.begin()+4, v2.cbegin(), v2.cend());
-  for (size_t i=0; i<v1.size(); ++i) std::cout << v1[i] << ", " ; std::cout << std::endl;
+  for (size_t i=0; i<v1.size(); ++i) 
+    std::cout << v1[i] << ", " ; 
+  std::cout << std::endl;
   ASSERT_TRUE(v1.isOrdered());
 }
 TEST(vector_insert_end_ordered_lt) {
@@ -486,14 +492,18 @@ TEST(vector_insert_start_unordered_lt) {
   Vector<double> v1{1,2,3,4,5,6,7,8,9,10};
   std::vector<double> v2{1,2,3};
   v1.insert(v1.begin(), v2.cbegin(), v2.cend());
-  for (size_t i=0; i<v1.size(); ++i) std::cout << v1[i] << ", " ; std::cout << std::endl;
+  for (size_t i=0; i<v1.size(); ++i) 
+    std::cout << v1[i] << ", " ; 
+  std::cout << std::endl;
   ASSERT_TRUE(!v1.isOrdered());
 }
 TEST(vector_insert_middle_unordered_lt) {
   Vector<double> v1{1,2,3,4,5,6,7,8,9,10};
   std::vector<double> v2{4,4.1,4.2};
   v1.insert(v1.begin()+4, v2.cbegin(), v2.cend());
-  for (size_t i=0; i<v1.size(); ++i) std::cout << v1[i] << ", " ; std::cout << std::endl;
+  for (size_t i=0; i<v1.size(); ++i) 
+    std::cout << v1[i] << ", " ; 
+  std::cout << std::endl;
   ASSERT_TRUE(!v1.isOrdered());
 }
 TEST(vector_insert_end_unordered_lt) {

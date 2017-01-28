@@ -281,7 +281,9 @@ TEST(vector_insert_middle) {
   Vector<bool> v1{0,0,0,0,0,0,0,0,0,0};
   std::vector<bool> v2{1,1,1};
   v1.insert(v1.begin()+4, v2.cbegin(), v2.cend());
-  for (size_t i=0; i<v1.size(); ++i) std::cout << v1[i] << ", " ; std::cout << std::endl;
+  for (size_t i=0; i<v1.size(); ++i) 
+    std::cout << v1[i] << ", " ; 
+  std::cout << std::endl;
   ASSERT_TRUE((v1 == Vector<bool>{0,0,0,0,1,1,1,0,0,0,0,0,0}));
 }
 TEST(vector_insert_end) {

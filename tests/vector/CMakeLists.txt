@@ -7,6 +7,8 @@ set(SOURCE_FILES
 
 SET_SOURCE_FILES_PROPERTIES(timezone/localtime.cpp
   PROPERTIES COMPILE_FLAGS "-Wno-address -Wno-maybe-uninitialized")
+SET_SOURCE_FILES_PROPERTIES(test.cpp
+  PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
 
 ADD_EXECUTABLE(test_vector ${SOURCE_FILES})
 ADD_TEST(test_vector ${CMAKE_CURRENT_BINARY_DIR}/test_vector --timeout-multiplier=3)

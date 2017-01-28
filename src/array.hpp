@@ -24,6 +24,7 @@
 #include <sstream>
 #include <functional>
 #include <algorithm> 
+#include <numeric>
 #include <exception> 
 #include <iostream>
 #include <set>

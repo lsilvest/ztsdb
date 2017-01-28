@@ -37,7 +37,7 @@ namespace arr {
     inline virtual void msync(bool async) const {
       throw std::range_error("msync not defined for allocator type");
     }
-    virtual ~baseallocator() { }
+    virtual ~baseallocator() noexcept(false) { }
   };
 
 
@@ -254,6 +254,7 @@ namespace arr {
       if (t) {
         // std::cout << filename << " msync" << std::endl;
         if (::msync(t, n, MS_SYNC) == -1) {
+          munmap(t, n);
           throw std::system_error(std::error_code(errno, std::system_category()), "msync");    
         }
         // std::cout << filename << " munmap" << std::endl;

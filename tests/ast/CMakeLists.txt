@@ -30,6 +30,8 @@ set(SOURCE_FILES
 
 SET_SOURCE_FILES_PROPERTIES(../../src/timezone/localtime.cpp
   PROPERTIES COMPILE_FLAGS "-Wno-address -Wno-maybe-uninitialized")
+SET_SOURCE_FILES_PROPERTIES(test.cpp
+  PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
 
 ADD_EXECUTABLE(test_ast $<TARGET_OBJECTS:main_parser> ${SOURCE_FILES})
 ADD_TEST(test_ast ${CMAKE_CURRENT_BINARY_DIR}/test_ast --timeout-multiplier=3)

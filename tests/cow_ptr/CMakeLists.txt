@@ -11,6 +11,9 @@ set(SOURCE_FILES
   ${SRC}/cow_ptr.cpp 
 )
 
+SET_SOURCE_FILES_PROPERTIES(test.cpp
+  PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
+
 ADD_EXECUTABLE(test_cow_ptr ${SOURCE_FILES})
 
 ADD_TEST(test_cow_ptr ${CMAKE_CURRENT_BINARY_DIR}/test_cow_ptr --timeout-multiplier=3)

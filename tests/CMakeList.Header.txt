@@ -8,6 +8,8 @@ FIND_PACKAGE(Boost COMPONENTS system filesystem REQUIRED)
 
 SET_SOURCE_FILES_PROPERTIES(../../src/timezone/localtime.cpp
   PROPERTIES COMPILE_FLAGS "-Wno-address -Wno-maybe-uninitialized")
+SET_SOURCE_FILES_PROPERTIES(test.cpp
+  PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
 
 INCLUDE_DIRECTORIES(
   ${LIBCRPCUT_INCLUDE_DIRS}
