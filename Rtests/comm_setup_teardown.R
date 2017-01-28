@@ -21,7 +21,7 @@ con2 <- NULL
 
 
 .startZtsdb <- function(port) {
-    cmd <- paste0(system("pwd", intern=T), "/../build/src/ztsdb -p ", port,
+    cmd <- paste0(system("pwd", intern=T), "/../src/ztsdb -p ", port,
                   " & echo $! > /tmp/ztsdb_", port, ".pid")
     system(cmd, ignore.stdout=TRUE, ignore.stderr=TRUE, wait=FALSE)    
 }
