@@ -1,38 +1,32 @@
-\name{ztsdb3-package}
-\alias{ztsdb3-package}
-\alias{ztsdb3}
+\name{ztsdb-package}
+\alias{ztsdb-package}
+\alias{ztsdb}
 \docType{package}
 \title{
-What the package does (short line)
+ztsdb connectivity
 }
 \description{
-More about what it does (maybe more than one line)
-~~ A concise (1-5 lines) description of the package ~~
+  Provides connectivity with the 'ztsdb' database management system. This
+  connectivity is provided with the S4 class \code{connection} and the
+  overload of the \code{?} operator for this new class.
 }
 \details{
-\tabular{ll}{
-Package: \tab ztsdb3\cr
-Type: \tab Package\cr
-Version: \tab 1.0\cr
-Date: \tab 2015-04-18\cr
-License: \tab GPL (>= 2)\cr
-}
-~~ An overview of how to use the package, including the most important ~~
-~~ functions ~~
+  
 }
 \author{
-Your Name
-
-Maintainer: Your Name <your@email.com>
+  Leonardo Silvestri
+  
+  Maintainer: lsilvestri@ztsdb.org
 }
 \references{
-~~ Literature or other references for background information ~~
+  Additional information about this package and 'ztsdb' can be found at
+  \url{https://www.ztsdb.org}
 }
 \keyword{ package }
-\seealso{
-~~ Optional links to other man pages, e.g. ~~
-~~ \code{\link[<pkg>:<pkg>-package]{<pkg>}} ~~
-}
+\keyword{ timeseries }
 \examples{
-%% ~~ simple examples of the most important functions ~~
+## create a connection:
+c1 <- connection("127.0.0.1", port=18000)
+## get the tail of remote object 'a'
+c1 ? tail(a)
 }

@@ -1,4 +1,5 @@
 useDynLib(ztsdb)
-exportPattern("^[[:alpha:]]+")
+#exportPattern("^[[:alpha:]]+")
 import(methods, Rcpp)
 export("?")
+export("connection")
