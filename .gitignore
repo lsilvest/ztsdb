@@ -10,7 +10,7 @@
 *.orig
 *.output
 *.log
-ztsdb
+*.gz
 test
 parser.cpp
 parser.hpp
@@ -27,5 +27,4 @@ build/*
 core/*
 cmdline.c
 cmdline.h
-
 /.project
