@@ -36,13 +36,16 @@
 namespace arr {
 
   size_t  getHeaderLength(const std::string& name);
-  void    writeHeader(buflen_pair& buf, 
+  void    writeHeader(Global::buflen_pair& buf, 
                       Global::MsgType msgtype, 
                       const std::string& name);
     
   template<typename T>
-  buflen_pair make_append_msg(const std::string& name, const arr::Array<T>& a) 
+  Global::buflen_pair make_append_msg(const std::string& name, const arr::Array<T>& a) 
   {
+    if (a.size() == 0) {
+      throw std::out_of_range("make_append_msg: no data");          
+    }
     const auto headersz = getHeaderLength(name); 
     const auto totalsz  = headersz + a.getBufferSize();
     auto buf = std::make_pair(std::make_unique<char[]>(totalsz), totalsz);
@@ -52,8 +55,11 @@ namespace arr {
   }
 
   template<typename T>
-  buflen_pair make_append_msg(const std::string& name, const Vector<T>& v) 
+  Global::buflen_pair make_append_msg(const std::string& name, const Vector<T>& v) 
   {
+    if (v.size() == 0) {
+      throw std::out_of_range("make_append_msg: no data");          
+    }
     const auto headersz = getHeaderLength(name);
     const auto totalsz  = headersz + v.getBufferSize();
     auto buf = std::make_pair(std::make_unique<char[]>(totalsz), totalsz);
@@ -62,14 +68,14 @@ namespace arr {
     return buf;
   }
 
-  buflen_pair make_append_msg(const std::string& name, 
-                              const Vector<Global::dtime> idx, 
-                              const Vector<double>& v);
+  Global::buflen_pair make_append_msg(const std::string& name, 
+                                      const Vector<Global::dtime>& idx, 
+                                      const Vector<double>& v);
 
 
   // specialize the above with string and zstring so that it fails... LLL
 
-  buflen_pair make_append_msg(const string& name, const arr::zts& z);
+  Global::buflen_pair make_append_msg(const string& name, const arr::zts& z);
 }
 
 

@@ -1,4 +1,4 @@
-// -*- compile-command: "make -k -j append" -*-
+// -*- compile-command: "make -k -j8 append" -*-
 
 // Copyright (C) 2016 Leonardo Silvestri
 //

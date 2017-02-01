@@ -110,8 +110,10 @@ SET(SOURCE_FILES
   vector_set.hpp
   zcpp.cpp
   zcpp.hpp
+  zcpp_stdlib.hpp   
   zts.cpp
-  zts.hpp)
+  zts.hpp
+  )
 
 
 EXECUTE_PROCESS(COMMAND

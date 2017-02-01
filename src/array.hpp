@@ -63,7 +63,6 @@ namespace arr {
   constexpr convert_cons_t convert_cons {};
 
   typedef uint64_t idx_type;
-  using buflen_pair = std::pair<std::unique_ptr<char[]>, size_t>;
 
   // a few miscellaneous helper functions:
 
@@ -1086,10 +1085,10 @@ namespace arr {
       if (dim.size() == 0) {
         // figure out if we want to support that...
         /// LLL, yes, we do!!!
-        throw range_error("append on null array not implemented");        
+        throw out_of_range("append on null array not implemented");        
       }
       if (!checkdims(dim, adim, 0)) {
-        throw range_error("incorrect dimensions for append");
+        throw out_of_range("incorrect dimensions for append");
       } 
       
       offset = sizeof(RawVector<idx_type>) + sizeof(idx_type)*adim.size();
@@ -1117,8 +1116,13 @@ namespace arr {
     Array& appendVector(const char* buf, size_t buflen) {
       auto data = Vector<T,O>(const_cast<char*>(buf), buflen);
       // the data has to be a multiple of the number of columns:
+      if (v.size() == 0) {
+        // figure out if we want to support that...
+        /// LLL, yes, we do!!!
+        throw out_of_range("appendVector on null array not implemented");        
+      }
       if (data.size() % v.size()) {
-        throw range_error("appendVector: incorrect vector size");        
+        throw out_of_range("appendVector: incorrect vector size");        
       }
       idx_type nrows = data.size() / v.size();
       idx_type i = 0, j=0;

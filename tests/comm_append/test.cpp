@@ -43,6 +43,7 @@
 #include "timezone/ztime.hpp"
 #include "logging.hpp"
 #include "zcpp.hpp"
+#include "zcpp_stdlib.hpp"
 #include "zts.hpp"
 #include "../utils.hpp"
 
@@ -144,7 +145,7 @@ cancelAndReturnResult(std::tuple<zcore::MsgHandler*,pthread_t,pthread_t,net::Net
 }
 
 
-static int open_send_close(const arr::buflen_pair& msg) {
+static int open_send_close(const Global::buflen_pair& msg) {
   // pause before sending anything to make sure any previously issued
   // command has been executed:
   const timespec pausetime{0, 100000000L};
@@ -182,6 +183,33 @@ static int open_send_close(const arr::buflen_pair& msg) {
   nanosleep(&pausetime, NULL);
 
   return fd;
+}
+
+
+// this will allow to test that the append routines error gracefully a
+// 0-sized message:
+static Global::buflen_pair make_zero_length_append_msg_zts(const std::string& name, size_t& offset)
+{
+  const std::vector<Global::dtime> idx{};
+  const std::vector<double> v{};
+  const auto headersz  = getHeaderLength(name);
+  const auto datasz    = v.size()*sizeof(double);
+  const auto rawvecsz  = sizeof(RawVector<double>);
+  const auto idxdatasz = idx.size()*sizeof(Global::dtime);
+  const auto totalsz   = headersz + rawvecsz + idxdatasz + rawvecsz + datasz;
+  auto buf = std::make_pair(std::make_unique<char[]>(totalsz), totalsz);
+  writeHeader(buf, Global::MsgType::APPEND_VECTOR, name);
+
+  const RawVector<Global::dtime> idx_rv{TypeNumber<Global::dtime>::n, idx.size(), 1};
+  memcpy(buf.first.get() + headersz, &idx_rv, rawvecsz);
+  memcpy(buf.first.get() + headersz + rawvecsz, &idx.front(), idxdatasz);    
+
+  const RawVector<double> v_rv{TypeNumber<double>::n, v.size(), 1};
+  memcpy(buf.first.get() + headersz + rawvecsz + idxdatasz, &v_rv, rawvecsz);
+  memcpy(buf.first.get() + headersz + rawvecsz + idxdatasz + rawvecsz, &v.front(), datasz);
+
+  offset = headersz;
+  return buf;
 }
 
 // test vector, 2D, 3D and the allowed types
@@ -582,6 +610,46 @@ TEST(comm_append_vector_zts_idx_not_increasing_receive_msg, log_to_file) {
   cancelAndReturnResult(tpl, "z", fd);
 
   ASSERT_TRUE(matchLog("append index not ascending"));
+}
+TEST(comm_make_append_msg_zts_empty_Vector) {
+  ASSERT_THROW(arr::make_append_msg("z",
+                                    Vector<Global::dtime>{},
+                                    Vector<double>{}),
+               std::out_of_range,
+               "make_append_msg: idx has size 0");
+}
+TEST(comm_make_append_msg_zts_empty_vector) {
+  ASSERT_THROW(arr::make_append_msg("z",
+                                    std::vector<Global::dtime>{},
+                                    std::vector<double>{}),
+               std::out_of_range,
+               "make_append_msg: idx has size 0");
+}
+TEST(comm_make_append_msg_array_empty_Vector) {
+  ASSERT_THROW(arr::make_append_msg("a", arr::Vector<double>{}),
+               std::out_of_range,
+               "make_append_msg: no data");
+}
+TEST(comm_make_append_msg_array_empty_Array) {
+  auto a = val::VArrayD(Vector<arr::idx_type>{}, Vector<double>{});
+  ASSERT_THROW(arr::make_append_msg("a", arr::Vector<double>{}),
+               std::out_of_range,
+               "make_append_msg: no data");
+}
+TEST(comm_zts_appendVector_empty_message) {
+  size_t offset;
+  auto msg = make_zero_length_append_msg_zts("z", offset);
+  // original z:
+  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York");
+  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York");
+  auto dt3 = tz::dtime_from_string("2015-03-09 06:38:03 America/New_York");
+  auto a = arr::Array<double>({3,3}, {1,2,3,4,5,6,7,8,9}, {{}, {"one", "two", "three"}});
+  auto z = make_cow<arr::zts>(false, 
+                              Vector<Global::dtime>{dt1,dt2,dt3}, 
+                              std::move(a));
+  ASSERT_THROW(z->appendVector(msg.first.get()+offset, msg.second),
+               std::out_of_range,
+               "arr::zts::appendVector: time vector has size 0");
 }
 
 int main(int argc, char *argv[])

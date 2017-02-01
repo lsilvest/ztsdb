@@ -100,6 +100,7 @@ clean:
 	$(MAKE) -C ./src/shlib clean
 	$(MAKE) -C ./lib clean
 	$(MAKE) -C ./itests/append clean
+	$(MAKE) -C ./itests/simple_append clean
 	$(MAKE) -C ./itests/client clean
 	find ./tests -type f -name test -exec rm {} \;
 	find ./tests -type f -name test.o -exec rm {} \;

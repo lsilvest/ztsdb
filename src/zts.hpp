@@ -92,7 +92,7 @@ namespace arr {
     zts& append(const char* buf, size_t buflen, size_t& offset);
     zts& appendVector(const char* buf, size_t buflen);
 
-    buflen_pair to_buffer(size_t offset=0) const;
+    Global::buflen_pair to_buffer(size_t offset=0) const;
       
     inline zts& addprefix(const string& prefix, idx_type d) { a->addprefix(prefix, d); return *this; }
 

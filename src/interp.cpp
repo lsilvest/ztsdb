@@ -315,7 +315,7 @@ static vector<tuple<E*, E*, bool, bool>> processArgs(int ellipsisPos,
       // if we find a tagged expression, it has to be part of an ellipsis
       if (ellipsisPos != -1) {
         auto te = static_cast<TaggedExpr*>(geln->e);
-        res.push_back(make_tuple(te->symb, te->e, false, true));
+        res.emplace_back(make_tuple(te->symb, te->e, false, true));
       }
       else {
         throw interp::EvalException("unused argument (" + to_string(*geln->e) + ')', geln->e->loc);
@@ -331,7 +331,7 @@ static vector<tuple<E*, E*, bool, bool>> processArgs(int ellipsisPos,
         fidx = getUnused(fidx, feln, ufargs); 
       } 
       else {
-        res.push_back(make_tuple(nullptr, geln->e, false, true));
+        res.emplace_back(make_tuple(nullptr, geln->e, false, true));
       }
     }
     gidx = getUnused(gidx, geln, uaargs);

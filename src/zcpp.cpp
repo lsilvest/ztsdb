@@ -16,6 +16,7 @@
 
 
 #include "zcpp.hpp"
+#include "zcpp_stdlib.hpp"
 #include "net_handler.hpp"
 
 
@@ -25,7 +26,7 @@ size_t arr::getHeaderLength(const std::string& name) {
 }
 
 
-void arr::writeHeader(arr::buflen_pair& buf, Global::MsgType msgtype, const std::string& name) {
+void arr::writeHeader(Global::buflen_pair& buf, Global::MsgType msgtype, const std::string& name) {
   size_t offset = 0;
   auto magicnb = hton64(Global::MAGICNB);
   memcpy(buf.first.get() + offset, &magicnb, sizeof(Global::MAGICNB));
@@ -47,16 +48,49 @@ void arr::writeHeader(arr::buflen_pair& buf, Global::MsgType msgtype, const std:
 }
 
 
-arr::buflen_pair arr::make_append_msg(const string& name, const arr::zts& z) {
+Global::buflen_pair arr::make_append_msg(const string& name, const arr::zts& z) {
   auto buf = z.to_buffer(getHeaderLength(name));
   writeHeader(buf, Global::MsgType::APPEND, name);
   return buf;
 }
 
 
-arr::buflen_pair arr::make_append_msg(const std::string& name, 
-                                      const arr::Vector<Global::dtime> idx, 
-                                      const arr::Vector<double>& v) {
+Global::buflen_pair arr::make_append_msg(const std::string& name, 
+                                         const arr::Vector<Global::dtime>& idx, 
+                                         const arr::Vector<double>& v)
+{
+  if (idx.size() == 0) {
+    throw std::out_of_range("make_append_msg: idx has size 0");
+  }
+  if (v.size() % idx.size()) {
+    throw std::out_of_range("make_append_msg: idx and v have incompatible lengths");
+  }
+  if (!idx.isOrdered()) {
+    throw std::out_of_range("make_append_msg: idx must be sorted");
+  }
+  
+  const auto headersz  = getHeaderLength(name);
+  const auto datasz    = v.size()*sizeof(double);
+  const auto rawvecsz  = sizeof(RawVector<double>);
+  const auto idxdatasz = idx.size()*sizeof(Global::dtime);
+  const auto totalsz   = headersz + rawvecsz + idxdatasz + rawvecsz + datasz;
+  auto buf = std::make_pair(std::make_unique<char[]>(totalsz), totalsz);
+  writeHeader(buf, Global::MsgType::APPEND_VECTOR, name);
+  memcpy(buf.first.get() + headersz, idx.getRawVectorPtr(), rawvecsz);
+  memcpy(buf.first.get() + headersz + rawvecsz, &idx.front(), idxdatasz);    
+  memcpy(buf.first.get() + headersz + rawvecsz + idxdatasz, v.getRawVectorPtr(), rawvecsz);
+  memcpy(buf.first.get() + headersz + rawvecsz + idxdatasz + rawvecsz, &v.front(), datasz);    
+  return buf;
+}
+
+
+Global::buflen_pair arr::make_append_msg(const std::string& name, 
+                                         const std::vector<Global::dtime>& idx, 
+                                         const std::vector<double>& v)
+{
+  if (idx.size() == 0) {
+    throw std::out_of_range("make_append_msg: idx has size 0");
+  }
   if (v.size() % idx.size()) {
     throw std::out_of_range("make_append_msg: idx and v have incompatible lengths");
   }
@@ -73,9 +107,13 @@ arr::buflen_pair arr::make_append_msg(const std::string& name,
   const auto totalsz   = headersz + rawvecsz + idxdatasz + rawvecsz + datasz;
   auto buf = std::make_pair(std::make_unique<char[]>(totalsz), totalsz);
   writeHeader(buf, Global::MsgType::APPEND_VECTOR, name);
-  memcpy(buf.first.get() + headersz, idx.getRawVectorPtr(), rawvecsz);
+
+  const RawVector<Global::dtime> idx_rv{TypeNumber<Global::dtime>::n, idx.size(), 1};
+  memcpy(buf.first.get() + headersz, &idx_rv, rawvecsz);
   memcpy(buf.first.get() + headersz + rawvecsz, &idx.front(), idxdatasz);    
-  memcpy(buf.first.get() + headersz + rawvecsz + idxdatasz, v.getRawVectorPtr(), rawvecsz);
+
+  const RawVector<double> v_rv{TypeNumber<double>::n, v.size(), 1};
+  memcpy(buf.first.get() + headersz + rawvecsz + idxdatasz, &v_rv, rawvecsz);
   memcpy(buf.first.get() + headersz + rawvecsz + idxdatasz + rawvecsz, &v.front(), datasz);    
   return buf;
 }

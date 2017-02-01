@@ -55,7 +55,6 @@ clean:
 	rm -f timezone/*.o
 	$(MAKE) -C ./main_parser clean
 	$(MAKE) -C ./config_parser clean
-	$(MAKE) -C ./shlib clean
 
 -include $(CSRCS:.c=.P)
 -include $(SRCS:.cpp=.P)

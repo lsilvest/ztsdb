@@ -41,6 +41,7 @@ ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(shlib)
 ADD_SUBDIRECTORY(itests/client)
 ADD_SUBDIRECTORY(itests/append)
+ADD_SUBDIRECTORY(itests/simple_append)
 
 
 ENABLE_TESTING()

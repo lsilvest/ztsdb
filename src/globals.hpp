@@ -23,6 +23,7 @@
 #include <chrono>
 #include <exception>
 #include <limits>
+#include <memory>
 
 
 namespace Global {
@@ -77,6 +78,8 @@ namespace Global {
   const char* const ZTSDBDIR_ENV = "ZTSDBDIR";
   const char* const CONFIG_FILENAME = "ztsdb.conf";
   const char* const LOGFILE_EXTENSION = ".log";
+
+  using buflen_pair = std::pair<std::unique_ptr<char[]>, size_t>;
 }
 
 

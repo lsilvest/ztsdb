@@ -112,6 +112,11 @@ arr::zts::zts(zts&& z) {
 
 
 arr::zts& arr::zts::append(const char* buf, size_t buflen, size_t& offset) {
+  if (a->getdim().size() == 0) {
+    // figure out if we want to support that...
+    /// LLL, yes, we do!!!
+    throw std::out_of_range("append on null zts not implemented");        
+  }
   idx->append(buf, buflen, offset);  // time array
   if (!idx->isOrdered()) {
     // stay in a coherent state:
@@ -135,11 +140,19 @@ arr::zts& arr::zts::append(const char* buf, size_t buflen, size_t& offset) {
 
 
 arr::zts& arr::zts::appendVector(const char* buf, size_t buflen) {
+  if (a->getdim().size() == 0) {
+    // figure out if we want to support that...
+    /// LLL, yes, we do!!!
+    throw std::out_of_range("append vector on null zts not implemented");        
+  }
   auto i = Vector<Global::dtime>(const_cast<char*>(buf), buflen);
+  if (i.size() == 0) {
+    throw std::out_of_range("arr::zts::appendVector: time vector has size 0");
+  }  
   for (auto& e : i) {
     if (idx->size() && e <= (*idx)[idx->size()-1]) {
       idx->resize(0, a->getdim(0));
-      throw std::range_error("append index not ascending");
+      throw std::out_of_range("append index not ascending");
     }
     idx->concat(e);
   }
@@ -148,12 +161,12 @@ arr::zts& arr::zts::appendVector(const char* buf, size_t buflen) {
   auto data = Vector<double>(const_cast<char*>(buf) + idxsz, buflen - idxsz);
   if (data.size() % i.size()) {
     idx->resize(0, a->getdim(0));
-    throw std::range_error("mismatch between index and data");        
+    throw std::out_of_range("mismatch between index and data");        
   }
   arr::idx_type nrows = data.size() / a->ncols();
   if (nrows != i.size()) { 
     idx->resize(0, a->getdim(0));
-    throw std::range_error("size mismatch between idx and array");        
+    throw std::out_of_range("size mismatch between idx and array");        
   }
   try {
     a->appendVector(const_cast<char*>(buf) + idxsz, buflen - idxsz);
@@ -166,7 +179,7 @@ arr::zts& arr::zts::appendVector(const char* buf, size_t buflen) {
 }
 
 
-arr::buflen_pair arr::zts::to_buffer(size_t offset) const {
+Global::buflen_pair arr::zts::to_buffer(size_t offset) const {
   // get the time index vector encoded length:
   size_t totalsz = offset + idx->getBufferSize() + a->getBufferSize();
   // allocate the buffer and encode the array:
