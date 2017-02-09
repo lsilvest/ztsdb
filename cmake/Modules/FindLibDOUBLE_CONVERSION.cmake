@@ -24,7 +24,7 @@ find_path (LIBDOUBLE_CONVERSION_INCLUDE_DIRS
       double-conversion.h
     PATHS
       /usr/include
-      /usr/include/crpcut
+      /usr/include/double-conversion
       /usr/local/include
       /usr/local/include/double-conversion
       /opt/local/include
