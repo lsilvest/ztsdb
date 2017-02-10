@@ -29,6 +29,7 @@
 #include "parser_ctx.hpp"
 #include "anf.hpp"
 #include "base_funcs.hpp"
+#include "config.hpp"
 
 
 // #define DEBUG
@@ -385,6 +386,10 @@ static shared_ptr<Kont> applyProc(val::VClos& proc,
 
   fstack.push_back(std::make_shared<ClosureFrame>(r));
   auto fenv = fstack.back();
+  if (fenv->getDepth() >= get<int64_t>(cfg::cfgmap.get("expressions"))) {
+    throw EvalException("evaluation nested too deeply: infinite recursion / options(expressions=)?",
+                        k->control ? k->control->loc : yy::missing_loc());
+  }
   fenv->ec = r->ec;
 
   // put a sentinel continuation to make sure fenv is cleared:

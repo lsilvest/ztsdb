@@ -52,7 +52,7 @@ namespace interp {
               shared_ptr<interp::Kont> bc_p = nullptr, 
               shared_ptr<interp::Kont> ec_p = shared_ptr<interp::Kont>(), 
               shared_ptr<interp::Kont> cc_p = nullptr) : 
-      name(name_p), up(u), global(g), bc(bc_p), ec(ec_p), cc(cc_p) {
+      name(name_p), up(u), global(g), bc(bc_p), ec(ec_p), cc(cc_p), depth(u ? u->depth + 1 : 0) {
 #ifdef ENV_HPP_DEBUG
       cout << name << " FRAME CREATED: " << this << endl; 
 #endif
@@ -101,6 +101,8 @@ namespace interp {
 #endif
     }
 
+    unsigned getDepth() const { return depth; }
+    
     string name;
     shpfrm up;
     shpfrm global;
@@ -111,7 +113,8 @@ namespace interp {
   protected:
     map_type m;
     map_type mtmp;	// temporaries
-
+    
+    unsigned depth;     /// allows tracking of recursion
   }; 
 
 

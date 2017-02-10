@@ -42,7 +42,8 @@ cfg::CfgMap::CfgMap() :
      { "digits"s,              7L                       }, 
      { "scipen"s,              0L                       }, 
      { "width"s,               100L                     }, 
-     { "max.print"s,           99999L                   },    
+     { "max.print"s,           99999L                   },
+     { "expressions"s,         10000L                   },
                               
      { "data.q.size"s,         100000L                  },  
      { "sig.q.size"s,          50L                      },  
