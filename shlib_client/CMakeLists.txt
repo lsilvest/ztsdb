@@ -1,0 +1,30 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+PROJECT(ztsdb)
+
+FIND_PACKAGE(Boost COMPONENTS system filesystem REQUIRED)
+FIND_PACKAGE(LibDOUBLE_CONVERSION REQUIRED)
+FIND_PACKAGE(BISON)
+FIND_PACKAGE(FLEX)
+
+SET(SRCDIR ${CMAKE_CURRENT_SOURCE_DIR}/../src)
+
+INCLUDE_DIRECTORIES(${LIBDOUBLE_CONVERSION_INCLUDE_DIRS}
+  ${SRC_PRSR_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR})              
+
+SET(SOURCE_FILES
+  ${SRCDIR}/array.cpp
+  ${SRCDIR}/dname.cpp
+  ${SRCDIR}/misc.cpp
+  ${SRCDIR}/zcpp.cpp
+)
+
+# create the shared library; -fPIC is the default which is what we
+# want:
+ADD_LIBRARY(shlib_client SHARED
+  ${SOURCE_FILES}
+  )
+
+SET_TARGET_PROPERTIES(shlib_client PROPERTIES OUTPUT_NAME ztsdb_client)
+
+INSTALL(TARGETS shlib_client DESTINATION lib)
