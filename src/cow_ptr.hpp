@@ -121,7 +121,7 @@ namespace arr {
 
     ~cow_ptr() {
       if (isLast()) {
-        resetLast();
+        *hasLast = false;
       }
     }
 

@@ -62,3 +62,17 @@ RUnit_ref_multiple <- function() {
     all.equal(a, 2 * matrix(1:9, 3, 3)) &
     all.equal(b, 3 * matrix(1:9, 3, 3))
 }
+RUnit_non_ref_user_function_last <- function() {
+    ## check that 'a' is not modified when it should't and that last doesn't dangle:
+    a <- 1
+    f <- function(x) x[] <- 0
+    f(a)
+    all.equal(a, 1) 
+}
+RUnit_non_ref_user_function <- function() {
+    ## check that 'a' is not modified when it should't
+    a <- 1
+    f <- function(x) x[] <- 0
+    f(a)
+    all.equal(a, 1) 
+}
