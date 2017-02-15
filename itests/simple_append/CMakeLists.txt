@@ -1,20 +1,11 @@
 FIND_PACKAGE(Boost COMPONENTS system filesystem REQUIRED)
 
 SET(SRC ../../src)
-SET(SRC_TZ ${SRC}/timezone)
 
 SET(SOURCE_FILES
   simple_append.cpp
-  ${SRC}/array.cpp
-  ${SRC}/dname.cpp
-  ${SRC}/zts.cpp
   ${SRC}/zcpp.cpp
-  ${SRC}/period.cpp
   ${SRC}/misc.cpp
-  ${SRC_TZ}/ztime.cpp
-  ${SRC_TZ}/ztime_vector.cpp
-  ${SRC_TZ}/zone.cpp
-  ${SRC_TZ}/localtime.cpp
   )
 
 SET_SOURCE_FILES_PROPERTIES(${SRC}/timezone/localtime.cpp

@@ -39,101 +39,110 @@ tz::Zones tzones("/usr/share/zoneinfo");
 // though, the following shows how to use the 'runR' to match unit
 // test results with R:
 DISABLED_TEST(dtime_constructor_string) {
-  auto dt = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York");
+  auto dt = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
   auto s = "as.numeric(as.POSIXct(\"2015-03-09 06:38:01\", tz=\"America/New_York\"))";
   auto r = stoll(runR(s));  
   ASSERT_TRUE((dt.time_since_epoch().count() / decltype(dt)::period::den) == r);   
 }
 DISABLED_TEST(dtime_constructor_string_origin) {
-  auto dt = tz::dtime_from_string("1969-12-31 19:00:00 America/New_York");
+  auto dt = tz::dtime_from_string("1969-12-31 19:00:00 America/New_York", tzones);
   auto s = "as.numeric(as.POSIXct(\"1969-12-31 19:00:00\", tz=\"America/New_York\"))";
   auto r = stoll(runR(s));  
   ASSERT_TRUE((dt.time_since_epoch().count() / decltype(dt)::period::den) == r);   
 }
 DISABLED_TEST(dtime_constructor_string_neg) {
-  auto dt = tz::dtime_from_string("1950-03-09 06:38:01 America/New_York");
+  auto dt = tz::dtime_from_string("1950-03-09 06:38:01 America/New_York", tzones);
   auto s = "as.numeric(as.POSIXct(\"1950-03-09 06:38:01\", tz=\"America/New_York\"))";
   auto r = stoll(runR(s));  
   ASSERT_TRUE((dt.time_since_epoch().count() / decltype(dt)::period::den) == r);   
 }
 
 TEST(dtime_constructor_nsec) {
-  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01.11 America/New_York"); 
-  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:01.11 America/New_York");
+  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01.11 America/New_York", tzones); 
+  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:01.11 America/New_York", tzones);
   ASSERT_TRUE(dt1 == dt2);   
 }
 TEST(dtime_constructor_nsec_long) {
-  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01.999999999 America/New_York"); 
-  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:01.999999998 America/New_York");
+  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01.999999999 America/New_York", tzones); 
+  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:01.999999998 America/New_York", tzones);
   ASSERT_TRUE(dt1 == dt2 + Global::duration(1));
 }
 TEST(dtime_constructor_format_sep) {
-  auto dt1 = tz::dtime_from_string("2015/03/09 06.38.01 America/New_York", 
+  auto dt1 = tz::dtime_from_string("2015/03/09 06.38.01 America/New_York", tzones,
                                    "%Y/%m/%d %H.%M.%S[.%s] %Z");
-  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York");
+  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
   ASSERT_TRUE(dt1 == dt2);   
 }
 TEST(dtime_constructor_format_y) {
-  auto dt1 = tz::dtime_from_string("03/09/15 06.38.01 America/New_York", 
+  auto dt1 = tz::dtime_from_string("03/09/15 06.38.01 America/New_York", tzones, 
                                    "%m/%d/%y %H.%M.%S[.%s] %Z");
-  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York");
+  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
   ASSERT_TRUE(dt1 == dt2);   
 }
 TEST(dtime_constructor_format_no_time) {
-  auto dt1 = tz::dtime_from_string("03/09/15 America/New_York", 
+  auto dt1 = tz::dtime_from_string("03/09/15 America/New_York", tzones, 
                                    "%m/%d/%y %Z");
-  auto dt2 = tz::dtime_from_string("2015-03-09 00:00:00 America/New_York");
+  auto dt2 = tz::dtime_from_string("2015-03-09 00:00:00 America/New_York", tzones);
   ASSERT_TRUE(dt1 == dt2);   
 }
 TEST(dtime_constructor_format_no_tz) {
-  ASSERT_THROW(tz::dtime_from_string("2015-03-09 06:38:01"), 
+  ASSERT_THROW(tz::dtime_from_string("2015-03-09 06:38:01", tzones), 
                std::range_error, "timezone must be specified");   
 }
 TEST(dtime_constructor_format_nsec_not_optional) {
-  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01.3333 America/New_York", 
+  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01.3333 America/New_York", tzones, 
                                    "%Y-%m-%d %H:%M:%S.%s %Z");
-  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:01.3333 America/New_York");
+  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:01.3333 America/New_York", tzones);
   ASSERT_TRUE(dt1 == dt2);   
 }
 TEST(dtime_constructor_format_no_sep) {
   // test that we read the correct number of chars:
-  auto dt1 = tz::dtime_from_string("20150309063801.3333 America/New_York", 
+  auto dt1 = tz::dtime_from_string("20150309063801.3333 America/New_York", tzones, 
                                    "%Y%m%d%H%M%S.%s %Z");
-  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:01.3333 America/New_York");
+  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:01.3333 America/New_York", tzones);
   ASSERT_TRUE(dt1 == dt2);   
 }
 TEST(dtime_constructor_format_no_leading0) {
-  auto dt1 = tz::dtime_from_string("3/9/15 America/New_York", 
+  auto dt1 = tz::dtime_from_string("3/9/15 America/New_York", tzones, 
                                    "%m/%d/%y %Z");
-  auto dt2 = tz::dtime_from_string("2015-03-09 00:00:00 America/New_York");
+  auto dt2 = tz::dtime_from_string("2015-03-09 00:00:00 America/New_York", tzones);
   ASSERT_TRUE(dt1 == dt2);   
 }
 TEST(dtime_constructor_throw) {
-  ASSERT_THROW(tz::dtime_from_string("2015-030-09 06:38:01 America/New_York"), std::range_error);
-  ASSERT_THROW(tz::dtime_from_string("|2015-030-09 06:38:01 America/New_York"), std::range_error);
-  ASSERT_THROW(tz::dtime_from_string("2015-13-09 06:38:01 America/New_York"), std::range_error);
-  ASSERT_THROW(tz::dtime_from_string("2015-11-32 06:38:01 America/New_York"), std::range_error);
-  ASSERT_THROW(tz::dtime_from_string("2015-11-30 24:38:01 America/New_York"), std::range_error);
-  ASSERT_THROW(tz::dtime_from_string("2015-11-30 06:60:01 America/New_York"), std::range_error);
-  ASSERT_THROW(tz::dtime_from_string("2015-11-30 06:38:60 America/New_York"), std::range_error);
-  ASSERT_THROW(tz::dtime_from_string("2015-11-09 06:38:01 Antarctica/New_York"), std::range_error);
-  ASSERT_THROW(tz::dtime_from_string("2015-11-09 06:38:01 Antarctica/New_York&"), std::range_error);
-  ASSERT_THROW(tz::dtime_from_string("2015-11-09 06:38:01 Antarctica/New_York",
+  ASSERT_THROW(tz::dtime_from_string("2015-030-09 06:38:01 America/New_York", tzones),
+               std::range_error);
+  ASSERT_THROW(tz::dtime_from_string("|2015-030-09 06:38:01 America/New_York", tzones),
+               std::range_error);
+  ASSERT_THROW(tz::dtime_from_string("2015-13-09 06:38:01 America/New_York", tzones),
+               std::range_error);
+  ASSERT_THROW(tz::dtime_from_string("2015-11-32 06:38:01 America/New_York", tzones),
+               std::range_error);
+  ASSERT_THROW(tz::dtime_from_string("2015-11-30 24:38:01 America/New_York", tzones),
+               std::range_error);
+  ASSERT_THROW(tz::dtime_from_string("2015-11-30 06:60:01 America/New_York", tzones),
+               std::range_error);
+  ASSERT_THROW(tz::dtime_from_string("2015-11-30 06:38:60 America/New_York", tzones),
+               std::range_error);
+  ASSERT_THROW(tz::dtime_from_string("2015-11-09 06:38:01 Antarctica/New_York", tzones),
+               std::range_error);
+  ASSERT_THROW(tz::dtime_from_string("2015-11-09 06:38:01 Antarctica/New_York&", tzones),
+               std::range_error);
+  ASSERT_THROW(tz::dtime_from_string("2015-11-09 06:38:01 Antarctica/New_York", tzones,
                                      "%p"), std::range_error);
 }
 TEST(dtime_eq_true) {
-  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York");
-  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York");
+  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
+  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
   ASSERT_TRUE(dt1 == dt2);   
 }
 TEST(dtime_eq_false_0) {
-  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York");
-  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York");
+  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
+  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones);
   ASSERT_TRUE(!(dt1 == dt2));   
 }
 TEST(dtime_eq_false_1) {
-  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:00 America/New_York");
-  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:00.1 America/New_York");
+  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:00 America/New_York", tzones);
+  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:00.1 America/New_York", tzones);
   ASSERT_TRUE(!(dt1 == dt2));   
 }
 
@@ -144,47 +153,47 @@ TEST(dtime_eq_false_1) {
 
 TEST(interval_eq_true) {
   auto dt1 = tz::interval_from_string("|+2015-03-09 06:38:01 America/New_York "
-                                      "-> 2015-03-10 06:38:01 America/New_York+|");
+                                      "-> 2015-03-10 06:38:01 America/New_York+|", tzones);
   auto dt2 = tz::interval_from_string("|+2015-03-09 06:38:01 America/New_York "
-                                      "-> 2015-03-10 06:38:01 America/New_York+|");
+                                      "-> 2015-03-10 06:38:01 America/New_York+|", tzones);
   ASSERT_TRUE(dt1 == dt2);   
   dt1 = tz::interval_from_string("|-2015-03-09 06:38:01 America/New_York "
-                                 "-> 2015-03-10 06:38:01 America/New_York-|");
+                                 "-> 2015-03-10 06:38:01 America/New_York-|", tzones);
   dt2 = tz::interval_from_string("|-2015-03-09 06:38:01 America/New_York "
-                                 "-> 2015-03-10 06:38:01 America/New_York-|");
+                                 "-> 2015-03-10 06:38:01 America/New_York-|", tzones);
   ASSERT_TRUE(dt1 == dt2);   
   dt1 = tz::interval_from_string("|+2015-03-09 06:38:01 America/New_York "
-                                 "-> 2015-03-10 06:38:01 America/New_York-|");
+                                 "-> 2015-03-10 06:38:01 America/New_York-|", tzones);
   dt2 = tz::interval_from_string("|+2015-03-09 06:38:01 America/New_York "
-                                 "-> 2015-03-10 06:38:01 America/New_York-|");
+                                 "-> 2015-03-10 06:38:01 America/New_York-|", tzones);
   ASSERT_TRUE(dt1 == dt2);   
   dt1 = tz::interval_from_string("|-2015-03-09 06:38:01 America/New_York "
-                                 "-> 2015-03-10 06:38:01 America/New_York+|");
+                                 "-> 2015-03-10 06:38:01 America/New_York+|", tzones);
   dt2 = tz::interval_from_string("|-2015-03-09 06:38:01 America/New_York "
-                                 "-> 2015-03-10 06:38:01 America/New_York+|");
+                                 "-> 2015-03-10 06:38:01 America/New_York+|", tzones);
   ASSERT_TRUE(dt1 == dt2);   
 }
 
 TEST(interval_eq_false) {
   auto dt1 = tz::interval_from_string("|+2015-03-09 06:38:01 America/New_York "
-                                      "-> 2015-03-10 06:38:01 America/New_York+|");
+                                      "-> 2015-03-10 06:38:01 America/New_York+|", tzones);
   auto dt2 = tz::interval_from_string("|+2015-03-09 06:38:01 America/New_York "
-                                      "-> 2015-03-10 06:38:02 America/New_York+|");
+                                      "-> 2015-03-10 06:38:02 America/New_York+|", tzones);
   ASSERT_TRUE(!(dt1 == dt2));   
   dt1 = tz::interval_from_string("|+2015-03-09 06:38:01 America/New_York "
-                                      "-> 2015-03-10 06:38:01 America/New_York-|");
+                                      "-> 2015-03-10 06:38:01 America/New_York-|", tzones);
   dt2 = tz::interval_from_string("|-2015-03-09 06:38:01 America/New_York "
-                                      "-> 2015-03-10 06:38:01 America/New_York-|");
+                                      "-> 2015-03-10 06:38:01 America/New_York-|", tzones);
   ASSERT_TRUE(!(dt1 == dt2));   
   dt1 = tz::interval_from_string("|-2015-03-09 06:38:01 America/New_York "
-                                      "-> 2015-03-10 06:38:01 America/New_York-|");
+                                      "-> 2015-03-10 06:38:01 America/New_York-|", tzones);
   dt2 = tz::interval_from_string("|+2015-03-09 06:38:01 America/New_York "
-                                      "-> 2015-03-10 06:38:01 America/New_York-|");
+                                      "-> 2015-03-10 06:38:01 America/New_York-|", tzones);
   ASSERT_TRUE(!(dt1 == dt2));   
   dt1 = tz::interval_from_string("|-2015-03-09 06:38:01 America/New_York "
-                                      "-> 2015-03-10 06:38:01 America/New_York+|");
+                                      "-> 2015-03-10 06:38:01 America/New_York+|", tzones);
   dt2 = tz::interval_from_string("|-2015-03-09 06:38:01.001 America/New_York "
-                                      "-> 2015-03-10 06:38:01 America/New_York+|");
+                                      "-> 2015-03-10 06:38:01 America/New_York+|", tzones);
   ASSERT_TRUE(!(dt1 == dt2));   
 }
 

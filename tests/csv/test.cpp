@@ -185,20 +185,20 @@ TEST(csv_array_dtime) {
   string file = dir + "array.csv";
   {
     auto a = arr::Array<Global::dtime>({2,2}, 
-      { tz::dtime_from_string("2015-03-09 06:38:00 America/New_York"),
-        tz::dtime_from_string("2015-03-09 06:38:01 America/New_York"),
-        tz::dtime_from_string("2015-03-09 06:38:02 America/New_York"),
-        tz::dtime_from_string("2015-03-09 06:38:03 America/New_York") }, 
+      { tz::dtime_from_string("2015-03-09 06:38:00 America/New_York", tzones),
+        tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones),
+        tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones),
+        tz::dtime_from_string("2015-03-09 06:38:03 America/New_York", tzones) }, 
       {{}, {"one", "two"}});
     arr::writecsv_array(a, file, true, ',');
   }
   {
     auto a = arr::readcsv_array<Global::dtime>(file, true, ',', "");
     auto b = arr::Array<Global::dtime>({2,2}, 
-      { tz::dtime_from_string("2015-03-09 06:38:00 America/New_York"),
-        tz::dtime_from_string("2015-03-09 06:38:01 America/New_York"),
-        tz::dtime_from_string("2015-03-09 06:38:02 America/New_York"),
-        tz::dtime_from_string("2015-03-09 06:38:03 America/New_York") }, 
+      { tz::dtime_from_string("2015-03-09 06:38:00 America/New_York", tzones),
+        tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones),
+        tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones),
+        tz::dtime_from_string("2015-03-09 06:38:03 America/New_York", tzones) }, 
       {{}, {"one", "two"}});
     ASSERT_TRUE(*a == b);
   }
@@ -210,10 +210,10 @@ TEST(csv_array_dtime_mmap) {
   string mmapdir = dir + "array";
   {
     auto a = arr::Array<Global::dtime>({2,2}, 
-      { tz::dtime_from_string("2015-03-09 06:38:00 America/New_York"),
-        tz::dtime_from_string("2015-03-09 06:38:01 America/New_York"),
-        tz::dtime_from_string("2015-03-09 06:38:02 America/New_York"),
-        tz::dtime_from_string("2015-03-09 06:38:03 America/New_York") }, 
+      { tz::dtime_from_string("2015-03-09 06:38:00 America/New_York", tzones),
+        tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones),
+        tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones),
+        tz::dtime_from_string("2015-03-09 06:38:03 America/New_York", tzones) }, 
       {{}, {"one", "two"}});
     arr::writecsv_array(a, file, true, ',');
   }
@@ -221,10 +221,10 @@ TEST(csv_array_dtime_mmap) {
     // reading the csv file into a memory mapped array:
     auto a = arr::readcsv_array<Global::dtime>(file, true, ',', mmapdir);
     auto b = arr::Array<Global::dtime>({2,2}, 
-      { tz::dtime_from_string("2015-03-09 06:38:00 America/New_York"),
-        tz::dtime_from_string("2015-03-09 06:38:01 America/New_York"),
-        tz::dtime_from_string("2015-03-09 06:38:02 America/New_York"),
-        tz::dtime_from_string("2015-03-09 06:38:03 America/New_York") }, 
+      { tz::dtime_from_string("2015-03-09 06:38:00 America/New_York", tzones),
+        tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones),
+        tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones),
+        tz::dtime_from_string("2015-03-09 06:38:03 America/New_York", tzones) }, 
       {{}, {"one", "two"}});
     ASSERT_TRUE(*a == b);
   }
@@ -232,10 +232,10 @@ TEST(csv_array_dtime_mmap) {
     // checking the memory mapped array was correctly written to file:
     auto a = arr::Array<Global::dtime>(std::make_unique<MmapAllocFactory>(mmapdir, true));
     auto b = arr::Array<Global::dtime>({2,2}, 
-      { tz::dtime_from_string("2015-03-09 06:38:00 America/New_York"),
-        tz::dtime_from_string("2015-03-09 06:38:01 America/New_York"),
-        tz::dtime_from_string("2015-03-09 06:38:02 America/New_York"),
-        tz::dtime_from_string("2015-03-09 06:38:03 America/New_York") }, 
+      { tz::dtime_from_string("2015-03-09 06:38:00 America/New_York", tzones),
+        tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones),
+        tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones),
+        tz::dtime_from_string("2015-03-09 06:38:03 America/New_York", tzones) }, 
       {{}, {"one", "two"}});
     ASSERT_TRUE(a == b);    
   }
@@ -249,8 +249,8 @@ TEST(csv_array_zts) {
   const string dir = "./";
   const string file = dir + "array.csv";
   auto idx = arr::Array<Global::dtime>({2}, 
-      { tz::dtime_from_string("2015-03-09 06:38:00 America/New_York"),
-        tz::dtime_from_string("2015-03-09 06:38:01 America/New_York") });
+      { tz::dtime_from_string("2015-03-09 06:38:00 America/New_York", tzones),
+        tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones) });
   auto data = arr::Array<double>({2,2}, {1,2,3,4}, {{}, {"one", "two"}});
   auto z1 = arr::zts(idx, data);
   arr::writecsv_zts(z1, file, true, ',');
@@ -266,8 +266,8 @@ TEST(csv_array_zts_mmap) {
   string mmapdir = dir + "zts";
   {
     auto idx = arr::Array<Global::dtime>({2}, 
-      { tz::dtime_from_string("2015-03-09 06:38:00 America/New_York"),
-        tz::dtime_from_string("2015-03-09 06:38:01 America/New_York") });
+      { tz::dtime_from_string("2015-03-09 06:38:00 America/New_York", tzones),
+        tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones) });
     auto data = arr::Array<double>({2,2}, {1,2,3,4}, {{}, {"one", "two"}});
     auto z1 = arr::zts(idx, data);
     arr::writecsv_zts(z1, file, true, ',');
@@ -275,8 +275,8 @@ TEST(csv_array_zts_mmap) {
   }
   {
     auto idx = arr::Array<Global::dtime>({2}, 
-      { tz::dtime_from_string("2015-03-09 06:38:00 America/New_York"),
-        tz::dtime_from_string("2015-03-09 06:38:01 America/New_York") });
+      { tz::dtime_from_string("2015-03-09 06:38:00 America/New_York", tzones),
+        tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones) });
     auto data = arr::Array<double>({2,2}, {1,2,3,4}, {{}, {"one", "two"}});
     auto z1 = arr::zts(idx, data);
     auto z2 = arr::readcsv_zts(file, true, ',', mmapdir);

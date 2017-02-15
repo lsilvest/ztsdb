@@ -243,7 +243,8 @@ TEST(Encode_Vdouble_multiple_ordering) {
   ASSERT_FALSE(b->getcol(1).isOrdered());
 }
 TEST(Encode_Vdtime) {
-  val::Value vin = val::make_array(tz::dtime_from_string("2015-03-09 06:38:01 America/New_York"));
+  val::Value vin = val::make_array(tz::dtime_from_string("2015-03-09 06:38:01 America/New_York",
+                                                         tzones));
   encode(vin, vout);
   ASSERT_TRUE(vin == *vout);
 }
@@ -372,18 +373,18 @@ TEST(Encode_VArrayIVL_3x2x4_named) {
 }
 // zts
 TEST(Encode_zts) {
-  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York");
-  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York");
-  auto dt3 = tz::dtime_from_string("2015-03-09 06:38:03 America/New_York");
+  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
+  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones);
+  auto dt3 = tz::dtime_from_string("2015-03-09 06:38:03 America/New_York", tzones);
   auto a = arr::zts({3,3}, {dt1,dt2,dt3}, {1,2,3,4,5,6,7,8,9}, {{}, {"a","b","c"}});
   encode(make_cow<arr::zts>(false, a), vout);
   ASSERT_TRUE(a == *get<val::SpZts>(*vout));
   delete vout;
 }
 TEST(Encode_zts_no_names) {
-  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York");
-  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York");
-  auto dt3 = tz::dtime_from_string("2015-03-09 06:38:03 America/New_York");
+  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
+  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones);
+  auto dt3 = tz::dtime_from_string("2015-03-09 06:38:03 America/New_York", tzones);
   auto a = arr::zts({3,3}, {dt1,dt2,dt3}, {1,2,3,4,5,6,7,8,9});
   encode(make_cow<arr::zts>(false, a), vout);
   ASSERT_TRUE(a == *get<val::SpZts>(*vout));

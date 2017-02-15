@@ -27,7 +27,11 @@
 #include "globals.hpp"
 #include "type_utils.hpp"
 #include "timezone/interval.hpp"
+#include "timezone/zone.hpp"
 #include "timezone/ztime.hpp"
+
+
+extern tz::Zones tzones;
 
 
 namespace arr {
@@ -185,13 +189,13 @@ namespace arr {
   /// conversions to time.
   template<>
   inline Global::dtime convert(const arr::zstring& u) {
-    return tz::dtime_from_string(u);
+    return tz::dtime_from_string(u, tzones);
   }
 
   /// conversions to interval.
   template<>
   inline tz::interval convert(const arr::zstring& u) {
-    return tz::interval_from_string(u);
+    return tz::interval_from_string(u, tzones);
   }
 }
 

@@ -270,9 +270,9 @@ TEST(intersect_time_interval) {
 // intersect interval/interval -------------------------
 TEST(intersect_interval) {
   auto dt1 = tz::interval_from_string("|+2015-03-09 06:38:01 America/New_York "
-                                      "-> 2015-03-10 06:38:01 America/New_York+|");
+                                      "-> 2015-03-10 06:38:01 America/New_York+|", tzones);
   auto dt2 = tz::interval_from_string("|+2015-03-09 06:38:02 America/New_York "
-                                      "-> 2015-03-10 06:38:00 America/New_York+|");
+                                      "-> 2015-03-10 06:38:00 America/New_York+|", tzones);
   Vector<tz::interval> v1{dt1};
   Vector<tz::interval> v2{dt2};
   auto res = arr::intersect<tz::interval,tz::interval>(v1, v2);
@@ -310,9 +310,10 @@ TEST(setdiff_interval_1) {
   Vector<tz::interval> v2{mki(2,4), mki(7,9)};
   Vector<tz::interval> exp{mki(1,2,f,t), mki(4,5,t,f), mki(6,7,f,t), mki(10,11)};
   auto res = arr::setdiff<tz::interval,tz::interval>(v1, v2);
+  const auto tzstring = "America/New_York";
   for (size_t i=0; i<res.size(); ++i) {
-    std::cout << tz::to_string(exp[i], "", "America/New_York") << std::endl;
-    std::cout << tz::to_string(res[i], "", "America/New_York") << std::endl;
+    std::cout << tz::to_string(exp[i], "", tzones.find(tzstring), tzstring) << std::endl;
+    std::cout << tz::to_string(res[i], "", tzones.find(tzstring), tzstring) << std::endl;
   }
   ASSERT_TRUE(res == exp);
 }

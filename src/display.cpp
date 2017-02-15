@@ -21,7 +21,10 @@
 #include "display.hpp"
 #include "double.hpp"
 #include "timezone/ztime.hpp"
+#include "timezone/zone.hpp"
 
+
+extern tz::Zones tzones;
 
 
   // ‘digits’: controls the number of digits to print when printing
@@ -234,12 +237,12 @@ struct DTimeToString {
   DTimeToString(const cfg::CfgMap& cfg_p) : cfg(cfg_p) { }
   Vector<zstring> operator()(Vector<Global::dtime> v) {
     auto frac = anyFractionalSecond(v);
-    auto timezone = get<std::string>(cfg.get("timezone"s));
+    auto tz = get<std::string>(cfg.get("timezone"s));
     Vector<zstring> vs;
     std::transform(v.begin(), v.end(), 
                    std::back_inserter(vs), 
-                   [timezone, frac](const Global::dtime& d) { 
-                     return tz::to_string(d, "", timezone, true, frac); });
+                   [tz, frac](const Global::dtime& d) { 
+                     return tz::to_string(d, "", tzones.find(tz), tz, true, frac); });
     return vs;
   }
   const cfg::CfgMap& cfg;
@@ -275,7 +278,7 @@ struct IntervalToString {
     std::transform(v.begin(), v.end(), 
                    std::back_inserter(vs), 
                    [timezone, frac](const tz::interval& i) { 
-                     return tz::to_string(i, "", timezone, true, frac); });
+                     return tz::to_string(i, "", tzones.find(timezone), timezone, true, frac); });
     return vs;
   }
   const cfg::CfgMap& cfg;
@@ -501,7 +504,7 @@ string val::to_string(Global::dtime dt, const cfg::CfgMap& cfg, bool fast) {
   auto timezone = get<std::string>(cfg.get("timezone"s));
   // no format for the time being, so pass "", but we're covered if we
   // want to add it later:
-  return tz::to_string(dt, "", timezone, true);
+  return tz::to_string(dt, "", tzones.find(timezone), timezone, true);
 }
 string val::to_string(Global::dtime::duration d, const cfg::CfgMap& cfg, bool fast) {
   return tz::to_string(d);
@@ -510,7 +513,7 @@ string val::to_string(tz::interval i, const cfg::CfgMap& cfg, bool fast) {
   auto timezone = get<std::string>(cfg.get("timezone"s));
   // no format for the time being, so pass "", but we're covered if we
   // want to add it later:
-  return tz::to_string(i, "", timezone, true); // true means we use the abbreviation
+  return tz::to_string(i, "", tzones.find(timezone), timezone, true); // true == use the abbreviation
 }
 string val::to_string(tz::period p, const cfg::CfgMap& cfg, bool fast) {
   return tz::to_string(p);

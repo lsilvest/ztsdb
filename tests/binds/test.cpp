@@ -358,15 +358,15 @@ TEST(binds_abind_named_3_3_3_dtime) {
         "abind(a=c(i=a1,ii=a2,iii=a3), b=c(b1,b2,b3), "
         "c=c(c1,c2,c3), along=3) \n");
   auto a = arr::Array<Global::dtime>({3,1,3}, 
-    { tz::dtime_from_string("2015-03-09 06:38:01 America/New_York"),
-      tz::dtime_from_string("2015-03-09 06:38:02 America/New_York"),
-      tz::dtime_from_string("2015-03-09 06:38:03 America/New_York"),
-      tz::dtime_from_string("2015-03-09 06:38:04 America/New_York"),
-      tz::dtime_from_string("2015-03-09 06:38:05 America/New_York"),
-      tz::dtime_from_string("2015-03-09 06:38:06 America/New_York"),
-      tz::dtime_from_string("2015-03-09 06:38:07 America/New_York"),
-      tz::dtime_from_string("2015-03-09 06:38:08 America/New_York"),
-      tz::dtime_from_string("2015-03-09 06:38:09 America/New_York")
+    { tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones),
+      tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones),
+      tz::dtime_from_string("2015-03-09 06:38:03 America/New_York", tzones),
+      tz::dtime_from_string("2015-03-09 06:38:04 America/New_York", tzones),
+      tz::dtime_from_string("2015-03-09 06:38:05 America/New_York", tzones),
+      tz::dtime_from_string("2015-03-09 06:38:06 America/New_York", tzones),
+      tz::dtime_from_string("2015-03-09 06:38:07 America/New_York", tzones),
+      tz::dtime_from_string("2015-03-09 06:38:08 America/New_York", tzones),
+      tz::dtime_from_string("2015-03-09 06:38:09 America/New_York", tzones)
     },
     {{"i","ii","iii"}, {}, {"a","b","c"}});
   ASSERT_TRUE(eval(eout) ==make_cow<val::VArrayDT>(false, a));  
@@ -395,8 +395,8 @@ TEST(binds_abind_named_dtime_dtime) {
         "a2 <- |.2015-03-09 06:38:02 America/New_York.|;"
         "abind(a=a1, b=a2, along=3) \n");
   auto a = arr::Array<Global::dtime>({1,1,2}, 
-    { tz::dtime_from_string("2015-03-09 06:38:01 America/New_York"),
-      tz::dtime_from_string("2015-03-09 06:38:02 America/New_York")
+    { tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones),
+      tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones)
     },  
     {{}, {}, {"a","b"}});
   ASSERT_TRUE(eval(eout) ==make_cow<val::VArrayDT>(false, a));  
@@ -422,8 +422,8 @@ TEST(binds_rbind_named_dtime_dtime) {
         "a2 <- |.2015-03-09 06:38:02 America/New_York.|;"
         "rbind(a=a1, b=a2) \n");
   auto a = arr::Array<Global::dtime>({2,1}, 
-    { tz::dtime_from_string("2015-03-09 06:38:01 America/New_York"),
-      tz::dtime_from_string("2015-03-09 06:38:02 America/New_York")
+    { tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones),
+      tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones)
     },  
     {{"a","b"}, {}});
   ASSERT_TRUE(eval(eout) ==make_cow<val::VArrayDT>(false, a));  
@@ -450,8 +450,8 @@ TEST(binds_cbind_named_dtime_dtime) {
         "a2 <- |.2015-03-09 06:38:02 America/New_York.|;"
         "cbind(a=a1, b=a2) \n");
   auto a = arr::Array<Global::dtime>({1,2}, 
-    { tz::dtime_from_string("2015-03-09 06:38:01 America/New_York"),
-      tz::dtime_from_string("2015-03-09 06:38:02 America/New_York")
+    { tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones),
+      tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones)
     },  
     {{}, {"a","b"}});
   ASSERT_TRUE(eval(eout) ==make_cow<val::VArrayDT>(false, a));  

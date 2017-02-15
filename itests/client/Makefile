@@ -1,6 +1,5 @@
 include ../../src/Makefile.header
 
-CPP = clang++-3.6
 LDFLAGS += -L/home/lsilvest/repos/ztsdb/src/shlib -lztsdb
 
 COREDIR =../../src

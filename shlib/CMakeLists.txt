@@ -49,6 +49,7 @@ SET(SOURCE_FILES
   ${SRCDIR}/unop_binop_funcs.cpp
   ${SRCDIR}/config.cpp
   ${SRCDIR}/zcpp.cpp
+  ${SRCDIR}/zcpp_zts.cpp
   ${SRCDIR}/period.cpp
   ${SRCDIR}/net_client.cpp
   ${BISON_parser_OUTPUTS}

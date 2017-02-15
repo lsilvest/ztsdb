@@ -108,11 +108,6 @@ inline T ntoh(T x) {
 
 std::string printBuf(const char* buf, unsigned len);
 
-inline unsigned getAlignedLength(const std::string& s, unsigned nbyteAlignment) {
-  auto rem = s.length() % nbyteAlignment;
-  return rem ? s.length() + nbyteAlignment - rem : s.length();
-}
-
 inline unsigned getAlignedLength(size_t n, unsigned nbyteAlignment) {
   auto rem = n % nbyteAlignment;
   return rem ? n + nbyteAlignment - rem : n;

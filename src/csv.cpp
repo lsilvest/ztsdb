@@ -36,6 +36,9 @@ using namespace std::string_literals;
 static const size_t BUFSZ = 64000;
 
 
+extern tz::Zones tzones;
+
+
 template<typename T>
 struct ToChar {
   size_t toChar(T t, char* buf, size_t sz) {
@@ -105,9 +108,11 @@ struct FromChar<bool> {
 // dtime
 template<>
 struct ToChar<Global::dtime> {
+  ToChar() : tz(tzones.find("UTC")) { }
+  
   // grab the format from cfgmap LLL
   size_t toChar(Global::dtime t, char* buf, size_t sz) {
-    auto s = tz::to_string(t, "", "UTC");
+    auto s = tz::to_string(t, "", tz, "UTC");
     if (s.length() > CMAX) {
       throw std::out_of_range("date string too long!");
     }
@@ -115,13 +120,14 @@ struct ToChar<Global::dtime> {
     return s.length();
   }
   static const size_t CMAX = 128; 
+  const tz::Zone& tz;
 };
 template<>
 struct FromChar<Global::dtime> {
   FromChar(const std::string& tz_p="") : tz(tz_p) { }
   size_t fromChar(const char* buf, int sz, Global::dtime& t) {
     // not efficient to pass by string, LLL
-    t = tz::dtime_from_string(string(buf, sz), "%Y-%m-%d %H:%M:%S[.%s] %Z"s, tz);
+    t = tz::dtime_from_string(string(buf, sz), tzones, "%Y-%m-%d %H:%M:%S[.%s] %Z"s, tz);
     return sz;
   }
   const std::string tz;
@@ -130,7 +136,7 @@ struct FromChar<Global::dtime> {
 // zstring
 template<>
 struct ToChar<arr::zstring> {
-  // grab the format from cfgmap LLL
+  // allow format as parameter: needs to be a template passed to the CSV, and specialized for time  LLL
   size_t toChar(arr::zstring t, char* buf, size_t sz) {
     memcpy(buf, t.c_str(), t.length());
     return t.length();

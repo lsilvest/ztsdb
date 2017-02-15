@@ -21,17 +21,15 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <cstring>
+#include <cstdlib>
 #include <string>
 #include <iostream>
 #include <limits>
 #include <vector>
 #include <system_error>
+#include <unistd.h>
 #include "zcpp_stdlib.hpp"
-#include "timezone/zone.hpp"
-
-
-// need to accomodate non-standard location LLL
-tz::Zones tzones("/usr/share/zoneinfo");
 
 
 static void simple_append(const std::string ip, 

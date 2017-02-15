@@ -109,6 +109,7 @@ SET(SOURCE_FILES
   vector.hpp
   vector_set.hpp
   zcpp.cpp
+  zcpp_zts.cpp
   zcpp.hpp
   zcpp_stdlib.hpp   
   zts.cpp

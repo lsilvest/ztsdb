@@ -162,7 +162,7 @@ TEST(comm_long_string) {
 }
 TEST(comm_dtime) {
   ASSERT_TRUE(getValue("|.2015-03-09 06:38:01 America/New_York.|") ==
-              val::make_array(tz::dtime_from_string("2015-03-09 06:38:01 America/New_York")));
+              val::make_array(tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones)));
 }
 TEST(comm_NULL) {
   ASSERT_TRUE(getValue("NULL") == val::VNull());

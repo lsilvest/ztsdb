@@ -36,47 +36,47 @@ TEST(period_parse) {
   ASSERT_TRUE(tz::period("/00:00:00.987") == tz::period("/00:00:00.987000"));
 }
 TEST(period_plus_1y) {
-  auto dt = tz::dtime_from_string("2015-03-09 06:38:00 America/New_York"s);
+  auto dt = tz::dtime_from_string("2015-03-09 06:38:00 America/New_York"s, tzones);
   auto p = tz::period("12m");
-  auto exp = tz::dtime_from_string("2016-03-09 06:38:00 America/New_York"s);
+  auto exp = tz::dtime_from_string("2016-03-09 06:38:00 America/New_York"s, tzones);
   auto& tz = tzones.find("America/New_York");
   ASSERT_TRUE(tz::plus(dt, p, tz) == exp);
   ASSERT_TRUE(tz::plus(p, dt, tz) == exp);
 }
 TEST(period_plus_1y_1m) {
-  auto dt = tz::dtime_from_string("2015-03-09 06:38:00 America/New_York"s);
+  auto dt = tz::dtime_from_string("2015-03-09 06:38:00 America/New_York"s, tzones);
   auto p = tz::period("13m");
-  auto exp = tz::dtime_from_string("2016-04-09 06:38:00 America/New_York"s);
+  auto exp = tz::dtime_from_string("2016-04-09 06:38:00 America/New_York"s, tzones);
   auto& tz = tzones.find("America/New_York");
   ASSERT_TRUE(tz::plus(dt, p, tz) == exp);
   ASSERT_TRUE(tz::plus(p, dt, tz) == exp);
 }
 TEST(period_plus_1y_1m_1d) {
-  auto dt = tz::dtime_from_string("2015-03-09 06:38:00 America/New_York"s);
+  auto dt = tz::dtime_from_string("2015-03-09 06:38:00 America/New_York"s, tzones);
   auto p = tz::period("13m1d");
-  auto exp = tz::dtime_from_string("2016-04-10 06:38:00 America/New_York"s);
+  auto exp = tz::dtime_from_string("2016-04-10 06:38:00 America/New_York"s, tzones);
   auto& tz = tzones.find("America/New_York");
   ASSERT_TRUE(tz::plus(dt, p, tz) == exp);
   ASSERT_TRUE(tz::plus(p, dt, tz) == exp);
 }
 TEST(period_minus_1y) {
-  auto dt = tz::dtime_from_string("2015-03-09 06:38:00 America/New_York"s);
+  auto dt = tz::dtime_from_string("2015-03-09 06:38:00 America/New_York"s, tzones);
   auto p = tz::period("12m");
-  auto exp = tz::dtime_from_string("2014-03-09 06:38:00 America/New_York"s);
+  auto exp = tz::dtime_from_string("2014-03-09 06:38:00 America/New_York"s, tzones);
   auto& tz = tzones.find("America/New_York");
   ASSERT_TRUE(tz::minus(dt, p, tz) == exp);
 }
 TEST(period_minus_1y_1m) {
-  auto dt = tz::dtime_from_string("2015-03-09 06:38:00 America/New_York"s);
+  auto dt = tz::dtime_from_string("2015-03-09 06:38:00 America/New_York"s, tzones);
   auto p = tz::period("13m");
-  auto exp = tz::dtime_from_string("2014-02-09 06:38:00 America/New_York"s);
+  auto exp = tz::dtime_from_string("2014-02-09 06:38:00 America/New_York"s, tzones);
   auto& tz = tzones.find("America/New_York");
   ASSERT_TRUE(tz::minus(dt, p, tz) == exp);
 }
 TEST(period_minus_1y_1m_1d) {
-  auto dt = tz::dtime_from_string("2015-03-09 06:38:00 America/New_York"s);
+  auto dt = tz::dtime_from_string("2015-03-09 06:38:00 America/New_York"s, tzones);
   auto p = tz::period("1y1m1d");
-  auto exp = tz::dtime_from_string("2014-02-08 06:38:00 America/New_York"s);
+  auto exp = tz::dtime_from_string("2014-02-08 06:38:00 America/New_York"s, tzones);
   auto& tz = tzones.find("America/New_York");
   ASSERT_TRUE(tz::minus(dt, p, tz) == exp);
 }
@@ -112,7 +112,7 @@ TEST(period_comp) {
   ASSERT_TRUE(tz::period("/01:00:00") != tz::period(0,0,1s));
 }
 TEST(period_from_string) {
-  auto dt = tz::dtime_from_string("2015-03-09 06:38:00 America/New_York"s);
+  auto dt = tz::dtime_from_string("2015-03-09 06:38:00 America/New_York"s, tzones);
   auto& tz = tzones.find("America/New_York");
   auto dt1 = tz::plus(dt, tz::period(2, 2, 0s), tz);
   auto dt2 = tz::plus(dt, tz::period("2m2d"), tz);

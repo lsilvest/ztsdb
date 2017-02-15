@@ -39,33 +39,33 @@ cfg::CfgMap cfg::cfgmap;
 
 
 TEST(zts_constructor) {
-  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York");
-  auto dt2 = tz::dtime_from_string("2015-03-10 06:38:01 America/New_York");
-  auto dt3 = tz::dtime_from_string("2015-03-11 06:38:01 America/New_York");
+  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
+  auto dt2 = tz::dtime_from_string("2015-03-10 06:38:01 America/New_York", tzones);
+  auto dt3 = tz::dtime_from_string("2015-03-11 06:38:01 America/New_York", tzones);
   const arr::zts a({3,3}, {dt1, dt2, dt3}, {1,2,3,4,5,6,7,8,9}, {{}, {"one", "two", "three"}});
   // no ASSERT, just checking the constructor runs correctly
 }
 TEST(zts_constructor_from_array) {
-  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York");
-  auto dt2 = tz::dtime_from_string("2015-03-10 06:38:01 America/New_York");
-  auto dt3 = tz::dtime_from_string("2015-03-11 06:38:01 America/New_York");
+  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
+  auto dt2 = tz::dtime_from_string("2015-03-10 06:38:01 America/New_York", tzones);
+  auto dt3 = tz::dtime_from_string("2015-03-11 06:38:01 America/New_York", tzones);
   arr::Array<double> a({3,3}, {1,2,3,4,5,6,7,8,9}, {{}, {"one", "two", "three"}});
   const arr::zts z(Vector<Global::dtime>({dt1, dt2, dt3}), std::move(a));
   // no ASSERT, just checking the constructor runs correctly
 }
 TEST(zts_to_string) {
-  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York");
-  auto dt2 = tz::dtime_from_string("2015-03-10 06:38:01 America/New_York");
-  auto dt3 = tz::dtime_from_string("2015-03-11 06:38:01 America/New_York");
+  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
+  auto dt2 = tz::dtime_from_string("2015-03-10 06:38:01 America/New_York", tzones);
+  auto dt3 = tz::dtime_from_string("2015-03-11 06:38:01 America/New_York", tzones);
   auto a = arr::Array<double>({3,3}, {1,2,3,4,5,6,7,8,9}, {{}, {"one", "two", "three"}});
   const auto z = arr::zts(Vector<Global::dtime>({dt1, dt2, dt3}), std::move(a));
   // cout << val::to_string(make_shared<arr::zts>(z)) << endl;
   // no ASSERT, just checking the function runs correctly
 }
 TEST(zts_constructor_from_file) {
-  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York");
-  auto dt2 = tz::dtime_from_string("2015-03-10 06:38:01 America/New_York");
-  auto dt3 = tz::dtime_from_string("2015-03-11 06:38:01 America/New_York");
+  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
+  auto dt2 = tz::dtime_from_string("2015-03-10 06:38:01 America/New_York", tzones);
+  auto dt3 = tz::dtime_from_string("2015-03-11 06:38:01 America/New_York", tzones);
   {
     std::unique_ptr<arr::AllocFactory> mmap_core_dir =
                     std::make_unique<arr::MmapAllocFactory>("./zts_mmap_constructor/"s, false);

@@ -1,6 +1,6 @@
 // -*- compile-command: "make -k -j8 append" -*-
 
-// Copyright (C) 2016 Leonardo Silvestri
+// Copyright (C) 2017 Leonardo Silvestri
 //
 // This file is part of ztsdb.
 //
@@ -28,9 +28,6 @@
 #include <limits>
 #include "zcpp.hpp"
 #include "cow_ptr.hpp"
-
-
-tz::Zones tzones("/usr/share/zoneinfo");
 
 
 static void loop_append(const std::string ip, 

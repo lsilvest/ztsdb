@@ -64,7 +64,7 @@ TEST(display_bool_false) {
   ASSERT_TRUE(val::display(val::make_array(false)) == "[1] FALSE");
 }
 TEST(display_dtime) {
-  auto dt = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York");
+  auto dt = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
   ASSERT_TRUE(val::display(val::make_array(dt)) == "[1] 2015-03-09 10:38:01 UTC");
 }
 TEST(display_vclos) {

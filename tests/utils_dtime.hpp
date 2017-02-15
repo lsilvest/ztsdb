@@ -22,6 +22,8 @@
 #include "globals.hpp"
 #include "timezone/ztime.hpp"
 
+extern tz::Zones tzones;
+
 
 using namespace std::literals;
 
@@ -42,7 +44,7 @@ inline Global::dtime mkt(unsigned t) {
     throw std::out_of_range("mkt: t must be < 99");
   }
   std::string tt = t < 10 ? "0"s + std::to_string(t) : std::to_string(t);
-  return tz::dtime_from_string("2015-03-09 06:38:00."s + tt + " America/New_York"s);
+  return tz::dtime_from_string("2015-03-09 06:38:00."s + tt + " America/New_York"s, tzones);
 }
 
 
@@ -58,7 +60,8 @@ inline tz::interval mki(unsigned s, unsigned e, bool sopen=false, bool eopen=fal
                        
   return tz::interval_from_string
                        ("|"s + ssopen + "2015-03-09 06:38:00."s + ss + " America/New_York "s
-                        "-> 2015-03-09 06:38:00."s + se + " America/New_York"s + seopen + "|"s);
+                        "-> 2015-03-09 06:38:00."s + se + " America/New_York"s + seopen + "|"s
+                        , tzones);
 }
 
 #endif

@@ -191,9 +191,9 @@ ssize_t zcore::InterpCtx::readAppendData(const char* buf, size_t len) {
   size_t off = 0;
   auto slen = ntoh64(*(reinterpret_cast<const uint64_t*>(buf)));
   off += sizeof(uint64_t);
-  string s(buf + off, buf + off + slen);
+  const string s(buf + off, buf + off + slen);
   static const unsigned STRALIGN = 8; // find this constant somewhere globally !!! LLL
-  off += getAlignedLength(s, STRALIGN);
+  off += getAlignedLength(s.size(), STRALIGN);
 
   try {
     auto val = r->global->find(s);
@@ -243,9 +243,9 @@ ssize_t zcore::InterpCtx::readAppendVectorData(const char* buf, size_t len) {
   size_t off = 0;
   auto slen = ntoh64(*(reinterpret_cast<const uint64_t*>(buf)));
   off += sizeof(uint64_t);
-  string s(buf + off, buf + off + slen);
+  const string s(buf + off, buf + off + slen);
   static const unsigned STRALIGN = 8;
-  off += getAlignedLength(s, STRALIGN);
+  off += getAlignedLength(s.size(), STRALIGN);
 
   try {
     auto val = r->global->find(s);

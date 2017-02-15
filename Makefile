@@ -97,7 +97,7 @@ rtest:
 clean:
 	rm -rf ./build/*
 	$(MAKE) -C ./src clean
-	$(MAKE) -C ./src/shlib clean
+	$(MAKE) -C ./shlib clean
 	$(MAKE) -C ./lib clean
 	$(MAKE) -C ./itests/append clean
 	$(MAKE) -C ./itests/simple_append clean

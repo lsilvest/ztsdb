@@ -106,12 +106,12 @@ Global::duration tz::duration_from_string2(const std::string& str) {
 
 std::string tz::to_string(Global::dtime dt,
                           const std::string& format,
-                          const std::string& timezone,
+                          const tz::Zone& timezone,
+                          const std::string& timezone_str,
                           bool abbrev,
                           bool fractional) {
   // look up the tz and find the tz offset:
-  const auto& tzone = tzones.find(timezone);
-  auto offset_abbrev = tzone.getoffset(dt);
+  auto offset_abbrev = timezone.getoffset(dt);
   dt += offset_abbrev.first;
 
   date::sys_days t_days = date::floor<date::days>(dt);
@@ -148,7 +148,7 @@ std::string tz::to_string(Global::dtime dt,
     ss << ' ' << offset_abbrev.second;
   }
   else {
-    ss << ' ' << timezone;
+    ss << ' ' << timezone_str;
   }
   return ss.str();
 }
@@ -362,7 +362,9 @@ Global::dtime tz::dtime_from_numbers(int y,
 }
 
 
-static Global::dtime dtime_from_timetuple(const timetuple& tpl, const std::string& tz_given="") {
+static Global::dtime dtime_from_timetuple(const timetuple& tpl,
+                                          const tz::Zones& zones,
+                                          const std::string& tz_given="") {
   enum { Y, M, D, H, MN, SEC, NSEC, TZ };
 
   const std::string& tz_read = std::get<TZ>(tpl);
@@ -382,31 +384,34 @@ static Global::dtime dtime_from_timetuple(const timetuple& tpl, const std::strin
 }
 
 Global::dtime tz::dtime_from_string(const std::string& s,
+                                    const tz::Zones& zones,
                                     const std::string& fmt,
                                     const std::string& tz) {
   // check we consumed all chars LLL
   auto sp = s.c_str();
   auto fp = fmt.c_str();
-  return dtime_from_timetuple(readDtime(sp, sp + s.size(), fp, fp + fmt.size()), tz);
+  return dtime_from_timetuple(readDtime(sp, sp + s.size(), fp, fp + fmt.size()), zones, tz);
 }
 
 
 std::string tz::to_string(const tz::interval& i,
                           const std::string& format,
-                          const std::string& timezone,
+                          const tz::Zone& timezone,
+                          const std::string& timezone_str,
                           bool abbrev,
                           bool fractional)
 {
   return
     (i.sopen ? "-" : "+") +
-    tz::to_string(i.s, format, timezone, abbrev, fractional) +
+    tz::to_string(i.s, format, timezone, timezone_str, abbrev, fractional) +
     " -> " +
-    tz::to_string(i.e, format, timezone, abbrev, fractional) +
+    tz::to_string(i.e, format, timezone, timezone_str, abbrev, fractional) +
     (i.eopen ? "-" : "+");
 }
 
 
 tz::interval tz::interval_from_string(const std::string& s,
+                                      const tz::Zones& zones,
                                       const std::string &f,
                                       const std::string& tz) {
   const char* sp = s.c_str();
@@ -432,7 +437,7 @@ tz::interval tz::interval_from_string(const std::string& s,
   ++sp;
 
   skipWhitespace(sp, se);
-  const auto is = dtime_from_timetuple(readDtime(sp, se, fp, fe), tz);
+  const auto is = dtime_from_timetuple(readDtime(sp, se, fp, fe), zones, tz);
   skipWhitespace(sp, se);
 
   if (*sp++ != '-' || *sp++ != '>') {
@@ -441,7 +446,7 @@ tz::interval tz::interval_from_string(const std::string& s,
   
   skipWhitespace(sp, se);
   fp = f.c_str();
-  const auto ie = dtime_from_timetuple(readDtime(sp, se, fp, fe), tz);
+  const auto ie = dtime_from_timetuple(readDtime(sp, se, fp, fe), zones, tz);
   skipWhitespace(sp, se);
                  
   if (*sp == '-') {

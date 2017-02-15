@@ -39,13 +39,13 @@ TEST(interp_dtime) {
   auto eout = parse("|.2015-03-09 06:38:01 America/New_York.|\n");
   cout << "dtime: " << val::to_string(eval(eout)) << endl;
   ASSERT_TRUE(eval(eout) == 
-              val::make_array(tz::dtime_from_string("2015-03-09 06:38:01 America/New_York")));
+              val::make_array(tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones)));
 }
 TEST(interp_interval) {
   auto eout = parse("|+2015-03-09 06:38:01 America/New_York -> 2015-03-10 06:38:01 America/New_York+|\n");
   cout << "dtime: " << val::to_string(eval(eout)) << endl;
   ASSERT_TRUE(eval(eout) == 
-               val::make_array(tz::interval_from_string("|+2015-03-09 06:38:01 America/New_York -> 2015-03-10 06:38:01 America/New_York+|")));
+              val::make_array(tz::interval_from_string("|+2015-03-09 06:38:01 America/New_York -> 2015-03-10 06:38:01 America/New_York+|", tzones)));
 }
 
 // scalar double arithmetics:
@@ -445,9 +445,9 @@ TEST(interp_zts_3_2) {
         "|.2015-03-09 06:38:02 America/New_York.|, "
         "|.2015-03-09 06:38:03 America/New_York.|);"
         "zts(idx, 1.0:6, dim=c(3, 2), dimnames=list(NULL, c(\"one\", \"two\"))) \n");
-  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York");
-  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York");
-  auto dt3 = tz::dtime_from_string("2015-03-09 06:38:03 America/New_York");
+  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
+  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones);
+  auto dt3 = tz::dtime_from_string("2015-03-09 06:38:03 America/New_York", tzones);
   auto z = arr::zts({3,2}, {dt1, dt2, dt3}, {1,2,3,4,5,6}, {{}, {"one", "two"}});
   cout << "array: " << val::to_string(make_cow<arr::zts>(false, z)) << endl;
   cout << "array: " << val::to_string(eval(eout)) << endl;
@@ -459,9 +459,9 @@ TEST(interp_zts_3_2) {
 //         "|.2015-03-09 06:38:02 America/New_York.|, "
 //         "|.2015-03-09 06:38:03 America/New_York.|);"
 //         "zts(idx=idx, data=1.0:6, dimnames=list(NULL, c(\"one\", \"two\"))) \n");
-//   auto dt1 = tz::dtime_from_string("|.2015-03-09 06:38:01 America/New_York.|");
-//   auto dt2 = tz::dtime_from_string("|.2015-03-09 06:38:02 America/New_York.|");
-//   auto dt3 = tz::dtime_from_string("|.2015-03-09 06:38:03 America/New_York.|");
+//   auto dt1 = tz::dtime_from_string("|.2015-03-09 06:38:01 America/New_York.|", tzones);
+//   auto dt2 = tz::dtime_from_string("|.2015-03-09 06:38:02 America/New_York.|", tzones);
+//   auto dt3 = tz::dtime_from_string("|.2015-03-09 06:38:03 America/New_York.|", tzones);
 //   auto z = arr::zts({3,2}, {dt1, dt2, dt3}, {1,2,3,4,5,6}, {{}, {"one", "two"}});
 //   ASSERT_TRUE(eval(eout) == make_cow<arr::zts>(false, z));
 // }
@@ -470,8 +470,8 @@ TEST(interp_zts_2_2_2) {
         "|.2015-03-09 06:38:02 America/New_York.|);"
         "zts(idx, 1.0:8, dim=c(2,2,2), "
         "dimnames=list(NULL, c(\"one\", \"two\"), c(\"1\",\"2\"))) \n");
-  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York");
-  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York");
+  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
+  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones);
   auto z = arr::zts({2,2,2}, {dt1, dt2}, {1,2,3,4,5,6,7,8}, {{}, {"one", "two"}, {"1","2"}});
   ASSERT_TRUE(eval(eout) == make_cow<arr::zts>(false, z));
 }
@@ -653,8 +653,8 @@ TEST(interp_vector_subset_named_slice_dtime) {
         "a <- matrix(c(a1,a2,a3,a4), 2, 2, "
         "dimnames=list(c(\"1\",\"2\"), c(\"a\",\"b\"))); a[2, , drop=FALSE] \n");
   auto a = arr::Array<Global::dtime>({1,2}, 
-    { tz::dtime_from_string("2015-03-09 06:38:02 America/New_York"),
-      tz::dtime_from_string("2015-03-09 06:38:04 America/New_York")
+    { tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones),
+      tz::dtime_from_string("2015-03-09 06:38:04 America/New_York", tzones)
     }, {{"2"}, {"a","b"}});
   ASSERT_TRUE(eval(eout) == make_cow<val::VArrayDT>(false, a));
 }
@@ -680,9 +680,9 @@ TEST(interp_vector_subset_named_slice_interval) {
         "dimnames=list(c(\"1\",\"2\"), c(\"a\",\"b\"))); a[2, , drop=FALSE] \n");
   auto a = arr::Array<tz::interval>({1,2}, 
     { tz::interval_from_string("|+1969-12-31 19:00:01 America/New_York "
-                               "-> 1969-12-31 19:00:02 America/New_York+|"),
+                               "-> 1969-12-31 19:00:02 America/New_York+|", tzones),
       tz::interval_from_string("|+1969-12-31 19:00:03 America/New_York "
-                               "-> 1969-12-31 19:00:04 America/New_York+|")
+                               "-> 1969-12-31 19:00:04 America/New_York+|", tzones)
     }, {{"2"}, {"a","b"}});
   ASSERT_TRUE(eval(eout) == make_cow<val::VArrayIVL>(false, a));
 }
@@ -805,10 +805,10 @@ TEST(interp_subassign_array_dtime_dtime) {
         "a[2,2] <- |.2015-03-09 06:38:07 America/New_York.| \n"
         );
   auto a = arr::Array<Global::dtime>({2,2}, 
-    { tz::dtime_from_string("2015-03-09 06:38:01 America/New_York"),
-      tz::dtime_from_string("2015-03-09 06:38:02 America/New_York"),
-      tz::dtime_from_string("2015-03-09 06:38:03 America/New_York"),
-      tz::dtime_from_string("2015-03-09 06:38:07 America/New_York")
+    { tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones),
+      tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones),
+      tz::dtime_from_string("2015-03-09 06:38:03 America/New_York", tzones),
+      tz::dtime_from_string("2015-03-09 06:38:07 America/New_York", tzones)
     }, {{"1","2"}, {"a","b"}});
   ASSERT_TRUE(eval(eout) == make_cow<val::VArrayDT>(false, a));
 }

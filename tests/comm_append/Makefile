@@ -9,6 +9,7 @@ SRCS = encode.cpp ast.cpp array.cpp valuevar.cpp valuevar_ic.cpp	\
 	base_funcs_set.cpp load_builtin.cpp string.cpp csv.cpp		\
 	unop_binop_funcs.cpp base_types.cpp timezone/ztime.cpp		\
 	timezone/ztime_vector.cpp timezone/zone.cpp			\
-	timezone/localtime.cpp interp_error.cpp zcpp.cpp period.cpp
+	timezone/localtime.cpp interp_error.cpp zcpp.cpp zcpp_zts.cpp	\
+	period.cpp
 
 include ../Makefile.target.parser

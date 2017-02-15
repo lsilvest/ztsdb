@@ -1,9 +1,9 @@
-include ../Makefile.header
+include ../src/Makefile.header
 
-COREDIR =..
-COREDIR_TZ =../timezone
-COREDIR_MAIN_PARSER =../main_parser
-CPPFLAGS += -I$(COREDIR) -fPIC -DZTSDB_CLIENT
+COREDIR =../src
+COREDIR_TZ =$(COREDIR)/timezone
+COREDIR_MAIN_PARSER =$(COREDIR)/main_parser
+CPPFLAGS += -I$(COREDIR) -I$(COREDIR_MAIN_PARSER) -I. -fPIC -DZTSDB_CLIENT
 LDFLAGS += -shared
 
 
@@ -36,10 +36,10 @@ LDFLAGS += -shared
 	$(CPP) $(CPPFLAGS) -c -o $(notdir $@) $<
 
 SRCS = parser_ctx.cpp anf.cpp array.cpp ast.cpp valuevar.cpp		\
-	dname.cpp comm.cpp encode.cpp misc.cpp zts.cpp display.cpp	\
-	conversion_funcs.cpp string.cpp base_types.cpp			\
-	unop_binop_funcs.cpp config.cpp zcpp.cpp period.cpp		\
-	net_client.cpp
+	dname.cpp net_handler.cpp encode.cpp misc.cpp zts.cpp		\
+	display.cpp conversion_funcs.cpp string.cpp base_types.cpp	\
+	unop_binop_funcs.cpp config.cpp zcpp.cpp zcpp_zts.cpp		\
+	period.cpp net_client.cpp
 
 SRCS_TZ = ztime.cpp ztime_vector.cpp zone.cpp localtime.cpp
 SRCS_MAIN_PARSER = lexer.cpp parser.cpp

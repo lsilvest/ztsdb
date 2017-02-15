@@ -433,8 +433,8 @@ static E* readCode(const char* buf, size_t len, size_t& off) {
   case etsymbol  : {
     unsigned strlen = ntoh<STRLEN_T>(*(reinterpret_cast<const STRLEN_T*>(buf+off)));
     off += sizeof(STRLEN_T);
-    string s(buf+off, buf+off+strlen);
-    off += getAlignedLength(s, STRALIGN);
+    const string s(buf+off, buf+off+strlen);
+    off += getAlignedLength(s.size(), STRALIGN);
     bool ref = ntoh<BOOL_T>(*(reinterpret_cast<const BOOL_T*>(buf+off)));
     off += sizeof(BOOL_T);
     return new Symbol(s, yy::missing_loc(), ref);
@@ -442,15 +442,15 @@ static E* readCode(const char* buf, size_t len, size_t& off) {
   case etstring  : {
     unsigned strlen = ntoh<STRLEN_T>(*(reinterpret_cast<const STRLEN_T*>(buf+off)));
     off += sizeof(STRLEN_T);
-    arr::zstring s(buf+off, buf+off+strlen);
-    off += getAlignedLength(s, STRALIGN);
+    const arr::zstring s(buf+off, buf+off+strlen);
+    off += getAlignedLength(s.size(), STRALIGN);
     return new String(s, yy::missing_loc());
   }
   case etboundvar: {
     unsigned strlen = ntoh<STRLEN_T>(*(reinterpret_cast<const STRLEN_T*>(buf+off)));
     off += sizeof(STRLEN_T);
-    string s(buf+off, buf+off+strlen);
-    off += getAlignedLength(s, STRALIGN);
+    const string s(buf+off, buf+off+strlen);
+    off += getAlignedLength(s.size(), STRALIGN);
     return new Boundvar(s, yy::missing_loc());
   }
   case etunop : {
@@ -686,9 +686,9 @@ template <>
 inline size_t getEltFromBuffer(arr::zstring& t, const char* buf) {
   uint64_t len = ntoh64(*(reinterpret_cast<const uint64_t*>(buf)));
   buf += sizeof(uint64_t);
-  string s(buf, buf + len);
+  const string s(buf, buf + len);
   t = s;
-  return sizeof(uint64_t) + getAlignedLength(s, STRALIGN);
+  return sizeof(uint64_t) + getAlignedLength(s.size(), STRALIGN);
 }
 
 
@@ -918,7 +918,7 @@ void zcore::readValue(const char* buf, size_t len, size_t& off, vector<ValState>
       // stage 1, string created
       size_t readLen = min(vs.exp, len - off);
       // assert len - off is aligned
-      string s(buf+off, buf+off+readLen);
+      const string s(buf+off, buf+off+readLen);
       if (ss[idx-1].stage == 0) {
         vs.val = val::Value(s);
         ++(ss[idx-1].stage);
@@ -927,7 +927,7 @@ void zcore::readValue(const char* buf, size_t len, size_t& off, vector<ValState>
         auto& v = get<std::string>(vs.val);
         v += s;
       }
-      size_t alen = getAlignedLength(s, STRALIGN);
+      size_t alen = getAlignedLength(s.size(), STRALIGN);
       off += alen;
       vs.n += alen;
       if (vs.n >= vs.exp) --idx;
@@ -938,7 +938,7 @@ void zcore::readValue(const char* buf, size_t len, size_t& off, vector<ValState>
       // stage 1, string created
       size_t readLen = min(vs.exp, len - off);
       // assert len - off is aligned
-      string s(buf+off, buf+off+readLen);
+      const string s(buf+off, buf+off+readLen);
       if (ss[idx-1].stage == 0) {
         vs.val = val::VError{s};
         ++(ss[idx-1].stage);
@@ -947,7 +947,7 @@ void zcore::readValue(const char* buf, size_t len, size_t& off, vector<ValState>
         auto& v = get<val::VError>(vs.val);
         v.what = v.what + s;
       }
-      size_t alen = getAlignedLength(s, STRALIGN);
+      size_t alen = getAlignedLength(s.size(), STRALIGN);
       off += alen;
       vs.n += alen;
       if (vs.n >= vs.exp) --idx;
@@ -1080,15 +1080,16 @@ size_t zcore::codeLength(const E* e) {
   case etinterval : return sizeof(ETYPE_T) + 2*sizeof(DTIME_T) + 2*sizeof(IVL_OPEN_T);
   case etsymbol   : {
     auto s = static_cast<const Symbol*>(e);
-    return sizeof(ETYPE_T) + sizeof(STRLEN_T) + getAlignedLength(s->data, STRALIGN) + sizeof(BOOL_T);
+    return sizeof(ETYPE_T) + sizeof(STRLEN_T) +
+      getAlignedLength(s->data.size(), STRALIGN) + sizeof(BOOL_T);
   }
   case etstring  : {
     auto s = static_cast<const String*>(e);
-    return sizeof(ETYPE_T) + sizeof(STRLEN_T) + getAlignedLength((*s->data)[0], STRALIGN);
+    return sizeof(ETYPE_T) + sizeof(STRLEN_T) + getAlignedLength((*s->data)[0].size(), STRALIGN);
   }
   case etboundvar: {
     auto bv = static_cast<const Boundvar*>(e);
-    return sizeof(ETYPE_T) + sizeof(STRLEN_T) + getAlignedLength(bv->data, STRALIGN);
+    return sizeof(ETYPE_T) + sizeof(STRLEN_T) + getAlignedLength(bv->data.size(), STRALIGN);
   }
     // case etconn cannot be sent!
   case etunop : {

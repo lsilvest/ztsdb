@@ -40,7 +40,8 @@ namespace tz {
 
   std::string to_string(Global::dtime dt,
                         const std::string& format,
-                        const std::string& timezone,
+                        const tz::Zone& timezone,
+                        const std::string& timezone_str,
                         bool abbrev=false,
                         bool fractional=false);
 
@@ -54,16 +55,19 @@ namespace tz {
                                    const tz::Zone& z);
 
   Global::dtime dtime_from_string(const std::string& s, 
+                                  const tz::Zones& tzones,
                                   const std::string& fmt = "%Y-%m-%d %H:%M:%S[.%s] %Z",
                                   const std::string& tz = "");
 
   std::string to_string(const tz::interval& i,
                         const std::string& format,
-                        const std::string& timezone,
+                        const tz::Zone& timezone,
+                        const std::string& timezone_str,
                         bool abbrev=false,
                         bool fractional=false);
 
   interval interval_from_string(const std::string& s, 
+                                const tz::Zones& tzones,
                                 const std::string& f = "%Y-%m-%d %H:%M:%S[.%s] %Z",
                                 const std::string& tz = "");
 

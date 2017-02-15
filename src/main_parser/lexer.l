@@ -26,6 +26,8 @@
 #include "../globals.hpp"
 #include "../timezone/ztime.hpp"
 
+extern tz::Zones tzones;
+
 typedef yy::parser::semantic_type YYSTYPE;
 typedef yy::parser::location_type YYLTYPE;
 
@@ -165,7 +167,8 @@ NaN   { ctx.ignore_nl=false; return yy::parser::make_DOUBLE(Global::ZNAN, ctx.lo
 
 {dtime}    { ctx.ignore_nl=false;
              try {
-               return yy::parser::make_DTIME(tz::dtime_from_string(yyget_text(yyscanner), "|.%Y-%m-%d %H:%M:%S[.%s] %Z.|"), ctx.loc);
+               return yy::parser::make_DTIME(tz::dtime_from_string(yyget_text(yyscanner),
+                                             tzones, "|.%Y-%m-%d %H:%M:%S[.%s] %Z.|"), ctx.loc);
              }
              catch (const std::exception& e) {
                return yy::parser::make_ERROR("Error parsing dtime: "s + e.what(), ctx.loc);
@@ -173,7 +176,8 @@ NaN   { ctx.ignore_nl=false; return yy::parser::make_DOUBLE(Global::ZNAN, ctx.lo
            }
 {interval} { ctx.ignore_nl=false; 
              try {
-               return yy::parser::make_INTERVAL(tz::interval_from_string(yyget_text(yyscanner)), ctx.loc); 
+               return yy::parser::make_INTERVAL(tz::interval_from_string(yyget_text(yyscanner),
+                                                tzones), ctx.loc); 
              }
              catch (const std::exception& e) {
                return yy::parser::make_ERROR("Error parsing interval: "s + e.what(), ctx.loc);

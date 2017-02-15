@@ -96,7 +96,8 @@ RUnit_assign_global <- function() {
     get("a_get_global", "global") == 2300
 }
 
-## test that the same variable name can reference an object or a function
+## test that the same variable name can reference both an object and a
+## function at the same time
 RUnit_access_builtin <- function() {
     t <- 2
     t(3) == 3 & t == 2

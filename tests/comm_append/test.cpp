@@ -313,12 +313,13 @@ TEST(comm_append_array_time) {
                          "               |.2015-03-09 06:38:02 America/New_York.|, "
                          "               |.2015-03-09 06:38:03 America/New_York.|), 3, 1)\n");
 
-  auto a = make_cow<val::VArrayDT>(false, 
-                                   Vector<arr::idx_type>{3,1}, 
-                                   Vector<Global::dtime>{
-                                     tz::dtime_from_string("2015-03-09 06:38:01 America/New_York"),
-                                     tz::dtime_from_string("2015-03-09 06:38:02 America/New_York"),
-                                     tz::dtime_from_string("2015-03-09 06:38:03 America/New_York")});
+  auto a = make_cow<val::VArrayDT>
+    (false, 
+     Vector<arr::idx_type>{3,1}, 
+     Vector<Global::dtime>{
+       tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones),
+         tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones),
+         tz::dtime_from_string("2015-03-09 06:38:03 America/New_York", tzones)});
 
   // create and send the append message (we just append 'a' to 'a'):
   auto msg = arr::make_append_msg("a", *a);
@@ -338,15 +339,15 @@ TEST(comm_append_array_time) {
 }
 TEST(comm_append_array_interval) {
   auto tpl = queryAndRun("i1 <- |-2015-03-09 06:38:01 America/New_York "
-                         "     -> 2015-03-10 06:38:01 America/New_York+|;"
+                         "-> 2015-03-10 06:38:01 America/New_York+|;"
                          "i2 <- |-2015-03-10 06:38:01 America/New_York "
-                         "     -> 2015-03-11 06:38:01 America/New_York+|;"
+                         "-> 2015-03-11 06:38:01 America/New_York+|;"
                          "a <<- matrix(c(i1, i2), 1, 2)\n");
 
   auto i1 = tz::interval_from_string("|-2015-03-09 06:38:01 America/New_York "
-                                     "-> 2015-03-10 06:38:01 America/New_York+|");
+                                     "-> 2015-03-10 06:38:01 America/New_York+|", tzones);
   auto i2 = tz::interval_from_string("|-2015-03-10 06:38:01 America/New_York "
-                                     "-> 2015-03-11 06:38:01 America/New_York+|");
+                                     "-> 2015-03-11 06:38:01 America/New_York+|", tzones);
   auto a = make_cow<val::VArrayIVL>(false, 
                                     Vector<arr::idx_type>{1,2}, 
                                     Vector<tz::interval>{i1, i2});
@@ -375,18 +376,18 @@ TEST(comm_append_zts) {
                                     "dimnames=list(NULL, c(\"one\", \"two\", \"three\")))\n");
 
   // original z:
-  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York");
-  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York");
-  auto dt3 = tz::dtime_from_string("2015-03-09 06:38:03 America/New_York");
+  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
+  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones);
+  auto dt3 = tz::dtime_from_string("2015-03-09 06:38:03 America/New_York", tzones);
   auto a = arr::Array<double>({3,3}, {1,2,3,4,5,6,7,8,9}, {{}, {"one", "two", "three"}});
   const auto z = make_cow<arr::zts>(false, 
                                     Vector<Global::dtime>{dt1,dt2,dt3}, 
                                     std::move(a));
 
   // zts to be appended to z:
-  auto dt4 = tz::dtime_from_string("2015-03-09 06:38:04 America/New_York");
-  auto dt5 = tz::dtime_from_string("2015-03-09 06:38:05 America/New_York");
-  auto dt6 = tz::dtime_from_string("2015-03-09 06:38:06 America/New_York");
+  auto dt4 = tz::dtime_from_string("2015-03-09 06:38:04 America/New_York", tzones);
+  auto dt5 = tz::dtime_from_string("2015-03-09 06:38:05 America/New_York", tzones);
+  auto dt6 = tz::dtime_from_string("2015-03-09 06:38:06 America/New_York", tzones);
   auto aa = arr::Array<double>({3,3}, {1,2,3,4,5,6,7,8,9});
   const arr::zts az(arr::Array<Global::dtime>({dt4,dt5,dt6}), std::move(aa));
 
@@ -414,9 +415,9 @@ TEST(comm_append_zts_not_ascending, log_to_file) {
                                     "dimnames=list(NULL, c(\"one\", \"two\", \"three\")))\n");
 
   // original z:
-  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York");
-  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York");
-  auto dt3 = tz::dtime_from_string("2015-03-09 06:38:03 America/New_York");
+  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
+  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones);
+  auto dt3 = tz::dtime_from_string("2015-03-09 06:38:03 America/New_York", tzones);
   auto aa = arr::Array<double>({3,3}, {1,2,3,4,5,6,7,8,9});
   const arr::zts az(arr::Array<Global::dtime>({dt1,dt2,dt3}), std::move(aa));
 
@@ -510,18 +511,18 @@ TEST(comm_append_vector_zts) {
                                     "dimnames=list(NULL, c(\"one\", \"two\", \"three\")))\n");
 
   // original z:
-  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York");
-  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York");
-  auto dt3 = tz::dtime_from_string("2015-03-09 06:38:03 America/New_York");
+  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
+  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones);
+  auto dt3 = tz::dtime_from_string("2015-03-09 06:38:03 America/New_York", tzones);
   auto a = arr::Array<double>({3,3}, {1,2,3,4,5,6,7,8,9}, {{}, {"one", "two", "three"}});
   const auto z = make_cow<arr::zts>(false, 
                                     Vector<Global::dtime>{dt1,dt2,dt3}, 
                                     std::move(a));
 
   // zts to be appended to z:
-  auto dt4 = tz::dtime_from_string("2015-03-09 06:38:04 America/New_York");
-  auto dt5 = tz::dtime_from_string("2015-03-09 06:38:05 America/New_York");
-  auto dt6 = tz::dtime_from_string("2015-03-09 06:38:06 America/New_York");
+  auto dt4 = tz::dtime_from_string("2015-03-09 06:38:04 America/New_York", tzones);
+  auto dt5 = tz::dtime_from_string("2015-03-09 06:38:05 America/New_York", tzones);
+  auto dt6 = tz::dtime_from_string("2015-03-09 06:38:06 America/New_York", tzones);
   auto aa = arr::Array<double>({3,3}, {1,2,3,4,5,6,7,8,9});
   const arr::zts az(arr::Array<Global::dtime>({dt4,dt5,dt6}), std::move(aa));
 
@@ -547,8 +548,8 @@ TEST(comm_append_vector_zts) {
   ASSERT_TRUE(res == expected);
 }
 TEST(comm_append_vector_zts_idx_data_mismatch_make_msg) {
-  auto dt4 = tz::dtime_from_string("2015-03-09 06:38:04 America/New_York");
-  auto dt5 = tz::dtime_from_string("2015-03-09 06:38:05 America/New_York");
+  auto dt4 = tz::dtime_from_string("2015-03-09 06:38:04 America/New_York", tzones);
+  auto dt5 = tz::dtime_from_string("2015-03-09 06:38:05 America/New_York", tzones);
   ASSERT_THROW(arr::make_append_msg("z",
                                     Vector<Global::dtime>{dt4,dt5},
                                     Vector<double>{1,2,3,4,5,6,7,8,9}),
@@ -559,8 +560,8 @@ TEST(comm_append_vector_zts_idx_data_mismatch_receive_msg, log_to_file) {
 
 }
 TEST(comm_append_vector_zts_idx_unsorted_make_msg) {
-  auto dt4 = tz::dtime_from_string("2015-03-09 06:38:04 America/New_York");
-  auto dt5 = tz::dtime_from_string("2015-03-09 06:38:05 America/New_York");
+  auto dt4 = tz::dtime_from_string("2015-03-09 06:38:04 America/New_York", tzones);
+  auto dt5 = tz::dtime_from_string("2015-03-09 06:38:05 America/New_York", tzones);
   ASSERT_THROW(arr::make_append_msg("z",
                                     Vector<Global::dtime>{dt5,dt4},
                                     Vector<double>{1,2,3,4,5,6}),
@@ -575,9 +576,9 @@ TEST(comm_append_vector_zts_idx_unsorted_receive_msg, log_to_file) {
                                     "dimnames=list(NULL, c(\"one\", \"two\", \"three\")))\n");
 
   // zts to be appended to z:
-  auto dt4 = tz::dtime_from_string("2015-03-09 06:38:04 America/New_York");
-  auto dt5 = tz::dtime_from_string("2015-03-09 06:38:05 America/New_York");
-  auto dt6 = tz::dtime_from_string("2015-03-09 06:38:06 America/New_York");
+  auto dt4 = tz::dtime_from_string("2015-03-09 06:38:04 America/New_York", tzones);
+  auto dt5 = tz::dtime_from_string("2015-03-09 06:38:05 America/New_York", tzones);
+  auto dt6 = tz::dtime_from_string("2015-03-09 06:38:06 America/New_York", tzones);
 
   auto msg = arr::make_append_msg("z",
                                   Vector<Global::dtime>{dt4,dt5,dt6},
@@ -598,9 +599,9 @@ TEST(comm_append_vector_zts_idx_not_increasing_receive_msg, log_to_file) {
                                     "dimnames=list(NULL, c(\"one\", \"two\", \"three\")))\n");
 
   // zts to be appended to z:
-  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York");
-  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York");
-  auto dt3 = tz::dtime_from_string("2015-03-09 06:38:03 America/New_York");
+  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
+  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones);
+  auto dt3 = tz::dtime_from_string("2015-03-09 06:38:03 America/New_York", tzones);
 
   auto msg = arr::make_append_msg("z",
                                   Vector<Global::dtime>{dt1,dt2,dt3},
@@ -640,9 +641,9 @@ TEST(comm_zts_appendVector_empty_message) {
   size_t offset;
   auto msg = make_zero_length_append_msg_zts("z", offset);
   // original z:
-  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York");
-  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York");
-  auto dt3 = tz::dtime_from_string("2015-03-09 06:38:03 America/New_York");
+  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
+  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones);
+  auto dt3 = tz::dtime_from_string("2015-03-09 06:38:03 America/New_York", tzones);
   auto a = arr::Array<double>({3,3}, {1,2,3,4,5,6,7,8,9}, {{}, {"one", "two", "three"}});
   auto z = make_cow<arr::zts>(false, 
                               Vector<Global::dtime>{dt1,dt2,dt3}, 

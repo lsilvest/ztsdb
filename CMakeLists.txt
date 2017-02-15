@@ -39,9 +39,11 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall")
 
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(shlib)
+ADD_SUBDIRECTORY(shlib_client)
 ADD_SUBDIRECTORY(itests/client)
 ADD_SUBDIRECTORY(itests/append)
 ADD_SUBDIRECTORY(itests/simple_append)
+ADD_SUBDIRECTORY(itests/simple_append_c)
 
 
 ENABLE_TESTING()

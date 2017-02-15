@@ -26,6 +26,9 @@
 #include "timezone/ztime.hpp"
 
 
+extern tz::Zones tzones;
+
+
 using namespace std::string_literals;
 
 
@@ -115,7 +118,8 @@ namespace zlog {
       if (sv >= level) {
         va_list ap;
         va_start(ap, fmt);
-        std::string tm = tz::to_string(std::chrono::system_clock::now(), "", tz, true); 
+        std::string tm = tz::to_string(std::chrono::system_clock::now(),
+                                       "", tzones.find(tz), tz, true); 
         static char str[BUFLEN];
         mx.lock();              // to protect 'str'
         vsnprintf(str, BUFLEN, fmt, ap);

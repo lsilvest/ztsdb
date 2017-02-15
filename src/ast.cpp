@@ -25,6 +25,7 @@
 #include "timezone/ztime.hpp"
 #include "array.hpp"
 
+extern tz::Zones tzones;
 
 using namespace std;
 
@@ -129,11 +130,11 @@ string to_string(const E& e) {
   }
   case etdtime : {
     auto d = static_cast<const Dtime*>(&e);
-    return tz::to_string((*d->data)[0], "", "GMT");
+    return tz::to_string((*d->data)[0], "", tzones.find("UTC"), "UTC");
   }
   case etinterval : {
     auto d = static_cast<const Interval*>(&e);
-    return tz::to_string((*d->data)[0], "", "GMT");
+    return tz::to_string((*d->data)[0], "", tzones.find("UTC"), "UTC");
   }
   case etsymbol: {
     auto& s = static_cast<const Symbol&>(e);
