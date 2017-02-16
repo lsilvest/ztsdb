@@ -27,7 +27,7 @@
 ## This example shows typical startup code that would be run as
 ## initial code by a database instance in order to load a set of
 ## persistent objects (arrays or time-series) from a directory and put
-## the in the global environment.
+## them in the global environment.
 
 
 objects <- system("ls /tmp", intern=TRUE)
