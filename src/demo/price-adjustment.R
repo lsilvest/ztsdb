@@ -33,6 +33,13 @@
 ## calculations on the fly as part of a data query. The recipient of
 ## this data, maybe in an R session, thus receives immediately usable
 ## data.
+##
+
+## CAVEAT: modify 'path' below to the correct location of the data:
+path <- "/path/to/ztsdb/src/demo/price-adjustment-data/"
+if (system(paste("test -d", path))) {
+  stop("can't find data directory for demo: please modify 'path' in the script")
+}
 
 
 ## Note that the data used in this example is from 'Quandl'
@@ -57,9 +64,7 @@ get_adjust_split_zts <- function(split) {
 
 
 ## In the real world this is the kind of data that would be present in
-## the DBMS, but for this demo, we load it from CSV files: modify
-## 'path' to suit your location!
-path <- "/home/lsilvest/repos/ztsdb/src/demo/price-adjustment-data/"
+## the DBMS, but for this demo, we load it from CSV files.
 aapl_price <- read.csv(paste0(path, "aapl_price.csv"))
 aapl_div   <- read.csv(paste0(path, "aapl_div.csv"))
 aapl_split <- read.csv(paste0(path, "aapl_split.csv"))
