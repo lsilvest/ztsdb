@@ -509,6 +509,12 @@ val::Value funcs::dimnames(const vector<val::VBuiltinG::arg_t>& v, zcore::Interp
 }
 
 
+val::Value funcs::stop(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  const auto& errorstr = val::get_scalar<zstring>(getVal(v[0]));
+  throw interp::EvalException(errorstr, getLoc(v[0]));
+}
+
+
 val::Value funcs::system(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   // system(command, intern = FALSE,
   //      ignore.stdout = FALSE, ignore.stderr = FALSE,
@@ -622,13 +628,19 @@ val::Value funcs::system(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCt
       return val::make_array(arr::zstring(buf)); 
     }
     else {                      // not intern
+      int status = 0;
       if (dowait) {
-        waitpid(pid, nullptr, 0);
+        waitpid(pid, &status, 0);
+        if (WIFEXITED(status)) {
+          // exited normally, so return the status of the process
+          status = WEXITSTATUS(status);
+        }
+        // otherwise just leave it to what 'waitpid' returned. 
       }
       fflush(stdout);
       close(link[1]);
       ic.s->k->next->next->atype |= interp::Kont::SILENT;
-      return val::make_array(0.0);
+      return val::make_array(static_cast<double>(status));
     }
   }
 }

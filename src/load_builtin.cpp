@@ -317,12 +317,6 @@ void core::loadBuiltinFunctions(interp::BaseFrame* r) {
   val::VBuiltinG(r, "print","function(x, tz=\"\") NULL\n", funcs::print);
   val::VBuiltinG(r, "str", "function(object) NULL\n", funcs::str, true);
 
-  val::VBuiltinG(r, "q",    "function(status=0) NULL\n", funcs::quit, false,
-                 {{"status", {{val::vt_double}, true}}});
-  val::VBuiltinG(r, "quit", "function(status=0) NULL\n", funcs::quit, false,
-                 {{"status", {{val::vt_double}, true}}});
-  val::VBuiltinG(r, "source", "function(file) NULL\n", funcs::source, true,
-                 {{"file", {{val::vt_string}, true}}});
   val::VBuiltinG(r, "substr", "function(x, start, stop) NULL \n", funcs::substr, true,
                  {{"x",     {{val::vt_string }, true}},
                   {"start", {{val::vt_double }, true}},
@@ -427,6 +421,14 @@ void core::loadBuiltinFunctions(interp::BaseFrame* r) {
   val::VBuiltinG(r, "prod", "function(x) NULL \n", funcs::prod, true,
                  {{"x",   {{val::vt_double, val::vt_zts }, true}}});
 
+  val::VBuiltinG(r, "q",    "function(status=0) NULL\n", funcs::quit, false,
+                 {{"status", {{val::vt_double}, true}}});
+  val::VBuiltinG(r, "quit", "function(status=0) NULL\n", funcs::quit, false,
+                 {{"status", {{val::vt_double}, true}}});
+  val::VBuiltinG(r, "stop", "function(x) NULL\n", funcs::stop, false,
+                 {{"x", {{val::vt_string}, true}}});
+  val::VBuiltinG(r, "source", "function(file) NULL\n", funcs::source, true,
+                 {{"file", {{val::vt_string}, true}}});
   val::VBuiltinG(r, "system", 
                  "function(command, intern=FALSE, ignore.stdout=FALSE," 
                  "ignore.stderr=FALSE, wait=TRUE) NULL \n", 

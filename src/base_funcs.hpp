@@ -111,7 +111,6 @@ namespace funcs {
   val::Value cat(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);  
   val::Value paste(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);  
 
-  val::Value quit(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);  
   val::Value read_csv(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value substr(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value write_csv(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
@@ -173,6 +172,8 @@ namespace funcs {
   val::Value prod(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
 
   // system and general utilities
+  val::Value quit(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);  
+  val::Value stop(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value system(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
 
   // date/time
