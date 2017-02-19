@@ -67,8 +67,8 @@ aapl_split <- read.csv(paste0(path, "aapl_split.csv"))
 
 ## Now get the multipliers for the adjustments, making sure we don't
 ## take dividend and split data that is beyond the last close:
-last_close <- tail(zts.idx(close), 1)
 aapl_close <- aapl_price[, "Close"]
+last_close <- tail(zts.idx(aapl_close), 1)
 adjust_div   <- get_adjust_div_zts(aapl_close, aapl_div[zts.idx(aapl_div) <= last_close, ])
 adjust_split <- get_adjust_split_zts(aapl_split[zts.idx(aapl_split) <= last_close, ])
 
@@ -80,3 +80,4 @@ adjust_split <- get_adjust_split_zts(aapl_split[zts.idx(aapl_split) <= last_clos
 ## scenario correctly:
 aapl_price_adj <- op.zts(adjust_div, aapl_close, "*")
 aapl_price_adj <- op.zts(adjust_split, aapl_price_adj, "*")
+
