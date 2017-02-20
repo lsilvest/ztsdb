@@ -23,8 +23,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "net_handler.hpp"
-#include "net_client.hpp"
+#include <ztsdb/net_handler.hpp>
+#include <ztsdb/net_client.hpp>
 
 
 class Zconnection {

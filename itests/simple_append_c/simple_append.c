@@ -1,4 +1,4 @@
-// -*- compile-command: "make -k -j8 simple_append" -*-
+// -*- compile-command: "gcc -g simple_append.c -o simple_append -lztsdb_client -lboost_system" -*-
 
 // Copyright (C) 2017 Leonardo Silvestri
 //
@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
-#include "zc.h"
+#include "ztsdb/zc.h"
 
 
 static void simple_append(const char* ip, int port, const char* varname, size_t ncols)

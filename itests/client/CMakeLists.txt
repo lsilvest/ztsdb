@@ -5,6 +5,7 @@ ADD_EXECUTABLE(client ${SOURCE_FILES})
 FIND_PACKAGE(Boost COMPONENTS system filesystem REQUIRED)
 
 INCLUDE_DIRECTORIES(
+  ../..
   ../../src
   ../../src/main_parser
   ${CMAKE_CURRENT_BINARY_DIR}/../../src/main_parser

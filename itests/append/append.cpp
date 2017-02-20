@@ -1,4 +1,4 @@
-// -*- compile-command: "make -k -j8 append" -*-
+// -*- compile-command: "g++ -g -std=c++1y append.cpp -o append -lstdc++ -lztsdb -lboost_system" -*-
 
 // Copyright (C) 2017 Leonardo Silvestri
 //
@@ -26,8 +26,8 @@
 #include <string>
 #include <iostream>
 #include <limits>
-#include "zcpp.hpp"
-#include "cow_ptr.hpp"
+#include <ztsdb/zcpp.hpp>
+#include <ztsdb/cow_ptr.hpp>
 
 
 static void loop_append(const std::string ip, 

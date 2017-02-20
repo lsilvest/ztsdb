@@ -1,6 +1,7 @@
 FIND_PACKAGE(Boost COMPONENTS system filesystem REQUIRED)
 
-SET(SRC ../../src)
+SET(BASE ../..)
+SET(SRC ${BASE}/src)
 
 SET(SOURCE_FILES
   simple_append.cpp
@@ -14,7 +15,7 @@ SET_SOURCE_FILES_PROPERTIES(${SRC}/timezone/localtime.cpp
 ADD_EXECUTABLE(simple_append ${SOURCE_FILES})
 
 INCLUDE_DIRECTORIES(
-  ${SRC}
+  ${BASE}
   ${LIBDOUBLE_CONVERSION_INCLUDE_DIRS})
 
 TARGET_LINK_LIBRARIES(

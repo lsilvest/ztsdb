@@ -31,7 +31,6 @@ SET(SOURCE_FILES
   allocator.hpp
   anf.cpp
   anf.hpp
-  api.hpp
   array.cpp
   array.hpp
   array_ops.hpp
@@ -159,25 +158,15 @@ TARGET_LINK_LIBRARIES(
   )
 
 
-SET(HEADER_FILES
-  main_parser/location.hpp
-  main_parser/position.hpp
+SET(ZTSDB_HEADER_FILES
   ast.hpp
   anf.hpp
   display.hpp
   globals.hpp
-  timezone/interval.hpp
-  timezone/zone.hpp
-  timezone/tz.hpp
-  timezone/tzfile.h
-  timezone/ztime_vector.hpp
-  timezone/ztime.hpp
   cow_ptr.hpp
   string.hpp
   dname.hpp
   array.hpp
-  juice/variant.hpp
-  juice/mpl.hpp
   allocator_factory.hpp
   allocator.hpp
   misc.hpp
@@ -190,8 +179,6 @@ SET(HEADER_FILES
   net_client.hpp
   encode.hpp
   valuevar.hpp
-  juice/variant_binary.hpp
-  juice/variant.hpp
   zts.hpp
   valuevar_ic.hpp
   valuevector.hpp
@@ -200,7 +187,38 @@ SET(HEADER_FILES
   info.hpp
   config.hpp
   index.hpp
+  parser_ctx.hpp
+  pseudovector.hpp
+  load_builtin.hpp
+  env.hpp
+  zcpp_stdlib.hpp
+  zc.h
+  main_parser/location.hpp
+  main_parser/position.hpp
+)
+
+SET(JUICE_HEADER_FILES 
+  juice/variant.hpp
+  juice/variant_binary.hpp
+  juice/mpl.hpp
+)
+
+SET(MAIN_PARSER_HEADER_FILES 
+  main_parser/location.hpp
+  main_parser/position.hpp
+)
+
+SET(TIMEZONE_HEADER_FILES 
+  timezone/interval.hpp
+  timezone/zone.hpp
+  timezone/tz.hpp
+  timezone/tzfile.h
+  timezone/ztime_vector.hpp
+  timezone/ztime.hpp
 )
 
 INSTALL(TARGETS ztsdb DESTINATION bin)
-INSTALL(FILES ${HEADER_FILES} DESTINATION include/ztsdb)
+INSTALL(FILES ${ZTSDB_HEADER_FILES} DESTINATION include/ztsdb)
+INSTALL(FILES ${JUICE_HEADER_FILES} DESTINATION include/ztsdb/juice)
+INSTALL(FILES ${MAIN_PARSER_HEADER_FILES} DESTINATION include/ztsdb/main_parser)
+INSTALL(FILES ${TIMEZONE_HEADER_FILES} DESTINATION include/ztsdb/timezone)

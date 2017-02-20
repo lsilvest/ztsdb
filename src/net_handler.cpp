@@ -30,7 +30,8 @@
 #include "misc.hpp"
 #include "globals.hpp"
 #include "logging.hpp"
-#include "api.hpp"
+#include "juice/variant.hpp"
+#include "juice/variant_binary.hpp"
 
 
 // #define DEBUG
@@ -177,7 +178,7 @@ bool net::BufferMgt::get_data(Global::conn_id_t& id, Buf& buf) {
 size_t net::BufferMgt::gc() {
   size_t bytes = 0;
   std::chrono::system_clock::time_point::duration combufttl =
-    std::chrono::seconds(get<int64_t>(cfg::cfgmap.get("commbuf.ttl.secs")));
+    std::chrono::seconds(Juice::get<int64_t>(cfg::cfgmap.get("commbuf.ttl.secs")));
   auto now = std::chrono::system_clock::now();
   mx.lock();
   for (auto i = bufmap.begin(); i != bufmap.end(); ++i) { 

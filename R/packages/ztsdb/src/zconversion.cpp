@@ -44,8 +44,8 @@
 // SOFTWARE.
 
 
+#include <ztsdb/globals.hpp>
 #include "zconversion.hpp"
-#include "globals.hpp"
 
 
 static Rcpp::List convertDimnames(const std::vector<std::unique_ptr<arr::Dname>>& dnames) {

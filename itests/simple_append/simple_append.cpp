@@ -1,4 +1,4 @@
-// -*- compile-command: "make -k -j8 simple_append" -*-
+// -*- compile-command: "g++ -g -std=c++1y simple_append.cpp -o simple_append -lstdc++ -lztsdb_client -lboost_system" -*-
 
 // Copyright (C) 2016 Leonardo Silvestri
 //
@@ -29,7 +29,7 @@
 #include <vector>
 #include <system_error>
 #include <unistd.h>
-#include "zcpp_stdlib.hpp"
+#include "ztsdb/zcpp_stdlib.hpp"
 
 
 static void simple_append(const std::string ip, 

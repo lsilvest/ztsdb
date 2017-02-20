@@ -16,14 +16,15 @@
 // along with ztsdb.  If not, see <http://www.gnu.org/licenses/>.
 
 
-#include <sys/eventfd.h>
 #include "zconnection.hpp"
 #include "zconversion.hpp"
-#include "parser_ctx.hpp"
-#include "load_builtin.hpp"
-#include "anf.hpp"
-#include "globals.hpp"
-#include "logging.hpp"
+
+#include <sys/eventfd.h>
+#include <ztsdb/parser_ctx.hpp>
+#include <ztsdb/load_builtin.hpp>
+#include <ztsdb/anf.hpp>
+#include <ztsdb/globals.hpp>
+#include <ztsdb/logging.hpp>
 
 
 // #define _DEBUG

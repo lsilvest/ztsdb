@@ -18,11 +18,11 @@
 
 #include <iostream>
 #include <sys/eventfd.h>
-#include "parser_ctx.hpp"
-#include "logging.hpp"
-#include "net_client.hpp"
-#include "anf.hpp"
-#include "display.hpp"
+#include <ztsdb/parser_ctx.hpp>
+#include <ztsdb/logging.hpp>
+#include <ztsdb/net_client.hpp>
+#include <ztsdb/anf.hpp>
+#include <ztsdb/display.hpp>
 
 
 tz::Zones tzones("/usr/share/zoneinfo"); // should be configurable LLL

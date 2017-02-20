@@ -21,7 +21,7 @@
 
 
 #include <Rcpp.h>
-#include "valuevar.hpp"         // <> rather than "" I guess LLL
+#include <ztsdb/valuevar.hpp>
 
 
 SEXP valueToSEXP(const val::Value& v);
