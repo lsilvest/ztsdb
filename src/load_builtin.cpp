@@ -514,11 +514,11 @@ void core::loadBuiltinFunctions(interp::BaseFrame* r) {
                   {"end",    {{val::vt_duration,val::vt_period}, true}},
                   {"tz",     {{val::vt_string,val::vt_null }, true}}});
   val::VBuiltinG(r, "op.zts",
-        	 "function(x, y, method) NULL \n", 
+        	 "function(x, y, op) NULL \n", 
         	 funcs::op_zts, true,
-        	 {{"x",      {{val::vt_zts}, true}},
-                  {"y",      {{val::vt_zts}, true}},
-                  {"method", {{val::vt_string}, true}}});
+        	 {{"x",  {{val::vt_zts}, true}},
+                  {"y",  {{val::vt_zts}, true}},
+                  {"op", {{val::vt_string}, true}}});
   
   val::VBuiltinG(r, "time",
         	 "function(year, month, day, hour=NULL, min=NULL, sec=NULL, nsec=NULL, tz) NULL \n", 

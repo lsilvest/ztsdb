@@ -914,27 +914,27 @@ val::Value funcs::year(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx&
 
 
 val::Value funcs::op_zts(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  enum { X, Y, METHOD };
+  enum { X, Y, OP };
   const auto& x = get<val::SpZts>(getVal(v[X]));
   auto y = get<val::SpZts>(getVal(v[Y]));
-  const auto& method = val::get_scalar<arr::zstring>(getVal(v[METHOD]));
+  const auto& op = val::get_scalar<arr::zstring>(getVal(v[OP]));
 
   using FIter = Vector<double>::iterator;
-  if (method == "*") {
+  if (op == "*") {
     arr::op<ztsdb::applyd<FIter, ztsdb::multiplies<double,double,double>>>(*x, *y);
     return y;
   }
-  if (method == "/") {
+  if (op == "/") {
     arr::op<ztsdb::applyd<FIter, ztsdb::divides<double,double,double>>>(*x, *y);
     return y;
   }
-  if (method == "+") {
+  if (op == "+") {
     arr::op<ztsdb::applyd<FIter, ztsdb::plus<double,double,double>>>(*x, *y);
     return y;
   }
-  if (method == "-") {
+  if (op == "-") {
     arr::op<ztsdb::applyd<FIter, ztsdb::minus<double,double,double>>>(*x, *y);
     return y;
   }
-  throw interp::EvalException("unknown align method", getLoc(v[METHOD]));
+  throw interp::EvalException("unknown align op", getLoc(v[OP]));
 }
