@@ -276,6 +276,34 @@ namespace arr {
     return a;
   }
 
+  
+  template<typename T>
+  Array<T>& diff_inplace(Array<T>& a, ssize_t n) {
+    if (n > 0 ) {
+      for (idx_type c=0; c<a.v.size(); c++) {
+        for (idx_type r=a.dim[0]-1; r >= static_cast<idx_type>(n); --r) {
+          setv(a.getcol(c), r, (*a.v[c])[r] - (*a.v[c])[r - n]);
+        }
+        for (idx_type r=0; r<static_cast<idx_type>(n); ++r) {
+          setv(a.getcol(c), r, Global::ZNAN);
+        }
+      }
+    } 
+    else {
+      for (idx_type c=0; c<a.v.size(); c++) {
+        for (idx_type r=0; r<a.dim[0] + n; ++r) {
+          setv(a.getcol(c), r, (*a.v[c])[r] - (*a.v[c])[r - n]);
+        }
+        for (idx_type r=a.dim[0]+n; r<a.dim[0]; ++r) {
+          setv(a.getcol(c), r, Global::ZNAN);
+        }
+      }
+    }
+    return a;
+  }
+
+
+
 
   /// window (or rolling window) function to compute the covariance on
   /// a sliding window. In addition to the window size 'window', an

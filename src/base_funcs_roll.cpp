@@ -123,7 +123,7 @@ val::Value funcs::rollcov(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpC
 template <arr::Array<double>& (*rollfunc2)(arr::Array<double>&, ssize_t)>
 static inline val::Value doroll2(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum {X, N};
-  const size_t n  = funcs::getUint(val::get_scalar<double>(getVal(v[N])), getLoc(v[N]));
+  const size_t n  = funcs::getInt(val::get_scalar<double>(getVal(v[N])), getLoc(v[N]));
   
   switch (getVal(v[X]).which()) {
   case val::vt_double: {
@@ -154,6 +154,11 @@ val::Value funcs::move(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx&
 
 val::Value funcs::rotate(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   return doroll2<arr::rotate_inplace>(v, ic);
+}
+
+
+val::Value funcs::diff(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  return doroll2<arr::diff_inplace>(v, ic);
 }
 
 
@@ -273,6 +278,70 @@ val::Value funcs::prod(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx&
   else if (getVal(v[0]).which() == val::vt_double) {
     const auto& a = get<val::SpVAD>(getVal(v[0]));
     auto s = a->for_each(Aggr<double, std::multiplies<double>>(1.0));
+    return val::make_array(s.res);
+  }
+  else {
+    throw interp::EvalException("invalid type", getLoc(v[0]));
+  }
+}
+
+
+
+template <class F>
+static val::Value minMax(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+
+}
+
+template <typename T>
+struct Min {
+  T operator()(const T& t1, const T& t2) { return std::min(t1, t2); }
+};
+
+val::Value funcs::_min(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  if (getVal(v[0]).which() == val::vt_zts) {
+    const auto& z = get<val::SpZts>(getVal(v[0]));
+    auto s = z->getArray().for_each(Aggr<double,
+                                    Min<double>>(std::numeric_limits<double>::max()));
+    return val::make_array(s.res);
+  }
+  else if (getVal(v[0]).which() == val::vt_double) {
+    const auto& a = get<val::SpVAD>(getVal(v[0]));
+    auto s = a->for_each(Aggr<double, Min<double>>(std::numeric_limits<double>::max()));
+    return val::make_array(s.res);
+  }
+  else if (getVal(v[0]).which() == val::vt_duration) {
+    const auto& a = get<val::SpVADUR>(getVal(v[0]));
+    auto s = a->for_each(Aggr<Global::duration,
+                         Min<Global::duration>>(std::numeric_limits<Global::duration>::max()));
+    return val::make_array(s.res);
+  }
+  else {
+    throw interp::EvalException("invalid type", getLoc(v[0]));
+  }
+}
+
+
+template <typename T>
+struct Max {
+  T operator()(const T& t1, const T& t2) { return std::max(t1, t2); }
+};
+
+val::Value funcs::_max(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  if (getVal(v[0]).which() == val::vt_zts) {
+    const auto& z = get<val::SpZts>(getVal(v[0]));
+    auto s = z->getArray().for_each(Aggr<double,
+                                    Max<double>>(std::numeric_limits<double>::min()));
+    return val::make_array(s.res);
+  }
+  else if (getVal(v[0]).which() == val::vt_double) {
+    const auto& a = get<val::SpVAD>(getVal(v[0]));
+    auto s = a->for_each(Aggr<double, Max<double>>(std::numeric_limits<double>::min()));
+    return val::make_array(s.res);
+  }
+  else if (getVal(v[0]).which() == val::vt_duration) {
+    const auto& a = get<val::SpVADUR>(getVal(v[0]));
+    auto s = a->for_each(Aggr<Global::duration,
+                         Max<Global::duration>>(std::numeric_limits<Global::duration>::min()));
     return val::make_array(s.res);
   }
   else {

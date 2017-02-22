@@ -389,6 +389,11 @@ void core::loadBuiltinFunctions(interp::BaseFrame* r) {
                  funcs::rotate, true,
                  {{"x", {{val::vt_double, val::vt_zts }, true}},
                   {"n", {{val::vt_double              }, true}}});
+  val::VBuiltinG(r, "diff", 
+                 "function(x, n) NULL \n", 
+                 funcs::diff, true,
+                 {{"x", {{val::vt_double, val::vt_zts }, true}},
+                  {"n", {{val::vt_double              }, true}}});
   val::VBuiltinG(r, "cumsum", 
                  "function(x, rev=FALSE) NULL \n", 
                  funcs::cumsum, true,
@@ -419,6 +424,10 @@ void core::loadBuiltinFunctions(interp::BaseFrame* r) {
                  {{"x",   {{val::vt_double, val::vt_duration, val::vt_zts }, true}}});
   val::VBuiltinG(r, "prod", "function(x) NULL \n", funcs::prod, true,
                  {{"x",   {{val::vt_double, val::vt_zts }, true}}});
+  val::VBuiltinG(r, "min", "function(x) NULL \n", funcs::_min, true,
+                 {{"x",   {{val::vt_double, val::vt_duration, val::vt_zts }, true}}});
+  val::VBuiltinG(r, "max", "function(x) NULL \n", funcs::_max, true,
+                 {{"x",   {{val::vt_double, val::vt_duration, val::vt_zts }, true}}});
 
   val::VBuiltinG(r, "q",    "function(status=0) NULL\n", funcs::quit, false,
                  {{"status", {{val::vt_double}, true}}});

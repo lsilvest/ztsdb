@@ -162,6 +162,7 @@ namespace funcs {
   val::Value locf(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value move(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value rotate(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
+  val::Value diff(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value cumsum(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value cumprod(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value cumdiv(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
@@ -170,6 +171,8 @@ namespace funcs {
   val::Value rev(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value sum(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value prod(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
+  val::Value _min(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
+  val::Value _max(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
 
   // system and general utilities
   val::Value quit(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);  
