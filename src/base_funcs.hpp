@@ -102,6 +102,8 @@ namespace funcs {
   val::Value head(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value tail(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value runif(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
+  val::Value rnorm(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
+  val::Value set_seed(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value msync(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value alloc_dirname(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
 

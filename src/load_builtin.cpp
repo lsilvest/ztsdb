@@ -261,6 +261,12 @@ void core::loadBuiltinFunctions(interp::BaseFrame* r) {
                  {{"x",   {{val::vt_double, val::vt_zts}, true}},
                   {"min", {{val::vt_double}, true}},
                   {"max", {{val::vt_double}, true}}});
+  val::VBuiltinG(r, "rnorm", "function(x, mean=0, sd=1) NULL\n", funcs::rnorm, true,
+                 {{"x",    {{val::vt_double, val::vt_zts}, true}},
+                  {"mean", {{val::vt_double}, true}},
+                  {"sd",   {{val::vt_double}, true}}});
+  val::VBuiltinG(r, "set.seed", "function(x) NULL\n", funcs::set_seed, true,
+                 {{"x",    {{val::vt_double, val::vt_zts}, true}}});
   val::VBuiltinG(r, "alloc.dirname", "function(x) NULL\n", funcs::alloc_dirname, true); 
   val::VBuiltinG(r, "msync", "function(x, async=FALSE) NULL\n", funcs::msync, true,
                  {{"async", {{val::vt_bool}, true}}});

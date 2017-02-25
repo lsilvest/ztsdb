@@ -1004,23 +1004,27 @@ val::Value funcs::tail(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx&
 }
 
 
-val::Value funcs::runif(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  enum { X, MIN, MAX };
+static std::random_device rd;
+static std::mt19937_64 gen(rd());
 
-  auto minp = val::get_scalar<double>(getVal(v[MIN]));
-  auto maxp = val::get_scalar<double>(getVal(v[MAX]));
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_real_distribution<> dis(minp, maxp);
+val::Value funcs::set_seed(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  enum { X };
+  auto x = static_cast<idx_type>(val::get_scalar<double>(getVal(v[X])));
+  gen.seed(x);
+  return val::VNull();
+}
 
+template <typename DIS>
+static val::Value random_helper(const vector<val::VBuiltinG::arg_t>& v, DIS& dis) {
+  enum { X };
   // if x is scalar, then we create a new vector of specified size
   if (getVal(v[X]).which() == val::vt_double) {
     auto x = get<val::SpVAD>(getVal(v[X]));
     if (x->isScalar()) {
       auto len = static_cast<idx_type>(val::get_scalar<double>(getVal(v[X])));
-      auto a = arr::make_cow<val::VArrayD>(false, rsv, Vector<idx_type>{len});
-      for (size_t i = 0; i<a->size(); ++i) {
-        arr::setv(*a, i, dis(gen));
+      auto a = arr::make_cow<val::VArrayD>(false, noinit_tag, Vector<idx_type>{len});
+      for (size_t i = 0; i<len; ++i) {
+        setv(*a, i, dis(gen));
       }
       return a;
     }
@@ -1039,6 +1043,26 @@ val::Value funcs::runif(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx
     }
     return x;
   }
+}
+
+val::Value funcs::runif(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  enum { X, MIN, MAX };
+
+  auto minp = val::get_scalar<double>(getVal(v[MIN]));
+  auto maxp = val::get_scalar<double>(getVal(v[MAX]));
+  std::uniform_real_distribution<> dis(minp, maxp);
+  return random_helper(v, dis);
+}
+
+
+// combine this code with the code for unif
+val::Value funcs::rnorm(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  enum { N, MEAN, SD };
+
+  auto mean = val::get_scalar<double>(getVal(v[MEAN]));
+  auto sd   = val::get_scalar<double>(getVal(v[SD]));
+  std::normal_distribution<double> dis(mean, sd);
+  return random_helper(v, dis);
 }
 
 
