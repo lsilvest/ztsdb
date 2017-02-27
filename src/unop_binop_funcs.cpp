@@ -466,6 +466,9 @@ val::Value funcs::evalbinop(val::Value v1, const val::Value& v2, int op, const v
   static std::set<int> plus_only{
     yy::parser::token::PLUS};
 
+  static std::set<int> minus_only{
+    yy::parser::token::MINUS};
+
   static std::set<int> mul_div{
     yy::parser::token::MUL, 
     yy::parser::token::DIV};
@@ -604,7 +607,7 @@ val::Value funcs::evalbinop(val::Value v1, const val::Value& v2, int op, const v
     }
     break;
   }
-    // Zts ----------------------- 
+  // Zts ----------------------- 
   case val::vt_zts: {
     const auto& t1 = get<val::SpZts>(v1);
     switch (v2.which()) {
@@ -685,7 +688,12 @@ val::Value funcs::evalbinop(val::Value v1, const val::Value& v2, int op, const v
     switch (v2.which()) {
     case val::vt_time: {
       const auto& t2 = get<val::SpVADT>(v2);
-      if (comp.find(op) != comp.end()) {
+      if (minus_only.find(op) != minus_only.end()) {
+        return evalbinop_array_array_<Global::dtime, Global::dtime, Global::duration,
+                                      yy::parser::token::MINUS
+                                      >(*t1, *t2, op);
+      }
+      else if (comp.find(op) != comp.end() || minus_only.find(op) != plus_minus.end()) {
         return evalbinop_array_array_<Global::dtime, Global::dtime, bool,
                                       yy::parser::token::LE,
                                       yy::parser::token::LT,

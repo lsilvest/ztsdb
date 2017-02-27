@@ -264,6 +264,10 @@ RUnit_string_undefined_ops <- function() {
 }
 
 ## time
+RUnit_time_minus <- function() {
+    |.2015-03-09 06:38:02 America/New_York.| - |.2015-03-09 06:38:01 America/New_York.| ==
+    as.duration(1e9)
+}
 RUnit_time_le <- function() {
     (|.2015-03-09 06:38:01 America/New_York.| <= |.2015-03-09 06:38:02 America/New_York.|)          &
     (|.2015-03-09 06:38:02 America/New_York.| <= |.2015-03-09 06:38:01 America/New_York.|) == FALSE &
@@ -769,6 +773,14 @@ RUnit_arr_arr_bool_undefined_ops <- function() {
 }
 
 ## time
+RUnit_arr_arr_time_minus <- function() {
+    dnames <- list(c("un","deux"), c("uno","due","tre"), c("unu","doi","trei","patru"))
+    a <- array(|.2015-03-09 06:38:02 America/New_York.|, c(2,3,4), dimnames=dnames)
+    b <- array(|.2015-03-09 06:38:01 America/New_York.|, c(2,3,4), dimnames=dnames)
+    res <- array(as.duration(1e9), c(2,3,4), dimnames=dnames);
+    all((a - b) == res  &
+        (b - a) == -res)
+}
 RUnit_arr_arr_time_le <- function() {
     dnames <- list(c("un","deux"), c("uno","due","tre"), c("unu","doi","trei","patru"))
     a <- array(|.2015-03-09 06:38:01 America/New_York.|, c(2,3,4), dimnames=dnames)
@@ -838,7 +850,6 @@ RUnit_arr_arr_time_undefined_ops <- function() {
     a <- array(|.2015-03-09 06:38:01 America/New_York.|, c(2,3,4), dimnames=dnames)
     b <- array(|.2014-03-09 06:38:01 America/New_York.|, c(2,3,4), dimnames=dnames)
     tryCatch(a +  b, "error") == "error" &
-    tryCatch(a -  b, "error") == "error" &
     tryCatch(a *  b, "error") == "error" &
     tryCatch(a /  b, "error") == "error" &
     tryCatch(a ^  b, "error") == "error" &
@@ -1388,6 +1399,16 @@ RUnit_scalar_arr_string_undefined_ops <- function() {
 }
 
 ## time
+RUnit_scalar_arr_time_minus <- function() {
+    dnames <- list(c("un","deux"), c("uno","due","tre"), c("unu","doi","trei","patru"))
+    a <- array(|.2015-03-09 06:38:02 America/New_York.|, c(2,3,4), dimnames=dnames)
+    b <- array(|.2015-03-09 06:38:01 America/New_York.|, c(2,3,4), dimnames=dnames)
+    as <- |.2015-03-09 06:38:02 America/New_York.|
+    bs <- |.2015-03-09 06:38:01 America/New_York.|
+    res <- array(as.duration(1e9), c(2,3,4), dimnames=dnames);
+    all((as - b) == res  &
+        (bs - a) == -res)
+}
 RUnit_scalar_arr_time_le <- function() {
     dnames <- list(c("un","deux"), c("uno","due","tre"), c("unu","doi","trei","patru"))
     a <- array(|.2015-03-09 06:38:01 America/New_York.|, c(2,3,4), dimnames=dnames)
@@ -1471,7 +1492,6 @@ RUnit_scalar_arr_time_undefined_ops <- function() {
     as <- |.2015-03-09 06:38:01 America/New_York.|
     bs <- |.2014-03-09 06:38:01 America/New_York.|
     tryCatch(as +  b, "error") == "error" &
-    tryCatch(as -  b, "error") == "error" &
     tryCatch(as *  b, "error") == "error" &
     tryCatch(as /  b, "error") == "error" &
     tryCatch(as ^  b, "error") == "error" &
@@ -2039,18 +2059,15 @@ RUnit_arr_scalar_string_undefined_ops <- function() {
 }
 
 ## time
-RUnit_arr_scalar_time_le <- function() {
+RUnit_arr_scalar_time_minus <- function() {
     dnames <- list(c("un","deux"), c("uno","due","tre"), c("unu","doi","trei","patru"))
-    a <- array(|.2015-03-09 06:38:01 America/New_York.|, c(2,3,4), dimnames=dnames)
-    b <- array(|.2014-03-09 06:38:01 America/New_York.|, c(2,3,4), dimnames=dnames)
-    as <- |.2015-03-09 06:38:01 America/New_York.|
-    bs <- |.2014-03-09 06:38:01 America/New_York.|
-    t <- array(TRUE, c(2,3,4), dimnames=dnames);
-    f <- !t
-    all((a <= bs) == f  &
-        (b <= as) == t  &
-        (b <= bs) == t  &
-        (a <= as) == t)
+    a <- array(|.2015-03-09 06:38:02 America/New_York.|, c(2,3,4), dimnames=dnames)
+    b <- array(|.2015-03-09 06:38:01 America/New_York.|, c(2,3,4), dimnames=dnames)
+    as <- |.2015-03-09 06:38:02 America/New_York.|
+    bs <- |.2015-03-09 06:38:01 America/New_York.|
+    res <- array(as.duration(1e9), c(2,3,4), dimnames=dnames);
+    all((a - bs) == res  &
+        (b - as) == -res)
 }
 RUnit_arr_scalar_time_lt <- function() {
     dnames <- list(c("un","deux"), c("uno","due","tre"), c("unu","doi","trei","patru"))
@@ -2120,7 +2137,6 @@ RUnit_arr_scalar_time_undefined_ops <- function() {
     a <- array(|.2015-03-09 06:38:01 America/New_York.|, c(2,3,4), dimnames=dnames)
     b <- |.2014-03-09 06:38:01 America/New_York.|
     tryCatch(a +  b, "error") == "error" &
-    tryCatch(a -  b, "error") == "error" &
     tryCatch(a *  b, "error") == "error" &
     tryCatch(a /  b, "error") == "error" &
     tryCatch(a ^  b, "error") == "error" &
