@@ -17,7 +17,6 @@
 
 
 #include <cstdint>
-#include <random>
 #include "base_funcs.hpp"
 #include "valuevar.hpp"
 #include "conversion_funcs.hpp"
@@ -335,7 +334,9 @@ val::Value funcs::dblsubset(const vector<val::VBuiltinG::arg_t>& v, zcore::Inter
     auto i = convertToIndex(v.begin()+1, v.end(), l->a);
     checkScalarIndex(i);
     auto r = (l->a)(i, true);
-    return r[0];
+    auto a = r[0];
+    setRef(a);
+    return a;
   }    
   case val::vt_string: {
     const auto ai = get<val::SpVAS>(a); // const necessary for disambiguation of subset function
@@ -505,16 +506,33 @@ val::Value funcs::subassign(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& 
 
 val::Value funcs::dblsubassign(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { A, B };
-  ic.s->k->next->next->atype |= interp::Kont::SILENT;
-  auto& a = getVal(v[A]);
-  if (a.which() == val::vt_list) {
-    auto& b = getVal(v[B]);
-    auto& al = get<val::SpVList>(a);
-    auto i = convertToIndex(v.begin()+2, v.end(), al->a);
-    al->a.operator()<Index, val::Value>(i, b);
-    return a;
+  try {
+    ic.s->k->next->next->atype |= interp::Kont::SILENT;
+    auto& a = getVal(v[A]);
+    if (a.which() == val::vt_list) {
+      auto& b = getVal(v[B]);
+      auto& al = get<val::SpVList>(a);
+      const auto i = convertToIndex(v.begin()+2, v.end(), al->a);
+      try {
+        al->a.operator()<Index, val::Value>(i, b);
+      }
+      catch (...) {
+        // in the case of an index character that doesn't exist, we
+        // extend the list in the last position:
+        if (i[0].idx.which() == arr::Index::it_names) {
+          std::cout << "it's a name" << std::endl;
+          const auto& name = get<arr::NameIndex>(i[0].idx).vs[0];
+          al->a.concat(b, name);
+        }
+        else throw;
+      }
+      return a;
+    }
+    else {
+      return subassign(v, ic);
+    }
   }
-  else {
-    return subassign(v, ic);
+  catch (std::exception& e) {
+    throw interp::EvalException(e.what(), getLoc(*(v.begin()+2)));
   }
 }
