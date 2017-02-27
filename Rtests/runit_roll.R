@@ -129,6 +129,9 @@ RUnit_rev_vector_bool <- function() {
 RUnit_move_vector <- function() {
     all.equal(move(1:10, 1), c(NaN, 1:9))
 }
+RUnit_move_vector_negative <- function() {
+    all.equal(move(1:10, -1), c(2:10, NaN))
+}
 RUnit_move_vector_zero <- function() {
     all.equal(move(1:10, 0), 1:10)
 }
@@ -145,9 +148,6 @@ RUnit_move_vector_inplace <- function() {
 }
 RUnit_move_vector_out_of_bound <- function() {
     tryCatch(move(1:10, 11), .Last.error=="subscript out of bounds")
-}
-RUnit_move_vector_negative <- function() {
-    tryCatch(move(1:10, -1), .Last.error=="argument cannot be negative")
 }
 RUnit_move_matrix <- function() {
     all.equal(move(matrix(1:9, 3, 3), 1), matrix(c(NaN,1,2,NaN,4,5,NaN,7,8), 3, 3))
@@ -172,6 +172,9 @@ RUnit_move_zts_copy <- function() {
 RUnit_rotate_vector <- function() {
     all.equal(rotate(1:10, 1), c(10, 1:9))
 }
+RUnit_rotate_vector_negative <- function() {
+    all.equal(rotate(1:10, -1), c(2:10, 1))
+}
 RUnit_rotate_vector_zero <- function() {
     all.equal(rotate(1:10, 0), 1:10)
 }
@@ -188,9 +191,6 @@ RUnit_rotate_vector_inplace <- function() {
 }
 RUnit_rotate_vector_out_of_bound <- function() {
     tryCatch(rotate(1:10, 11), .Last.error=="subscript out of bounds")
-}
-RUnit_rotate_vector_negative <- function() {
-    tryCatch(rotate(1:10, -1), .Last.error=="argument cannot be negative")
 }
 RUnit_rotate_matrix <- function() {
     all.equal(rotate(matrix(1:9, 3, 3), 1), matrix(c(3,1,2,6,4,5,9,7,8), 3, 3))
