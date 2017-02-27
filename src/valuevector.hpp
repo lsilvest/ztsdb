@@ -199,11 +199,18 @@ namespace arr {
     vector<val::Value> c;
   };
 
-  
+
+  // redefine these so as not to take into account ordering:
   template <>
-  inline void setv(Vector<val::Value>& v, size_t i, const val::Value& t) { v.at(i, t); }
+  inline void setv(Vector<val::Value>& v, size_t i, const val::Value& t) {
+    if (i >= v.size()) throw std::range_error("subscript out of bounds");        
+    v.at(i, t);
+  }
   template <>
-  inline void setv_checkbefore(Vector<val::Value>& v, size_t i, const val::Value& t) { v.at(i, t); }
+  inline void setv_checkbefore(Vector<val::Value>& v, size_t i, const val::Value& t) {
+    if (i >= v.size()) throw std::range_error("subscript out of bounds");        
+    v.at(i, t);
+  }
 
 }
 
