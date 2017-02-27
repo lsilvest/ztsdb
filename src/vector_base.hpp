@@ -162,7 +162,7 @@ namespace arr {
       c->ordered = n > 1 ? O()(value, value) : true;
     }
 
-    /// basic constructor leaving the vector allocated but ininitialized.
+    /// basic constructor leaving the vector allocated but uninitialized.
     Vector(rsv_t, size_t n, 
            std::unique_ptr<baseallocator>&& alloc_p=std::make_unique<memallocator>()) 
       : alloc(std::move(alloc_p))
