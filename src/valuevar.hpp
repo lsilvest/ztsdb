@@ -480,6 +480,8 @@ namespace val {
   void resetTmp(Value& v);
   void setConst(Value& v);
   void setLast(Value& v);
+  void setRef(Value& v);
+  void resetRef(Value& v);
   bool isLocked(const Value& v);
   bool isRef(const Value& v);
   bool isTmp(const Value& v);

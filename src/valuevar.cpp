@@ -229,6 +229,50 @@ void val::setLast(val::Value& v) {
 }
 
 
+template<typename T>
+struct setRef_helper {
+  static void f(val::Value& v) {
+    auto& a = get<T>(v);
+    a.setRef();
+  }
+};
+
+void val::setRef(val::Value& v) {
+  apply_to_types<setRef_helper, 
+                 val::vt_double, 
+                 val::vt_bool, 
+                 val::vt_time, 
+                 val::vt_duration, 
+                 val::vt_interval, 
+                 val::vt_period, 
+                 val::vt_string, 
+                 val::vt_zts,
+                 val::vt_list>(v);
+}
+
+
+template<typename T>
+struct resetRef_helper {
+  static void f(val::Value& v) {
+    auto& a = get<T>(v);
+    a.resetRef();
+  }
+};
+
+void val::resetRef(val::Value& v) {
+  apply_to_types<resetRef_helper, 
+                 val::vt_double, 
+                 val::vt_bool, 
+                 val::vt_time, 
+                 val::vt_duration, 
+                 val::vt_interval, 
+                 val::vt_period, 
+                 val::vt_string, 
+                 val::vt_zts,
+                 val::vt_list>(v);
+}
+
+
 // to reduce boilerplate switch code:
 template <template<typename...> class F, typename... T>
 static inline bool apply_to_types_bool(const val::Value& v) { return false; }
