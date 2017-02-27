@@ -63,6 +63,7 @@ static Rcpp::List convertDimnames(const std::vector<std::unique_ptr<arr::Dname>>
 
 template <int RTYPE, typename T>
 static Rcpp::Vector<RTYPE> convertArray(const arr::Array<T>& a) {
+  // if we have a vector we can do 'memcpy' LLL
   Rcpp::Vector<RTYPE> v;
   for (arr::idx_type i=0; i<a.size(); ++i) {
     v.push_back(a[i]);
@@ -105,6 +106,25 @@ static Rcpp::NumericVector convertDtimeVector(const Vector<Global::dtime>& a) {
     v.push_back(d);
   }
   v.attr("class") = Rcpp::CharacterVector{"POSIXct", "POSIXt"};
+  return v;
+}
+
+union int64_double {
+  int64_t i;
+  double d;
+};
+
+
+static Rcpp::NumericVector convertDurationArray(const arr::Array<Global::duration>& a) {
+  Rcpp::NumericVector v;
+  for (arr::idx_type i=0; i<a.size(); ++i) {
+    int64_double id;
+    id.i = a[i].count();
+    v.push_back(id.d);
+  }
+  v.attr("class") = Rcpp::CharacterVector{"integer64"};
+  v.attr("dim") = Rcpp::IntegerVector(a.getdim().begin(), a.getdim().end());
+  v.attr("dimnames") = convertDimnames(a.names);
   return v;
 }
 
@@ -151,6 +171,11 @@ SEXP valueToSEXP(const val::Value& v) {
   case val::vt_time: {
     val::SpVADT a = get<val::SpVADT>(v);
     Rcpp::NumericVector v = convertDtimeArray(*a);
+    return Rcpp::wrap(v);
+  }
+  case val::vt_duration: {
+    val::SpVADUR a = get<val::SpVADUR>(v);
+    Rcpp::NumericVector v = convertDurationArray(*a);
     return Rcpp::wrap(v);
   }
   case val::vt_string: {
