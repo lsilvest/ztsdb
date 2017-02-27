@@ -53,16 +53,26 @@ if (system(paste("test -d", path))) {
 
 ## The two functions below calculate time-series with the multipliers
 ## needed for the adjustment:
-get_adjust_div_zts <- function(close, div) {
+get_adjust_div_zts <<- function(close, div) {
   pricedaym1 <- align(move(close, 1), zts.idx(div)) # adj must start on previous day
   cumprod(1 - (div / pricedaym1), rev=TRUE)
 }
 
-get_adjust_split_zts <- function(split) {
+get_adjust_split_zts <<- function(split) {
   cumprod(1 / split, rev=TRUE)          # split should not have any zeroes!
 }
 
-
+## This function returns the adjusted price for a given 'id':
+get_adjusted_price <<- function(id) {
+  close <- stock_data[[id]][, "Close"]
+  last_close <- tail(zts.idx(close), 1)
+  adjust_div <- get_adjust_div_zts(close, div[[id]][zts.idx(div) <= last_close, ])
+  adjust_split <- get_adjust_split_zts(split[zts.idx(split) <= last_close, ])
+  price_adj <- op.zts(adjust_div, aapl_close, "*")
+  price_adj <- op.zts(adjust_split, aapl_price_adj, "*")
+  price_adj
+}
+  
 ## In the real world this is the kind of data that would be present in
 ## the DBMS, but for this demo, we load it from CSV files.
 aapl_price <- read.csv(paste0(path, "aapl_price.csv"))
