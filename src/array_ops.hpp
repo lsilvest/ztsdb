@@ -252,7 +252,7 @@ namespace arr {
           v[r-(a.dim[0]-n)] = (*a.v[c])[r];
         }
         for (idx_type r=a.dim[0]-1; r >= static_cast<idx_type>(n); --r) {
-          setv(a.getcol(c), r, (*a.v[c])[r] - n);
+          setv(a.getcol(c), r, (*a.v[c])[r - n]);
         }
         for (idx_type r=0; r<static_cast<idx_type>(n); ++r) {
           setv(a.getcol(c), r, v[r]);
@@ -266,7 +266,7 @@ namespace arr {
           v[r] = (*a.v[c])[r];
         }
         for (idx_type r=0; r<a.dim[0] + n; ++r) {
-          setv(a.getcol(c), r, (*a.v[c])[r] - n);
+          setv(a.getcol(c), r, (*a.v[c])[r - n]);
         }
         for (idx_type r=a.dim[0]+n; r<a.dim[0]; ++r) {
           setv(a.getcol(c), r, v[r - (a.dim[0]+n)]);

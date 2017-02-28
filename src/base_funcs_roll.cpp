@@ -153,7 +153,44 @@ val::Value funcs::move(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx&
 
 
 val::Value funcs::rotate(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  return doroll2<arr::rotate_inplace>(v, ic);
+  enum {X, N};
+  const size_t n  = funcs::getInt(val::get_scalar<double>(getVal(v[N])), getLoc(v[N]));
+  
+  switch (getVal(v[X]).which()) {
+  case val::vt_double: {
+    val::SpVAD a = get<val::SpVAD>(getVal(v[X]));
+    arr::rotate_inplace(*a, n);           // potentially a copy when not ref
+    return a;
+  }
+  case val::vt_time: {
+    val::SpVADT a = get<val::SpVADT>(getVal(v[X]));
+    arr::rotate_inplace(*a, n);           // potentially a copy when not ref
+    return a;
+  }
+  // correct this!
+  // case val::vt_bool: {
+  //   val::SpVAB a = get<val::SpVAB>(getVal(v[X]));
+  //   arr::rotate_inplace(*a, n);           // potentially a copy when not ref
+  //   return a;
+  // }
+  case val::vt_duration: {
+    val::SpVADUR a = get<val::SpVADUR>(getVal(v[X]));
+    arr::rotate_inplace(*a, n);           // potentially a copy when not ref
+    return a;
+  }
+  case val::vt_interval: {
+    val::SpVAIVL a = get<val::SpVAIVL>(getVal(v[X]));
+    arr::rotate_inplace(*a, n);           // potentially a copy when not ref
+    return a;
+  }
+  case val::vt_zts: {
+    auto z = get<val::SpZts>(getVal(v[X]));
+    arr::rotate_inplace(*z->getArrayPtr(), n); // potentially a copy when not ref
+    return z;
+  }
+  default:
+    throw interp::EvalException("invalid argument type", getLoc(v[X]));
+  }
 }
 
 

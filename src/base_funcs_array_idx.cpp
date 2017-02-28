@@ -520,7 +520,6 @@ val::Value funcs::dblsubassign(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCt
         // in the case of an index character that doesn't exist, we
         // extend the list in the last position:
         if (i[0].idx.which() == arr::Index::it_names) {
-          std::cout << "it's a name" << std::endl;
           const auto& name = get<arr::NameIndex>(i[0].idx).vs[0];
           al->a.concat(b, name);
         }

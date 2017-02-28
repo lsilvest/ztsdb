@@ -393,8 +393,7 @@ void core::loadBuiltinFunctions(interp::BaseFrame* r) {
   val::VBuiltinG(r, "rotate", 
                  "function(x, n) NULL \n", 
                  funcs::rotate, true,
-                 {{"x", {{val::vt_double, val::vt_zts }, true}},
-                  {"n", {{val::vt_double              }, true}}});
+                 {{"n", {{val::vt_double}, true}}});
   val::VBuiltinG(r, "diff", 
                  "function(x, n) NULL \n", 
                  funcs::diff, true,
