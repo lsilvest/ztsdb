@@ -107,7 +107,7 @@ namespace arr {
         throw range_error("incorrect number of dimensions");
       }
       // the following is a bit more complicated than using
-      // 'idx(vector<INDEX>{i[0]})' but in compensation it avoid the
+      // 'idx(vector<INDEX>{i[0]})' but in compensation it avoids the
       // copy of 'idx[0]':
       Vector<Global::dtime> sidx;
       i[0].subset(sidx, idx->getcol(0));

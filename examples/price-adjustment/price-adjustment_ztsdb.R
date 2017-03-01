@@ -36,7 +36,8 @@
 ##
 
 ## CAVEAT: modify 'path' below to the correct location of the data:
-path <- "/path/to/ztsdb/src/demo/price-adjustment-data/"
+## path <- "/path/to/ztsdb/examples/price-adjustment-data/"
+path <- "/home/lsilvest/repos/ztsdb/examples/price-adjustment/price-adjustment-data/"
 if (system(paste("test -d", path))) {
   stop("can't find data directory for demo: please modify 'path' in the script")
 }
@@ -62,37 +63,38 @@ get_adjust_split_zts <<- function(split) {
   cumprod(1 / split, rev=TRUE)          # split should not have any zeroes!
 }
 
-## This function returns the adjusted price for a given 'id':
-get_adjusted_price <<- function(id) {
-  close <- stock_data[[id]][, "Close"]
-  last_close <- tail(zts.idx(close), 1)
-  adjust_div <- get_adjust_div_zts(close, div[[id]][zts.idx(div) <= last_close, ])
-  adjust_split <- get_adjust_split_zts(split[zts.idx(split) <= last_close, ])
-  price_adj <- op.zts(adjust_div, aapl_close, "*")
-  price_adj <- op.zts(adjust_split, aapl_price_adj, "*")
-  price_adj
-}
-  
+
 ## In the real world this is the kind of data that would be present in
 ## the DBMS, but for this demo, we load it from CSV files.
-aapl_price <- read.csv(paste0(path, "aapl_price.csv"))
-aapl_div   <- read.csv(paste0(path, "aapl_div.csv"))
-aapl_split <- read.csv(paste0(path, "aapl_split.csv"))
+price <<- list()
+div   <<- list()
+split <<- list()
+read_stock_data <- function(id_list) {
+  for (id in id_list) {
+    data <- read.csv(paste0(path, id, ".csv"), format="%Y-%m-%d", tz="America/New_York")
+    price[[id]] <- data[, "Close"]
+    div  [[id]] <- data[data[, "Ex-Dividend"] != 0, "Ex-Dividend"]
+    split[[id]] <- data[data[, "Split Ratio"] != 1, "Split Ratio"]
+  }
+}
+id_list <- list("AAPL", "MSFT", "XOM")
+read_stock_data(id_list)
 
 
-## Now get the multipliers for the adjustments, making sure we don't
-## take dividend and split data that is beyond the last close:
-aapl_close <- aapl_price[, "Close"]
-last_close <- tail(zts.idx(aapl_close), 1)
-adjust_div   <- get_adjust_div_zts(aapl_close, aapl_div[zts.idx(aapl_div) <= last_close, ])
-adjust_split <- get_adjust_split_zts(aapl_split[zts.idx(aapl_split) <= last_close, ])
-
-
-## Here the 'op.zts' operator is used to adjust first for dividends
-## and then for splits; in this demo we adjust the close price series,
-## but another more realistic scenario would be the adjustment of
-## intraday data; the 'op.zts' multiplication will also handle this
-## scenario correctly:
-aapl_price_adj <- op.zts(adjust_div, aapl_close, "*")
-aapl_price_adj <- op.zts(adjust_split, aapl_price_adj, "*")
-
+# This function returns the adjusted price for a given 'id':
+get_adjusted_price <<- function(id) {
+  close <- price[[id]][, "Close"]
+  last_close <- tail(zts.idx(close), 1)
+  div <- div[[id]]
+  split <- split[[id]]
+  adjust_div <- get_adjust_div_zts(close, div[zts.idx(div) <= last_close, ])
+  adjust_split <- get_adjust_split_zts(split[zts.idx(split) <= last_close, ])
+  ## The 'op.zts' operator is used to adjust first for dividends and
+  ## then for splits; in this demo we adjust the close price series, but
+  ## another more realistic scenario would be the adjustment of intraday
+  ## data; the 'op.zts' multiplication will also handle this scenario
+  ## correctly:
+  price_adj <- op.zts(adjust_div, close, "*")
+  price_adj <- op.zts(adjust_split, price_adj, "*")
+  price_adj
+}

@@ -50,7 +50,10 @@ static vector<Index> convertToIndex(const vector<val::VBuiltinG::arg_t>::const_i
     case val::vt_double: {
       // - 1, like in R: indices start at 1:
       const auto& idx = get<val::SpVAD>(getVal(*e));
-      if (!signbit((*idx)[0])) {
+      if (idx->size() == 0) {
+        vi.push_back(IntIndex(Vector<size_t>()));
+      }
+      else if (!signbit((*idx)[0])) {
         const auto idx0 = applyf<double,double>(*idx, minus1).getcol(0);
         vi.push_back(IntIndex(Vector<size_t>(idx0.begin(), idx0.end())));
       }
@@ -168,7 +171,10 @@ static vector<Index> convertToIndex(const vector<val::VBuiltinG::arg_t>::const_i
         break;      
       case val::vt_double: {
         const auto& idx = get<val::SpVAD>(getVal(*e));
-        if ((*idx)[0] >= 0) {
+        if (idx->size() == 0) {
+          vi.push_back(IntIndex(Vector<size_t>()));
+        }
+        else if ((*idx)[0] >= 0) {
           // - 1 because indices are 1-based:
           const auto idx0 = applyf<double,double>(*idx, minus1).getcol(0);
           vi.push_back(IntIndex(Vector<size_t>(idx0.begin(), idx0.end())));

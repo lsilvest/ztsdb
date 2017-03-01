@@ -66,6 +66,13 @@ RUnit_subset_double_vector_double_idx <- function() {
     all(a[2:9] == 2:9) &
     all(a[c(1,10)] == c(1,10))
 }
+RUnit_subset_double_vector_double_idx_empty <- function() {
+    all.equal((1:10)[as.double(NULL)], as.double(NULL)) &
+    all.equal((1:10)[vector(mode="double")], as.double(NULL))
+}
+RUnit_subset_double_vector_double_idx_matrix_1col <- function() {
+    all.equal((1:10)[matrix(1:3, 3, 1)], 1:3)
+}
 RUnit_subset_double_vector_double_neg_idx <- function() {
     a <- 1:10
     all(a[-(2:9)] == c(1,10)) &
@@ -111,7 +118,17 @@ RUnit_subset_double_2d_double_idx <- function() {
     all(a[1, 1] == 1) &
     all(a[1, c(1,3)] == c(1,5))
 }
-RUnit_subset_double_2d_double <- neg_idx <- function() {
+RUnit_subset_double_2d_double_idx_matrix_1col <- function() {
+    a <- matrix(1:6, 2, 3)
+    all(a[matrix(1,1,1),] == c(1,3,5)) &
+    all(a[,matrix(1:3, 3, 1)] == a)
+}
+RUnit_subset_double_2d_double_idx_empty <- function() {
+    a <- matrix(1:6, 2, 3)
+    all.equal(a[as.double(NULL),], matrix(0, 0, 3)) &
+    all.equal(a[,as.double(NULL)], matrix(0, 2, 0))
+}
+RUnit_subset_double_2d_double_neg_idx <- function() {
     a <- matrix(1:6, 2, 3)
     all(a[-1,] == c(2,4,6)) &
     all(a[,-(1:3)] == matrix(0, 2, 0)) &
@@ -165,17 +182,35 @@ RUnit_subset_double_3d_double_1d_idx <- function() {
     all(a[1:24] == 1:24) &
     all(a[c(1,5,24)] == c(1,5,24))
 }
+RUnit_subset_double_3d_double_idx_matrix_1col <- function() {
+    d1 <- c("1","2"); d2 <- c("a","b","c"); d3 <- c("i","ii","iii","iv")
+    a <- array(1:24, c(2, 3, 4), dimnames=list(d1,d2,d3))
+    all.equal(a[matrix(1,1,1),,], matrix(seq(1,23,by=2), 3, 4, dimnames=list(d2,d3))) &
+    all.equal(a[,matrix(1,1,1),], matrix(c(1,2,7,8,13,14,19,20), 2, 4, dimnames=list(d1,d3))) &
+    all.equal(a[,,matrix(1,1,1)], matrix(1:6, 2, 3, dimnames=list(d1,d2))) &
+    all.equal(a[,matrix(1:3, 3, 1),], a) &
+    all.equal(a[matrix(1:2,2,1), matrix(1:3,3,1), matrix(1:4,4,1)], a)
+}
 RUnit_subset_double_3d_double_idx <- function() {
     d1 <- c("1","2"); d2 <- c("a","b","c"); d3 <- c("i","ii","iii","iv")
     a <- array(1:24, c(2, 3, 4), dimnames=list(d1,d2,d3))
-    all(a[1,,] == matrix(seq(1,23,by=2), 3, 4, dimnames=list(d2,d3))) &
-    all(a[,1,] == matrix(c(1,2,7,8,13,14,19,20), 2, 4, dimnames=list(d1,d3))) &
-    all(a[,,1] == matrix(1:6, 2, 3, dimnames=list(d1,d2))) &
-    all(a[,1:3,] == a) &
-    all(a[1:2, 1:3, 1:4] == a) &
-    all(a[1:2, 1, 1] == c("1"=1,"2"=2)) &
-    all(a[2,3,4] == 24) &
-    all(a[1, c(1,3), 1] == c(1,5))
+    all.equal(a[1,,], matrix(seq(1,23,by=2), 3, 4, dimnames=list(d2,d3))) &
+    all.equal(a[,1,], matrix(c(1,2,7,8,13,14,19,20), 2, 4, dimnames=list(d1,d3))) &
+    all.equal(a[,,1], matrix(1:6, 2, 3, dimnames=list(d1,d2))) &
+    all.equal(a[,1:3,], a) &
+    all.equal(a[1:2, 1:3, 1:4], a) &
+    all.equal(a[1:2, 1, 1], c("1"=1,"2"=2)) &
+    a[2,3,4] == 24 &
+    all.equal(a[1, c(1,3), 1], c(a=1,c=5))
+}
+RUnit_subset_double_3d_double_idx_empty <- function() {
+    d1 <- c("1","2"); d2 <- c("a","b","c"); d3 <- c("i","ii","iii","iv")
+    a <- array(1:24, c(2, 3, 4), dimnames=list(d1,d2,d3))
+    all.equal(a[as.double(NULL),,], array(0, c(0, 3, 4), dimnames=list(NULL,d2,d3))) &
+    all.equal(a[,as.double(NULL),], array(0, c(2, 0, 4), dimnames=list(d1,NULL,d3))) &
+    all.equal(a[,,as.double(NULL)], array(0, c(2, 3, 0), dimnames=list(d1,d2,NULL))) &
+    all.equal(a[as.double(NULL),as.double(NULL),as.double(NULL)],
+              array(0, c(0, 0, 0)))
 }
 RUnit_subset_double_3d_double_neg_idx <- function() {
     d1 <- c("1","2"); d2 <- c("a","b","c"); d3 <- c("i","ii","iii","iv")

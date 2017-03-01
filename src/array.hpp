@@ -785,7 +785,7 @@ namespace arr {
     }
 
     inline bool isVector() const {
-      return dim.size() == 1;
+      return ncols() == 1;
     }
 
     inline bool isScalar() const {

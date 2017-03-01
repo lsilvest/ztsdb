@@ -68,7 +68,7 @@ namespace tz {
 
   interval interval_from_string(const std::string& s, 
                                 const tz::Zones& tzones,
-                                const std::string& f = "%Y-%m-%d %H:%M:%S[.%s] %Z",
+                                const std::string& fmt = "%Y-%m-%d %H:%M:%S[.%s] %Z",
                                 const std::string& tz = "");
 
   std::string to_string(Global::duration d);

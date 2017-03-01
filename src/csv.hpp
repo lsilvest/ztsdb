@@ -41,6 +41,7 @@ namespace arr {
                            bool header,
                            const char sep,
                            const string& mmapfile,
+                           const string& fmt="%Y-%m-%d %H:%M:%S[.%s] %Z",
                            const string& tz="");
   void writecsv_zts(const zts& z, const string& file, bool header, const char sep);
 

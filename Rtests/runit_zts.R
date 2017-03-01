@@ -1,4 +1,4 @@
-## Copyright (C) 2015 Leonardo Silvestri
+## Copyright (C) 2015-2017 Leonardo Silvestri
 ##
 ## This file is part of ztsdb.
 ##
@@ -22,8 +22,10 @@
 
 source("zts.R") 
 source("utils.R")
+source("zts_large.R")
 
 
+## constructors
 RUnit_zts_constructor <- function() {
     a <- zts(idx1, 1:27, dim=c(9, 3), dimnames=list(NULL, c("one", "two", "three")))
     b <- zts(idx1, 1:27, dimnames=list(NULL, c("one", "two", "three")))
@@ -31,6 +33,24 @@ RUnit_zts_constructor <- function() {
     c <- zts(idx1, c_data)
     all.equal(a, b) & all.equal(b, c)
 }
+## LLL more to come!
+
+## subset
+RUnit_zts_subset_double <- function() {
+  z <- get_large_zts(3)
+  exp <- zts(zts.idx(z)[1:2], c(1,2,4,5), dimnames=list(NULL,colnames(z)[1:2]))
+  all.equal(z[1:2,1:2], exp)
+}
+RUnit_zts_subset_double_matrix_1col <- function() {
+  z <- get_large_zts(3)
+  exp <- zts(zts.idx(z)[1:2], c(1,2,4,5), dimnames=list(NULL,colnames(z)[1:2]))
+  all.equal(z[matrix(1:2,2,1), matrix(1:2,2,1)], exp)
+}
+RUnit_zts_subset_double_empty <- function() {
+  z <- get_large_zts(3)
+  all.equal(z[as.double(NULL),], get_large_zts(0))
+}
+
 
 
 

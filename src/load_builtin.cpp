@@ -332,13 +332,15 @@ void core::loadBuiltinFunctions(interp::BaseFrame* r) {
   val::VBuiltinG(r,
                  "read.csv",
                  "function(csvfile, type=\"zts\", "
-                 "arrayfile=\"\", header=TRUE, sep=\",\", tz=\"\") NULL\n",
+                 "arrayfile=\"\", header=TRUE, sep=\",\", "
+                 "format=\"%Y-%m-%d %H:%M:%S[.%s] %Z\", tz=\"\") NULL\n",
                  funcs::read_csv, true,
                  {{"csvfile",   {{val::vt_string }, true}},
                   {"type",      {{val::vt_string }, true}},
                   {"arrayfile", {{val::vt_string }, true}},
                   {"header",    {{val::vt_bool   }, true}},
                   {"sep",       {{val::vt_string }, true}},
+                  {"format",    {{val::vt_string }, true}},
                   {"tz",        {{val::vt_string }, true}}});
   val::VBuiltinG(r,
                  "write.csv",

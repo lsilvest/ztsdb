@@ -1,19 +1,27 @@
-## Copyright (C) 2015 Leonardo Silvestri
+## This is free and unencumbered software released into the public domain.
 ##
-## This file is part of ztsdb.
+## Anyone is free to copy, modify, publish, use, compile, sell, or
+## distribute this software, either in source code form or as a compiled
+## binary, for any purpose, commercial or non-commercial, and by any
+## means.
 ##
-## ztsdb is free software: you can redistribute it and/or modify
-## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation, either version 3 of the License, or
-## (at your option) any later version.
+## In jurisdictions that recognize copyright laws, the author or authors
+## of this software dedicate any and all copyright interest in the
+## software to the public domain. We make this dedication for the benefit
+## of the public at large and to the detriment of our heirs and
+## successors. We intend this dedication to be an overt act of
+## relinquishment in perpetuity of all present and future rights to this
+## software under copyright law.
 ##
-## ztsdb is distributed in the hope that it will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU General Public License for more details.
+## THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+## EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+## MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+## IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+## OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+## ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+## OTHER DEALINGS IN THE SOFTWARE.
 ##
-## You should have received a copy of the GNU General Public License
-## along with ztsdb.  If not, see <http://www.gnu.org/licenses/>.
+## For more information, please refer to <http://unlicense.org/>
 
 
 tz <- "America/New_York"
@@ -23,15 +31,15 @@ tz <- "America/New_York"
 start <- |.2015-01-01 00:00:00 America/New_York.|
 end   <- |.2016-01-01 00:00:00 America/New_York.|
 idx   <- seq(start, end, by=as.duration("00:00:01"))
-## data  <- runif(nrow(idx)*3)
-data <- array(1, c(nrow(idx)*3))
+data  <- 1000 + cumsum(array(rnorm(nrow(idx)*3, 0, 0.05), c(nrow(idx)*3)))
 z     <- zts(idx, data)
 
 ## create a daily interval between 9am and 4pm for all the above days
-_9am   <- as.duration("09:00:00")
+_930am <- as.duration("09:30:00")
 _4pm   <- as.duration("16:00:00")
-ivl   <- interval(seq(`+`(start,_9am,tz), `+`(end,_9am,tz), by=as.period("1d"), tz=tz),
-                  seq(`+`(start,_4pm,tz), `+`(end,_4pm,tz), by=as.period("1d"), tz=tz))
+ivl    <- interval(seq(`+`(start,_930am,tz), `+`(end,_930am,tz), by=as.period("1d"), tz=tz),
+                   seq(`+`(start,_4pm,tz),   `+`(end,_4pm,tz),   by=as.period("1d"), tz=tz),
+                   eopen=FALSE)
 
 ## create an interval of weekends:
 days    <- seq(start, end, by=as.period("1d"), tz=tz) # sequence of days
