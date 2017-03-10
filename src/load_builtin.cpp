@@ -106,7 +106,10 @@ void core::loadBuiltinFunctions(interp::BaseFrame* r) {
   val::VBuiltinG(r, "ceiling", "function (x, unit=NULL, tz=NULL) NULL\n", funcs::_ceiling, false, 
                  {{"x", {{val::vt_double, val::vt_zts, val::vt_time, val::vt_interval}, true}},
                   {"unit", {{val::vt_string, val::vt_null}, true}},
-                  {"tz", {{val::vt_string, val::vt_null}, true}}});  
+                  {"tz", {{val::vt_string, val::vt_null}, true}}});
+  val::VBuiltinG(r, "op", "function (op, x, y=NULL, tz=NULL) NULL\n", funcs::op, false, 
+                 {{"tz", {{val::vt_string, val::vt_null}, true}}});
+  
 
   val::VBuiltinG(r, "list", "function(...) NULL\n", funcs::vlist);
   val::VBuiltinG(r, "is.null", "function(x) NULL\n", funcs::is_null);

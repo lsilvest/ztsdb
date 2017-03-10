@@ -1,4 +1,4 @@
-## Copyright (C) 2015 Leonardo Silvestri
+## Copyright (C) 2015-2017 Leonardo Silvestri
 ##
 ## This file is part of ztsdb.
 ##
@@ -37,7 +37,9 @@ RUnit_while_false <- function() {
 }
 RUnit_while_true <- function() {
     { count <- 1; while (count < 10) count <- count + 1; T } &
-    { count <- 10; while (count) count <- count - 1; T }
+    { count <- 10; while (count) count <- count - 1; T } &
+    { count <- 10; while (as.logical(count)) count <- count - 1; T } &
+    { count <- 10; while ({count}) count <- count - 1; T }
 }
 RUnit_for_vector_double <- function() {
     count <- 0

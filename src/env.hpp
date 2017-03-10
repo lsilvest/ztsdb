@@ -75,8 +75,9 @@ namespace interp {
 
     virtual val::Value& add(string s, val::Value&& val) = 0;
     virtual val::Value& addSpecial(string s, val::Value&& val) = 0;
-    virtual val::Value& addEllipsis(string s, val::Value&& val, const yy::location& loc) = 0;
-    virtual val::Value& addArg(string s, val::Value&& val, const yy::location& loc) = 0;
+    virtual val::Value& addEllipsis(string s, val::Value&& val,
+                                    const yy::location& loc, bool isRef) = 0;
+    virtual val::Value& addArg(string s, val::Value&& val, const yy::location& loc, bool isRef) = 0;
     virtual bool remove(const string& symb) = 0;
     virtual bool removeSpecial(const string& symb) = 0;
 
@@ -175,19 +176,25 @@ namespace interp {
       return a;
     }
 
-    val::Value& add(string s, val::Value&& val) { 
+    val::Value& add(string s, val::Value&& val) {
 #ifdef ENV_HPP_DEBUG
-      cout << "add " << s << " to " << this << endl;
+      cout << "add " << s << "=" << val::to_string(val) << " to " << this << endl;
 #endif    
       map_type& ml = s[0] != '?' ? m : mtmp;
       auto elt = ml.find(s);
       if (elt != ml.end()) {
+        val::Value tmp = elt->second; // this is needed in the case where val is pointing to
+                                      // same array; otherwise it might get deleted before
+                                      // the insertion.
         ml.erase(elt);
+        auto res = ml.emplace(s, val::gval(val));
+        return res.first->second;
       }
-      auto res = ml.emplace(s, std::move(val));
-      return res.first->second;
+      else {
+        auto res = ml.emplace(s, val::gval(val));
+        return res.first->second;
+      }
     }
-
 
     val::Value& addSpecial(string s, val::Value&& val) { 
 #ifdef ENV_HPP_DEBUG
@@ -195,12 +202,15 @@ namespace interp {
 #endif
       auto elt = m.find(s);
       if (elt != m.end()) {
+        val::Value tmp = elt->second; // this is needed in the case where val is pointing to
+                                      // same array; otherwise it might get deleted before
+                                      // the insertion.
         m.erase(elt);
-        auto res = m.emplace(s, std::move(val));
+        auto res = m.emplace(s, val::gval(val));
         return res.first->second;
       }
       else if (name == "global") { // not found, so just add it if this is global
-        auto res = m.emplace(s, std::move(val));
+        auto res = m.emplace(s, val::gval(val));
         return res.first->second;
       }
       else {
@@ -209,11 +219,12 @@ namespace interp {
     }
 
 
-    val::Value& addArg(string s, val::Value&& val, const yy::location& loc) { 
-      return add(s, std::move(val));
+    val::Value& addArg(string s, val::Value&& val, const yy::location& loc, bool isRef) { 
+      assert(false);            // at least put a string, no? LLL
+      throw std::range_error("'addArg' no meaningful on base frame");
     }
   
-    val::Value& addEllipsis(string s, val::Value&& val, const yy::location& loc) {
+    val::Value& addEllipsis(string s, val::Value&& val, const yy::location& loc, bool isRef) {
       assert(false);
       throw std::range_error("'addEllipsis' no meaningful on base frame");
     }
@@ -264,7 +275,24 @@ namespace interp {
   struct ClosureFrame : Frame {
     ClosureFrame(shpfrm u) : Frame("closure", u->global, u) { }
 
-    val::Value& addEllipsis(string s, val::Value&& val, const yy::location& loc) {
+    val::Value& addArg(string s, val::Value&& val, const yy::location& loc, bool isRef) { 
+#ifdef ENV_HPP_DEBUG
+      cout << "addArg " << s << " to " << this << "; isRef: " << isRef << endl;
+#endif    
+      map_type& ml = s[0] != '?' ? m : mtmp;
+      auto elt = ml.find(s);
+      if (elt != ml.end()) {
+        ml.erase(elt);
+      }
+      auto res = ml.emplace(s, isRef ? std::move(val) : val::gval(val));
+      if (isRef)
+        setRef(res.first->second);
+      else
+        resetRef(res.first->second);      
+      return res.first->second;
+    }
+
+    val::Value& addEllipsis(string s, val::Value&& val, const yy::location& loc, bool isRef) {
       mv.emplace_back(make_tuple(s, std::move(val), loc));
       return get<1>(mv.back());
     }
@@ -286,13 +314,22 @@ namespace interp {
       mv.reserve(MAX_ARGS);
     }
 
-    val::Value& addArg(string s, val::Value&& val, const yy::location& loc) {
-      mv[currentPos] = make_tuple(s, std::move(val), loc);
+    val::Value& addArg(string s, val::Value&& val, const yy::location& loc, bool isRef) {
+      mv[currentPos] = make_tuple(s, isRef ? std::move(val) : val::Value(val::gval(val)), loc);
+      if (isRef)
+        setRef(get<1>(mv[currentPos]));
+      else
+        resetRef(get<1>(mv[currentPos]));
       return get<1>(mv[currentPos++]);
     }
 
-    val::Value& addEllipsis(string s, val::Value&& val, const yy::location& loc) {
-      mv.emplace_back(make_tuple(s, std::move(val), loc));
+    val::Value& addEllipsis(string s, val::Value&& val, const yy::location& loc, bool isRef) {
+      // std::cout << "addEllipsis: isRef: " << isRef << std::endl;
+      mv.emplace_back(make_tuple(s, isRef ? std::move(val) : val::Value(val::gval(val)), loc));
+      if (isRef)
+        setRef(get<1>(mv.back()));
+      else
+        resetRef(get<1>(mv.back()));
       return get<1>(mv.back());
     }
   
@@ -416,11 +453,11 @@ namespace interp {
       return up->addSpecial(s, std::move(val));
     }
 
-    val::Value& addArg(string s, val::Value&& val, const yy::location& loc) { 
+    val::Value& addArg(string s, val::Value&& val, const yy::location& loc, bool isRef) { 
       return up->add(s, std::move(val));
     }
   
-    val::Value& addEllipsis(string s, val::Value&& val, const yy::location& loc) {
+    val::Value& addEllipsis(string s, val::Value&& val, const yy::location& loc, bool isRef) {
       assert(false);
       throw std::out_of_range("'addEllipsis' irrelevant for shadow frame");
     }
@@ -434,12 +471,14 @@ namespace interp {
     }
 
     operator string() const {
+      stringstream ss;
       if (up) {
-        return "shadow(" + (string(*up)) + ")";
+        ss << "shadow(" << string(*up) << "<-" << this << ")";
       }
       else {
-        return "shadow()";
+        ss << "shadow(null<-" << this << ")";
       }
+      return ss.str();
     }
 
     void clear() {

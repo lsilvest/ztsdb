@@ -56,7 +56,8 @@ const char* et_to_string[] = {
   "taggedexpr",
   "function",
   "exprsublist",
-  "code"
+  "code",
+  "arg"
 };
 
 
@@ -72,14 +73,15 @@ For::For(Symbol* s, E* inexpr, E* body, loc_t l) : E(etfor, l) {
   auto inexprSymbol = new Symbol(gensym("?inexpr"), l);
   auto inexprAssign = new LeftAssign(inexprSymbol, inexpr, l);
   // length(inexpr)
-  auto lengthExpr = new Funcall(new Symbol("length", l), new El(inexprSymbol->clone()));
+  auto lengthExpr = new Funcall(new Symbol("length", l),
+                                new El(new Arg(false, inexprSymbol->clone(), l)));
   // ?foridx0 < length(inexpr)
   auto whileCond = new Binop(yy::parser::token::LE, index->clone(), lengthExpr, l);
-
+  
   // now create a body { s <- ?inexprSymbol[[?foridx0]]; body }
   // ?forIdx0 (the inside of the double assign)
-  auto dlbAssignSublist = new El(inexprSymbol->clone());
-  dlbAssignSublist->add(index->clone());
+  auto dlbAssignSublist = new El(new Arg(false, inexprSymbol->clone(), l));
+  dlbAssignSublist->add(new Arg(false, index->clone(), l));
   //  ?inexprSymbol[[?foridx0]]
   auto dblsubset = new Funcall(new Symbol("dblsubset", l), dlbAssignSublist);
   // s <- ?inexprSymbol[[?foridx0]]
@@ -213,6 +215,10 @@ string to_string(const E& e) {
   case ettaggedexpr: {
     auto& et = static_cast<const TaggedExpr&>(e);
     return to_string(*et.symb) + "=" + to_string(*et.e); 
+  }
+  case etarg: {
+    auto& a = static_cast<const Arg&>(e);
+    return (a.ref ? "ref: "s : ""s) + to_string(*a.e); 
   }
   case etfunction: {
     auto& f = static_cast<const Function&>(e);
@@ -375,6 +381,14 @@ bool isEqual(const E* e1, const E* e2) {
       isEqual(te1->e,    te2->e);
     break;
   }
+  case etarg: {
+    auto a1 = static_cast<const Arg*>(e1);
+    auto a2 = static_cast<const Arg*>(e2);
+    return 
+      a1->ref == a2->ref && 
+      isEqual(a1->e,   a2->e);
+    break;
+  }
   case etfunction: {
     auto f1 = static_cast<const Function*>(e1);
     auto f2 = static_cast<const Function*>(e2);
@@ -481,6 +495,11 @@ void getBoundVars(E* e, set<string>& ss) {
   case ettaggedexpr: {
     auto& et = static_cast<const TaggedExpr&>(*e);
     getBoundVars(et.e, ss);
+    break;
+  }
+  case etarg: {
+    auto& a = static_cast<const Arg&>(*e);
+    getBoundVars(a.e, ss);
     break;
   }
   case etfunction: {

@@ -56,6 +56,7 @@ namespace val {
   string to_string(const val::SpVI& s, const cfg::CfgMap& cfg, bool fast=false);
   string to_string(const arr::zstring& s, const cfg::CfgMap& cfg, bool fast=false);
   string to_string(const VError& e, const cfg::CfgMap& cfg, bool fast=false);
+  string to_string(const VPtr& p, const cfg::CfgMap& cfg, bool fast=false);
 
   using namespace std::string_literals;
 

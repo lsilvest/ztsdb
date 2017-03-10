@@ -63,7 +63,8 @@ namespace interp {
       COND     = 0x00001000,    ///< result is the eval of a while condition
       ARG      = 0x00010000,    ///< result is the eval of a function arg
       SILENT   = 0x00100000,    ///< result of assignment will not be printed
-      END      = 0x01000000     ///< indicates the last assignment
+      END      = 0x01000000,    ///< indicates the last assignment
+      REF      = 0x10000000     ///< indicates the pass-by-reference
     };
 
     Kont() = delete;
@@ -96,6 +97,7 @@ namespace interp {
           if (a & ARG)      s += "A,";
           if (a & SILENT)   s += "S,";
           if (a & END)      s += "END,";
+          if (a & REF)      s += "REF,";
           if (s.length()) {
             s = s.substr(0, s.length() - 1);
           }

@@ -24,8 +24,9 @@
 
 namespace arr {
 
+  const unsigned NOFLAGS  = 0x00;
   const unsigned REF      = 0x01;
-  const unsigned LOCKED   = 0x02; // LLL: is LOCKED used?
+  const unsigned LOCKED   = 0x02;
   const unsigned CONSTREF = 0x04;
   const unsigned TMP      = 0x08;
   const unsigned LAST     = 0x10;
@@ -41,10 +42,9 @@ namespace arr {
   struct cow_ptr {
 
     cow_ptr(unsigned flags_p, T* t) 
-      : flags(flags_p), p(t), hasLast(std::make_shared<bool>(false)) { }
+      : flags(flags_p), p(t), count(std::make_shared<long>(1)) { }
     cow_ptr(unsigned flags_p, std::shared_ptr<T> tp) 
-      : flags(flags_p), p(tp), hasLast(std::make_shared<bool>(false)) { }
-
+      : flags(flags_p),  p(tp), count(std::make_shared<long>(1)) { }
 
     // LLL: to be complete we need a constructor that can construct
     // from a class derived from T
@@ -59,26 +59,34 @@ namespace arr {
   
     // non-const dereferencing
     T* operator->() {
-      if (flags & LOCKED && !(flags & REF)) {
-        throw std::range_error("cannot copy locked object");
-      } 
       if (isConst()) {
         throw std::range_error("cannot modify const object");        
       }
-      if (!flags && !p.unique()) {
+      //std::cout << "->deref: use_count(): " << use_count() << std::endl;
+      if (*count > 1) {
+        if (flags & LOCKED) {
+          throw std::range_error("cannot copy locked object");
+        } 
+        //std::cout << "->deref: making copy" << std::endl;
         p = std::make_shared<T>(*p); // call T's copy constructor
+        --*count;
+        count = std::make_shared<long>(1);
       }
       return p.get();
     }
     T& operator*() {
-      if (flags & LOCKED && !(flags & REF)) {
-        throw std::range_error("cannot copy locked object");
-      } 
+      //std::cout << "*deref: use_count(): " << use_count() << std::endl;
       if (isConst()) {
         throw std::range_error("cannot modify const object");        
       }
-      if (!flags && !p.unique()) {
+      if (*count > 1) {
+        if (flags & LOCKED) {
+          throw std::range_error("cannot copy locked object");
+        } 
+        //std::cout << "*deref: making copy" << std::endl;
         p = std::make_shared<T>(*p); // call T's copy constructor
+        --*count;
+        count = std::make_shared<long>(1);
       }
       return *p.get();
     }
@@ -91,44 +99,48 @@ namespace arr {
     const T* get() const { return p.get(); }
 
     cow_ptr& operator=(const cow_ptr<T>& o) {
+      // should not allow copying of CONST ? and LAST? LLL
       p = o.p;
       flags = o.flags & ~LAST;
-      hasLast = o.hasLast;
+      count = o.count;
+      if (!(flags & CONSTREF))
+        ++*count;
       return *this;
     }
 
-    cow_ptr(const cow_ptr& o) : flags(o.flags & ~LAST), p(o.p), hasLast(o.hasLast) { }
+    cow_ptr(const cow_ptr& o)
+      : flags(o.flags & ~LAST), p(o.p), count(o.count) { ++*count; }
 
     bool isRef()       const { return flags & REF; }
     bool isLocked()    const { return flags & LOCKED; }
     bool isConst()     const { return flags & CONSTREF; }
     bool isTmp()       const { return flags & TMP; }
     bool isLast()      const { return flags & LAST; }
-    bool hasLastPtr()  const { return *hasLast; }
 
     void setTmp()   { flags |=  TMP; }
     void setRef()   { flags |=  REF; }
     void setConst() { flags |=  CONSTREF; }
-    void setLast()  { *hasLast = true; flags |=  LAST; }
+    void setLast()  {
+      flags |=  LAST; --*count;
+    }
 
     void resetTmp()  { flags &= ~TMP; }
     void resetRef()  { flags &= ~REF; }
-    void resetLast() { flags &= ~LAST; }
 
     unsigned getFlags() const { return flags; }
 
-    long use_count() const { return p.use_count(); }
+    long use_count() const { return *count; }
 
     ~cow_ptr() {
-      if (isLast()) {
-        *hasLast = false;
+      if (!isLast()) {
+        --*count;
       }
     }
 
   private:
     unsigned flags;
     std::shared_ptr<T> p;
-    std::shared_ptr<bool> hasLast; 
+    std::shared_ptr<long> count; 
   };
 
 

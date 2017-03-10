@@ -360,6 +360,12 @@ static zcore::Encode& writeCode(zcore::Encode& ec, const E* e) {
     writeCode(ec, te->e);
     break;
   }
+  case etarg: {
+    auto a = static_cast<const Arg*>(e);
+    ec << static_cast<BOOL_T>(a->ref); // cast as it needs to be encoded over 8 bytes
+    writeCode(ec, a->e);
+    break;
+  }
   case etfunction: {
     auto f = static_cast<const Function*>(e);
     writeCode(ec, f->formlist);
@@ -509,6 +515,11 @@ static E* readCode(const char* buf, size_t len, size_t& off) {
     return new TaggedExpr(reinterpret_cast<Symbol*>(sym), 
                                         readCode(buf, len, off),
                                         yy::missing_loc());
+  }
+  case etarg: {
+    bool ref = ntoh<BOOL_T>(*(reinterpret_cast<const BOOL_T*>(buf+off)));
+    off += sizeof(BOOL_T);
+    return new Arg(ref, readCode(buf, len, off), yy::missing_loc());
   }
   case etfunction: {
     E* el = readCode(buf, len, off);
@@ -1137,6 +1148,10 @@ size_t zcore::codeLength(const E* e) {
   case ettaggedexpr: {
     auto& et = static_cast<const TaggedExpr&>(*e);
     return sizeof(ETYPE_T) + codeLength(et.symb) + codeLength(et.e);
+  }
+  case etarg: {
+    auto& et = static_cast<const Arg&>(*e);
+    return sizeof(ETYPE_T) + sizeof(BOOL_T) + codeLength(et.e);
   }
   case etfunction: {
     auto& f = static_cast<const Function&>(*e);

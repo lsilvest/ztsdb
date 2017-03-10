@@ -48,8 +48,14 @@ RUnit_ref_simple_nested_ref_access_in_formals <- function() {
     f(  a)
     all.equal(a, -matrix(1:9, 3, 3)) 
 }
-RUnit_ref_simple_nested_access_non_ref<- function() {
+RUnit_ref_simple_nested_access_non_ref_op <- function() {
     f <- function(x, y=x) { `+`(--x, y); x + 2 }
+    a <- matrix(1:9, 3, 3)
+    f(--a)
+    all.equal(a, 2 * matrix(1:9, 3, 3)) 
+}
+RUnit_ref_simple_nested_access_non_ref_sin <- function() {
+    f <- function(x, y=x) { `+`(--x, y); sin(x) }
     a <- matrix(1:9, 3, 3)
     f(--a)
     all.equal(a, 2 * matrix(1:9, 3, 3)) 

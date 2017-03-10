@@ -1,4 +1,4 @@
-// (C) 2016 Leonardo Silvestri
+// (C) 2016-2017 Leonardo Silvestri
 //
 // This file is part of ztsdb.
 //
@@ -20,70 +20,71 @@
 #include "interp_ctx.hpp"
 #include "base_funcs.hpp"
 #include "timezone/ztime.hpp"
+#include "unop_binop_funcs.hpp"
 
 
 extern tz::Zones tzones;
 
 
-static inline val::Value mathfunc(const vector<val::VBuiltinG::arg_t>& v, 
+static inline val::Value mathfunc(vector<val::VBuiltinG::arg_t>& v, 
                                   zcore::InterpCtx& ic,
                                   double(*f)(double)) {
-  switch (getVal(v[0]).which()) {
+  switch (val::getVal(v[0]).which()) {
   case val::vt_double: {
-    auto a = get<val::SpVAD>(getVal(v[0]));
+    auto& a = get<val::SpVAD>(val::getVal(v[0]));
     a->applyf(f);               // will copy if not ref
     return a;
   }
   case val::vt_zts: {
-    auto z = get<val::SpZts>(getVal(v[0]));
+    auto& z = get<val::SpZts>(val::getVal(v[0]));
     z->applyf(f);               // will copy if not ref
     return z;
   }
   default:
-    throw interp::EvalException("invalid type for argument", getLoc(v[0]));
+    throw interp::EvalException("invalid type for argument", val::getLoc(v[0]));
   }
 }
 
-val::Value funcs::_sin(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::_sin(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   return mathfunc(v, ic, std::sin);
 }
-val::Value funcs::_sinh(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::_sinh(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   return mathfunc(v, ic, std::sinh);
 }
-val::Value funcs::_cos(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::_cos(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   return mathfunc(v, ic, std::cos);
 }
-val::Value funcs::_cosh(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::_cosh(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   return mathfunc(v, ic, std::cosh);
 }
-val::Value funcs::_tan(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::_tan(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   return mathfunc(v, ic, std::tan);
 }
-val::Value funcs::_tanh(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::_tanh(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   return mathfunc(v, ic, std::tanh);
 }
-val::Value funcs::_asin(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::_asin(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   return mathfunc(v, ic, std::asin);
 }
-val::Value funcs::_asinh(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::_asinh(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   return mathfunc(v, ic, std::asinh);
 }
-val::Value funcs::_acos(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::_acos(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   return mathfunc(v, ic, std::acos);
 }
-val::Value funcs::_acosh(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::_acosh(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   return mathfunc(v, ic, std::acosh);
 }
-val::Value funcs::_atan(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::_atan(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   return mathfunc(v, ic, std::atan);
 }
-val::Value funcs::_atanh(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::_atanh(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   return mathfunc(v, ic, std::atanh);
 }
 
 
 template <typename T, typename SPVA, T (*F)(T)>
-static val::Value _floor_numeric_helper(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+static val::Value _floor_numeric_helper(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { X, UNIT, TZ };
   if (get<1>(v[UNIT]).which() != val::vt_null) {
     throw interp::EvalException("'unit' only meaningful for 'time' or 'interval'", get<2>(v[UNIT]));
@@ -95,28 +96,28 @@ static val::Value _floor_numeric_helper(const vector<val::VBuiltinG::arg_t>& v, 
 
 
 template <typename T, typename SPVA, T (*F)(T, tz::Period), T (*FTZ)(T, tz::Period, const tz::Zone&)>
-static val::Value _floor_dt_helper(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+static val::Value _floor_dt_helper(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   using namespace std::placeholders;  // for _1, _2, _3...
   enum { X, UNIT, TZ };
 
   // we need a unit for dtime/interval ops:
-  if (getVal(v[UNIT]).which() != val::vt_string) {
-    throw interp::EvalException("invalid type for argument", getLoc(v[UNIT]));
+  if (val::getVal(v[UNIT]).which() != val::vt_string) {
+    throw interp::EvalException("invalid type for argument", val::getLoc(v[UNIT]));
   }
-  auto s = val::get_scalar<arr::zstring>(get<1>(v[UNIT]));
+  const auto& s = val::get_scalar<arr::zstring>(get<1>(v[UNIT]));
   auto p = tz::unqualified_period_from_string(s);
   if (p >= tz::Period::DAY) {
-    if (getVal(v[TZ]).which() == val::vt_null) {
-      throw interp::EvalException("tz needed", getLoc(v[TZ]));
+    if (val::getVal(v[TZ]).which() == val::vt_null) {
+      throw interp::EvalException("tz needed", val::getLoc(v[TZ]));
     }
-    if (getVal(v[TZ]).which() != val::vt_string) {
-      throw interp::EvalException("invalid type for argument", getLoc(v[TZ]));
+    if (val::getVal(v[TZ]).which() != val::vt_string) {
+      throw interp::EvalException("invalid type for argument", val::getLoc(v[TZ]));
     }
   }
 
   auto a = get<SPVA>(get<1>(v[0]));
   if (p >= tz::Period::DAY) {
-    auto& z = tzones.find(val::get_scalar<arr::zstring>(getVal(v[TZ])));
+    auto& z = tzones.find(val::get_scalar<arr::zstring>(val::getVal(v[TZ])));
     auto g = std::bind(FTZ, _1, p, std::ref(z));
     a->applyf(g);
   }
@@ -131,7 +132,7 @@ static val::Value _floor_dt_helper(const vector<val::VBuiltinG::arg_t>& v, zcore
 template <double (*FN)(double),
           template <typename T> class fdt, 
           template <typename T> class fdt_tz>
-static val::Value _floor_helper(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+static val::Value _floor_helper(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { X, UNIT, TZ };
 
   auto x_t = (get<1>(v[X]).which());
@@ -164,7 +165,7 @@ struct FloorTz {
   static T f (T t, tz::Period p, const tz::Zone& z) { return ztsdb::floor_tz(t, p, z); }
 };
 
-val::Value funcs::_floor(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::_floor(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   return _floor_helper<std::floor, Floor, FloorTz>(v, ic);
 }
 
@@ -179,6 +180,25 @@ struct CeilingTz {
   static T f (T t, tz::Period p, const tz::Zone& z) { return ztsdb::ceiling_tz(t, p, z); }
 };
 
-val::Value funcs::_ceiling(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::_ceiling(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   return _floor_helper<std::ceil, Ceiling, CeilingTz>(v, ic);
 }
+
+
+// unary and binary operators when called via function syntax:
+val::Value funcs::op(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  enum { OP, X, Y, ATTRIB };
+
+  int op = static_cast<int>(val::get_scalar<double>(get<1>(v[OP])));
+  auto& x = std::get<1>(v[X]);          // don't use getVal so VPtr is preserved
+
+  if (getVal(v[Y]).which() != val::vt_null) {
+    const auto& y = getVal(v[Y]);
+    const auto& attrib = getVal(v[ATTRIB]);
+    return evalbinop(x, y, op, attrib);
+  }
+  else {
+    return evalunop(x, op);
+  }
+}
+

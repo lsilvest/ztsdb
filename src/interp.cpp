@@ -46,8 +46,7 @@ static function<string(string)> gensym = GensymFun();
 
 static bool isAtomic(const E* e) {
   switch (e->etype) {
-  case etbool:
-  case etdouble:
+  case etbool:  case etdouble:
   case etdtime:
   case etinterval:
   case etunop:
@@ -65,80 +64,10 @@ static bool isAtomic(const E* e) {
 }
 
 
-/// For 'Value' objects that are 'cow_ptr': if 'refValue' is true,
-/// reassign a copy of 'v' to 'v' with the ref flag to true on that
-/// copy, else don't make a copy and just set ref to false. This
-/// function should only be called if 'v' is a symbol. A few points to
-/// note: 1) making the copy here ensures the symbol that points to
-/// 'v' has a unique reference to it and can therefore be modified
-/// without modifying other symbols that point to it (which is
-/// possible because of the copy on write semantics of 'cow_ptr'); 2)
-/// setting the ref ensures that no subsequent copy will be made even
-/// on a normal 'cow_ptr' non-const dereference (otherwise we'd have
-/// to use 'get' and it's both uglier and error prone; 3) setting the
-/// ref to false is necessary because a ref flag previously set to
-/// true must be reset to false.
-
-// to reduce boilerplate switch code:
-template <template<typename, typename FA1> class F, 
-          typename FA1, typename... T>
-static inline val::Value apply_to_types2(val::Value& v, FA1 a1) {
-  return v;
-}
-template <template<typename, typename FA1> class F, 
-          typename FA1, val::ValType H, val::ValType... T>
-static inline val::Value apply_to_types2(val::Value& v, FA1 a1) {
-  return H == v.which() ? F<typename val::gettype<H>::TP, FA1>::f(v, a1) : 
-    apply_to_types2<F, FA1, T...>(v, a1);
-}
-
-template<typename T, typename A1>
-struct copyIfRefAndSetRef_helper {
-  static val::Value f(val::Value& v, A1 refValue) {
-    auto a = get<T>(v);         // note, we're making a copy of the cow_ptr here!
-    if (refValue) {
-      if (isConst(v)) {
-        throw std::range_error("cannot modify const reference object");
-      }
-      // > 2 because we already hold a copy here above!
-      if (!isRef(v) && !isLocked(v) && (a.use_count() - (a.hasLastPtr() ?  1 : 0) > 2)) {
-        // the get below ensures we don't make a copy of 'a' since 'a' is non-const:
-        v = arr::make_cow<typename val::rmptr<T>::TP>(a.getFlags(), *a.get());
-        auto& a = get<T>(v);
-        a.setRef();
-        return v;
-      }
-      else {
-        a.setRef();
-        return a;
-      }
-    }
-    else { 
-      a.resetRef();
-      return a;
-    }
-  }
-};
-
-static val::Value copyIfRefAndSetRef(val::Value& v, bool refValue) {
-  return apply_to_types2<copyIfRefAndSetRef_helper, 
-                         bool,
-                         val::vt_list,
-                         val::vt_double, 
-                         val::vt_bool, 
-                         val::vt_time, 
-                         val::vt_duration, 
-                         val::vt_interval, 
-                         val::vt_period, 
-                         val::vt_string, 
-                         val::vt_zts>(v, refValue);
-}
-
-
 static val::Value evalAtom(const E* e,
                            const shared_ptr<BaseFrame> r,
                            zcore::InterpCtx& ic,
-                           bool funcall=false)
+                           bool isFuncall=false)
 {
 #ifdef DEBUG
   cout << "evalAtom with e : " << to_string(*e) << endl;
@@ -152,11 +81,11 @@ static val::Value evalAtom(const E* e,
   case etsymbol: {
     const auto s = static_cast<const Symbol*>(e);
     try {
-      auto& val = r->findR(s->data, funcall); // will throw  
+      auto& val = r->findR(s->data, isFuncall); // will throw  
       if (val.which() == val::vt_future) {
         throw interp::FutureException(s->data);
       }
-      return copyIfRefAndSetRef(val, s->ref);
+      return val::VPtr(val);
     }
     catch (interp::FutureException) {
       throw;
@@ -194,9 +123,10 @@ static val::Value evalAtom(const E* e,
   case etbinop: {
     auto b = static_cast<const Binop*>(e);
     // choose integer for b.op LLL
-    const auto& e1 = evalAtom(b->left, r, ic);
+    auto e1 = evalAtom(b->left, r, ic);
     const auto& e2 = evalAtom(b->right, r, ic);
     const auto& attrib = evalAtom(b->attrib, r, ic);
+    resetRef(e1); // never pass by reference when using infix notation
     return funcs::evalbinop(e1, e2, int(b->op), attrib); }
   case etdouble: {
     auto f = static_cast<const Double*>(e);
@@ -223,7 +153,7 @@ static val::Value evalAtom(const E* e,
       throw interp::FutureException("invoke");
     }
     b.checkArgs(bf);
-    return b(bf, ic); 
+    return b(bf, ic);
   }
   default:
     throw interp::EvalException("unknown atomic expression: " + to_string(*e), e->loc);
@@ -253,14 +183,24 @@ static int getUnused(int& idx, ElNode*& eln, const vector<bool>& uargs) {
 } 
 
 
+
+struct ArgInfo {
+  E* name;                      // 0
+  E* expr;                      // 1
+  bool isFormal;                // 2
+  bool isEllipsis;              // 3
+  bool isRef;
+};
+
+
 /// Build vector or tuples <name, expression, formal, part of ellipis>
 /// for all arguments. The resulting vector is an ordered list of
 /// arguments to the function, in the order in which they were defined
 /// (and matched) in the formlist.
-static vector<tuple<E*, E*, bool, bool>> processArgs(int ellipsisPos,
-                                                     const map<string, int>& fargsMap,
-                                                     const El* fargs, /// formals args
-                                                     const El* aargs) /// actuals args
+static vector<ArgInfo> processArgs(int ellipsisPos,
+                                   const map<string, int>& fargsMap,
+                                   const El* fargs, /// formals args
+                                   const El* aargs) /// actuals args
 {
 #ifdef DEBUG
   cout << "processArgs" << endl;
@@ -271,10 +211,10 @@ static vector<tuple<E*, E*, bool, bool>> processArgs(int ellipsisPos,
 
   // the following two are to track use (consumption) of the arguments as we go:
   auto ufargs = vector<bool>(fargs->n, false);
-  auto uaargs = vector<bool>(aargs->n, false);
+  auto ugargs = vector<bool>(aargs->n, false);
 
   // the result of the processing:
-  auto res = vector<tuple<E*, E*, bool, bool>>(ellipsisPos >= 0 ? fargs->n - 1 : fargs->n);
+  auto res = vector<ArgInfo>(ellipsisPos >= 0 ? fargs->n - 1 : fargs->n);
   
   // 1. extract named actual args that match in formal args:
   auto geln = aargs->begin;
@@ -284,7 +224,7 @@ static vector<tuple<E*, E*, bool, bool>> processArgs(int ellipsisPos,
       if (te->symb && te->symb->data != "") {
         auto idx = fargsMap.find(te->symb->data);
         if (idx != fargsMap.end()) {
-          uaargs[n]           = true;
+          ugargs[n]           = true;
           if (ufargs[idx->second]) {
             throw interp::EvalException("formal argument \"" + 
                                         te->symb->data + "\" matched by multiple actual arguments",
@@ -293,10 +233,10 @@ static vector<tuple<E*, E*, bool, bool>> processArgs(int ellipsisPos,
           ufargs[idx->second] = true;
           if (ellipsisPos >= 0 && idx->second > ellipsisPos) {
             // get proper index in case there is an ellipsis:
-            res[idx->second-1] = make_tuple(te->symb, te->e, false, false);
+            res[idx->second-1] = ArgInfo{te->symb, te->e, false, false, te->symb->ref};
           } 
           else {
-            res[idx->second] = make_tuple(te->symb, te->e, false, false);
+            res[idx->second] = ArgInfo{te->symb, te->e, false, false, te->symb->ref};
           }
         }
       }
@@ -310,32 +250,34 @@ static vector<tuple<E*, E*, bool, bool>> processArgs(int ellipsisPos,
   int fidx = -1;
   int gidx = -1;
   fidx = getUnused(fidx, feln, ufargs); 
-  gidx = getUnused(gidx, geln, uaargs);
+  gidx = getUnused(gidx, geln, ugargs);
   while (fidx >= 0 && gidx >= 0) {
     if (geln->e->etype == ettaggedexpr) {
       // if we find a tagged expression, it has to be part of an ellipsis
       if (ellipsisPos != -1) {
         auto te = static_cast<TaggedExpr*>(geln->e);
-        res.emplace_back(make_tuple(te->symb, te->e, false, true));
+        res.emplace_back(ArgInfo{te->symb, te->e, false, true, te->symb->ref});
       }
       else {
         throw interp::EvalException("unused argument (" + to_string(*geln->e) + ')', geln->e->loc);
       }
     } else {
+      assert(geln->e->etype == etarg);
+      auto a = static_cast<Arg*>(geln->e);
       if (feln->e->etype == ettaggedexpr) {
-        auto te = static_cast<TaggedExpr*>(feln->e);
-        res[fidx] = make_tuple(te->symb, geln->e, false, false);
+        const auto te = static_cast<TaggedExpr*>(feln->e);
+        res[fidx] = ArgInfo{te->symb, a->e, false, false, a->ref};
         fidx = getUnused(fidx, feln, ufargs); 
       }
       else if (feln->e->etype != etellipsis) {
-        res[fidx] = make_tuple(feln->e, geln->e, false, false);
+        res[fidx] = ArgInfo{feln->e, a->e, false, false, a->ref};
         fidx = getUnused(fidx, feln, ufargs); 
       } 
       else {
-        res.emplace_back(make_tuple(nullptr, geln->e, false, true));
+        res.emplace_back(ArgInfo{nullptr, a->e, false, true, a->ref});
       }
     }
-    gidx = getUnused(gidx, geln, uaargs);
+    gidx = getUnused(gidx, geln, ugargs);
   }  
   
   // 3. if we have leftovers in the actuals, then it's an error, and we throw:
@@ -350,10 +292,10 @@ static vector<tuple<E*, E*, bool, bool>> processArgs(int ellipsisPos,
       auto te = static_cast<TaggedExpr*>(feln->e);
       if (ellipsisPos >= 0 && fidx > ellipsisPos) {
         // get proper index in case there is an ellipsis:
-        res[fidx-1] = make_tuple(te->symb, te->e, true, false);
+        res[fidx-1] = ArgInfo{te->symb, te->e, true, false, false};
       } 
       else {
-        res[fidx] = make_tuple(te->symb, te->e, true, false);
+        res[fidx] = ArgInfo{te->symb, te->e, true, false, false};
       }
       fidx = getUnused(fidx, feln, ufargs); 
     } 
@@ -369,6 +311,12 @@ static vector<tuple<E*, E*, bool, bool>> processArgs(int ellipsisPos,
       }
     }      
   }
+
+  // for (const auto& i : res)
+  //   cout << to_string(*i.name) << "=" << to_string(*i.expr)
+  //        << ", isFormal: " << i.isFormal
+  //        << ", isEllipsis: " << i.isEllipsis
+  //        << ", isRef: " << i.isRef << std::endl;
 
   return res;
 } 
@@ -417,10 +365,11 @@ static shared_ptr<Kont> applyProc(val::VClos& proc,
   auto kchain = make_shared<Kont>(Kont{nullptr, proc.f->body, fenv, ksentinel, Kont::NORMAL});
 
   for (auto i=static_cast<int>(paVec.size())-1; i>=0; --i) {
-    auto er = get<2>(paVec[i]) ? fenv : r;
-    auto atype = get<3>(paVec[i]) ? Kont::ELLIPSIS : Kont::NORMAL;
-    kchain = make_shared<Kont>(Kont{get<0>(paVec[i]), nullptr, fenv, kchain, atype}); 
-    kchain = make_shared<Kont>(Kont{nullptr, get<1>(paVec[i]), er, kchain, Kont::NORMAL}); 
+    auto er = paVec[i].isFormal ? fenv : r;
+    auto atype = (paVec[i].isEllipsis ? Kont::ELLIPSIS : Kont::ARG) |
+                 (paVec[i].isRef ? Kont::REF : 0);
+    kchain = make_shared<Kont>(Kont{paVec[i].name, nullptr, fenv, kchain, atype}); 
+    kchain = make_shared<Kont>(Kont{nullptr, paVec[i].expr, er, kchain, Kont::NORMAL}); 
   }
 
   return kchain;
@@ -468,33 +417,36 @@ static shared_ptr<Kont> applyBuiltin(const val::VBuiltinG& builtin,
 
 
   for (auto i=static_cast<int>(paVec.size())-1; i>=0; --i) {
-    const auto atype = get<3>(paVec[i]) ? Kont::ELLIPSIS : Kont::ARG;
-    const auto& name = static_cast<const Symbol*>(get<0>(paVec[i]));
+    const auto atype = (paVec[i].isEllipsis ? Kont::ELLIPSIS : Kont::ARG) |
+                       (paVec[i].isRef ? Kont::REF : 0);
+    const auto& name = static_cast<const Symbol*>(paVec[i].name);
     const auto& info = builtin.argInfo;
  
-    bool noEval = atype == Kont::ARG ? 
+    bool noEval = atype & Kont::ARG ? 
       name && info.find(name->data) != info.end() && !info.at(name->data).doEval : 
       !builtin.evalEllipsis;
       
     if (noEval) {
+      // when we have a reason we could add the ref information...
       if (atype == Kont::ARG) {
         assert(name);
-        fenv->add(name->data, val::VCode(get<1>(paVec[i])));
+        fenv->add(name->data, val::VCode(paVec[i].expr));
       }
       else {
-        fenv->addEllipsis(name ? name->data : "", 
-                          val::VCode(get<1>(paVec[i])), 
-                          get<1>(paVec[i])->loc);
+        fenv->addEllipsis(name ? name->data : "",
+                          val::VCode(paVec[i].expr),
+                          paVec[i].expr->loc,
+                          paVec[i].isRef);
       }
     } 
     else {
-      auto er = get<2>(paVec[i]) ? fenv : r;
-      if (get<0>(paVec[i]) && get<1>(paVec[i])) {
-        get<0>(paVec[i])->loc = get<1>(paVec[i])->loc; // we need to recover the
-                                                       // location of the evaluated
-      }                                                // argument and not of the symbol
-      kchain = make_shared<Kont>(Kont{get<0>(paVec[i]), nullptr, fenv, kchain, atype});
-      kchain = make_shared<Kont>(Kont{nullptr, get<1>(paVec[i]), er, kchain, Kont::NORMAL});
+      auto er = paVec[i].isFormal ? fenv : r;
+      if (paVec[i].name && paVec[i].expr) {
+        paVec[i].name->loc = paVec[i].expr->loc; // we need to recover the
+                                                 // location of the evaluated
+      }                                          // argument and not of the symbol
+      kchain = make_shared<Kont>(Kont{paVec[i].name, nullptr, fenv, kchain, atype});
+      kchain = make_shared<Kont>(Kont{nullptr, paVec[i].expr, er, kchain, Kont::NORMAL});
     }
   }
 
@@ -584,11 +536,11 @@ inline static shared_ptr<Kont> insertWhile(shared_ptr<Kont> k, std::vector<shpfr
   k->next->atype |= interp::Kont::SILENT;    // but silence it
   auto nextk = make_shared<Kont>(Kont{
       k->next->var, 
-        &null, 
-        r, 
-        k->next, 
-        Kont::WHILE});
-
+      &null, 
+      r, 
+      k->next, 
+      Kont::WHILE});
+  
   shared_ptr<Kont> bodyk;
   if (w->e2->etype == etexprlist) {
     auto body = static_cast<const El*>(w->e2);
@@ -629,7 +581,9 @@ inline static shared_ptr<Kont> applyKont(shared_ptr<Kont> k,
 {
 #ifdef DEBUG
   cout << "apply cont" << endl;
-  cout << "| k:  " << string(*k) << endl;
+  cout << "| k:        "  << string(*k) << endl;
+  cout << "| val type: "  << val::vt_to_string.at(val.which()) << endl;
+  cout << "| val:      "  << val::to_string(val) << endl;
 #endif
 
   // REMEMBER: eval in current env but assign in next!
@@ -649,7 +603,8 @@ inline static shared_ptr<Kont> applyKont(shared_ptr<Kont> k,
   // (potentially) deleted only on exit of this function.
   std::vector<shpfrm> tmpenv;
   while (k->next->atype & Kont::END) {
-    k->r->clear();              // really only for the ec and stuff... LLL
+    //k->r->clear();              // really only for the ec and stuff...
+    k->r->ec = k->r->bc = k->r->cc = nullptr;
     tmpenv.push_back(fstack.back());
     fstack.pop_back();
     k = k->next;
@@ -664,7 +619,10 @@ inline static shared_ptr<Kont> applyKont(shared_ptr<Kont> k,
   if (k->next->atype & Kont::ELLIPSIS) {
     string sym = k->next->var ? static_cast<const Symbol*>(k->next->var)->data : "";
     auto& valref = 
-      ar->addEllipsis(sym, std::move(val), k->control ? k->control->loc : yy::missing_loc());
+      ar->addEllipsis(sym,
+                      std::move(val),
+                      k->control ? k->control->loc : yy::missing_loc(),
+                      k->next->atype & Kont::REF);
     setIfFuture(valref, ar);
   }
   else {
@@ -672,14 +630,17 @@ inline static shared_ptr<Kont> applyKont(shared_ptr<Kont> k,
 #ifdef DEBUG
     cout << "| assignment env p: " << hex << ar << dec << endl;
     cout << "| assignment env:   " << string(*ar) << endl;
-    cout << "| global:           " << (k->next->atype==Kont::GLOBAL) << endl;
+    cout << "| global:           " << (k->next->atype & Kont::GLOBAL) << endl;
 #endif 
     if (k->next->var) {
       if (k->next->var->etype == etsymbol) {
         string sym = static_cast<const Symbol*>(k->next->var)->data;
         if (k->next->atype & Kont::ARG) {
           auto& valref = 
-            ar->addArg(sym, std::move(val), k->control ? k->control->loc : yy::missing_loc());
+            ar->addArg(sym,
+                       std::move(val),
+                       k->control ? k->control->loc : yy::missing_loc(),
+                       k->next->atype & Kont::REF);
           setIfFuture(valref, ar);
         }
         else if (k->next->atype & Kont::GLOBAL) {
@@ -698,6 +659,7 @@ inline static shared_ptr<Kont> applyKont(shared_ptr<Kont> k,
           }
           auto& valref = ar->add(sym, std::move(val));
           setIfFuture(valref, ar);
+          if (k->next->atype & Kont::REF) setRef(valref); else resetRef(valref);
         }
       }
       else {
@@ -712,17 +674,20 @@ inline static shared_ptr<Kont> applyKont(shared_ptr<Kont> k,
         // here as '?tmp' will be overwritten; as the future pointer
         // is not set, the response will discarded, which is the
         // behaviour we want:
-        k->next->atype & Kont::ARG ? 
-          ar->addArg("?tmp", std::move(val), k->control ? k->control->loc : yy::missing_loc()) : 
+        k->next->atype & Kont::ARG ?
+          // check the isRef == false LLL
+          ar->addArg("?tmp", std::move(val), k->control ? k->control->loc : yy::missing_loc(), false) : 
           ar->add("?tmp", std::move(val));
+        // if (k->next->atype & Kont::REF) setRef(valref); else resetRef(valref);// needed LLL ?
       } else {
         // this is the last evaluation and, although it's without
         // assigment, the value might come as the result of a previous
         // assignment:
         isTmp(val) ? resetTmp(val) : setConst(val);
-        setLast(val);
         auto& valref = ar->add(".Last.value", std::move(val));
+        setLast(valref);
         setIfFuture(valref, ar);
+        // if (k->next->atype & Kont::REF) setRef(valref); else resetRef(valref);//needed LLL?
       }
     }
   }
@@ -736,8 +701,8 @@ inline static shared_ptr<Kont> applyKont(shared_ptr<Kont> k,
       return k->next;
     } else {
       // else terminate the loop by going to the current continuation
-      auto cc = k->r->cc;       
-      k->r->clear();            // breaks the circular reference of
+      auto cc = k->next->r->cc;       
+      k->next->r->clear();      // breaks the circular reference of
                                 // shared ptrs (else bc will never be
                                 // freed)
       return cc;
@@ -795,7 +760,7 @@ shared_ptr<Kont> interp::step(shared_ptr<Kont>& k, vector<shpfrm>& fstack, zcore
       // this is an outgoing request of the form 'con ? <expr>'
       // we don't block until the value is actually used
       auto req = static_cast<const Request*>(k->control);
-      val::Value atom = evalAtom(req->e1, k->r, ic);
+      auto& atom = val::gval(evalAtom(req->e1, k->r, ic));
       auto& con = get<val::VConn>(atom); // throws bad get...
       // it should be a VCon, check that LLL
       // look up bound vars (::xyz)
@@ -816,7 +781,7 @@ shared_ptr<Kont> interp::step(shared_ptr<Kont>& k, vector<shpfrm>& fstack, zcore
     // IfElse ---------
     case etifelse: {
       auto ie = static_cast<const IfElse*>(k->control);
-      if (funcs::isTrue(evalAtom(ie->e1, k->r, ic))) {
+      if (funcs::isTrue(val::gval(evalAtom(ie->e1, k->r, ic)))) {
         return make_shared<Kont>(Kont{nullptr, ie->e2, k->r, k->next, Kont::NORMAL});
       } else {
         return make_shared<Kont>(Kont{nullptr, ie->e3, k->r, k->next, Kont::NORMAL});
@@ -825,7 +790,7 @@ shared_ptr<Kont> interp::step(shared_ptr<Kont>& k, vector<shpfrm>& fstack, zcore
     // ExprSublist - function invocation -----
     case etfuncall: {
       auto es = static_cast<const Funcall*>(k->control);
-      auto proc = evalAtom(es->e, k->r, ic, true); // tell evalAtom we're looking for a funcall
+      auto& proc = val::gval(evalAtom(es->e, k->r, ic, true)); // true: tell evalAtom we're looking for a funcall
       if (proc.which() == val::vt_clos) {
         return applyProc(*get<shared_ptr<val::VClos>>(proc), 
                          k->r->shared_from_this(), 

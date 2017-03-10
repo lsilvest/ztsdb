@@ -61,13 +61,14 @@ val::Value val::VBuiltinG::operator()(interp::BuiltinFrame& a, zcore::InterpCtx&
 /// Check that the arguments are of the correct type.
 void val::VBuiltinG::checkArgs(const interp::BuiltinFrame& r) const {
   for (const auto& e : r.mv) {
-    const auto& info = argInfo.find(get<0>(e));
+    const auto& info = argInfo.find(val::getName(e));
     if (info != argInfo.end() && info->second.doEval) {
       auto& typeset = info->second.typeset;
       if (typeset.empty()) {
         throw out_of_range("empty typeset for parameter " + get<0>(e));
       }
-      if (typeset.count(static_cast<val::ValType>(get<1>(e).which())) == 0) {
+      const auto& val = val::getVal(e);
+      if (typeset.count(static_cast<val::ValType>(val.which())) == 0) {
         std::ostringstream ss;
         for (auto i = typeset.begin(); i != typeset.end(); ) {
           ss << '\'' << vt_to_string.at(*i) << '\'';
@@ -75,10 +76,10 @@ void val::VBuiltinG::checkArgs(const interp::BuiltinFrame& r) const {
             ss << ',';
           }
         } 
-        throw interp::EvalException("invalid argument type: '" + get<0>(e) 
+        throw interp::EvalException("invalid argument type: '" + val::getName(e) 
                                     + "' should be any of " + ss.str()
-                                    + " but is '" + vt_to_string.at(get<1>(e).which()) + '\'',
-                                    get<2>(e));
+                                    + " but is '" + vt_to_string.at(val.which()) + '\'',
+                                    val::getLoc(e));
       }
     }
   }

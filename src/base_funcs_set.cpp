@@ -78,7 +78,7 @@ struct intersect_func_wrapper {
 template <typename T, typename U>
 using intersect_wrapper = set_wrapper<T, U, intersect_func_wrapper>;
 
-val::Value funcs::intersect(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic)
+val::Value funcs::intersect(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic)
 {
   enum { X, Y };
   return apply_to_types_xy<intersect_wrapper, 
@@ -90,7 +90,7 @@ val::Value funcs::intersect(const vector<val::VBuiltinG::arg_t>& v, zcore::Inter
                            val::vt_string,   val::vt_string,   
                            val::vt_time,     val::vt_time,
                            val::vt_time,     val::vt_interval
-                           >(getVal(v[X]), getVal(v[Y]), getLoc(v[X]), getLoc(v[Y]));
+                           >(val::getVal(v[X]), val::getVal(v[Y]), val::getLoc(v[X]), val::getLoc(v[Y]));
 }
 
 
@@ -102,7 +102,7 @@ struct union_func_wrapper {
 template <typename T, typename U>
 using union_wrapper = set_wrapper<T, U, union_func_wrapper>;
 
-val::Value funcs::_union(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::_union(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { X, Y };
   return apply_to_types_xy<union_wrapper, 
                            val::vt_double,   val::vt_double,
@@ -112,7 +112,7 @@ val::Value funcs::_union(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCt
                            val::vt_interval, val::vt_interval, 
                            val::vt_string,   val::vt_string,   
                            val::vt_time,     val::vt_time
-                           >(getVal(v[X]), getVal(v[Y]), getLoc(v[X]), getLoc(v[Y]));
+                           >(val::getVal(v[X]), val::getVal(v[Y]), val::getLoc(v[X]), val::getLoc(v[Y]));
 
 }
 
@@ -124,7 +124,7 @@ struct setdiff_func_wrapper {
 template <typename T, typename U>
 using setdiff_wrapper = set_wrapper<T, U, setdiff_func_wrapper>;
 
-val::Value funcs::setdiff(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::setdiff(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { X, Y };
   return apply_to_types_xy<setdiff_wrapper, 
                            val::vt_double,   val::vt_double,
@@ -135,7 +135,7 @@ val::Value funcs::setdiff(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpC
                            val::vt_string,   val::vt_string,   
                            val::vt_time,     val::vt_time,
                            val::vt_time,     val::vt_interval
-                           >(getVal(v[X]), getVal(v[Y]), getLoc(v[X]), getLoc(v[Y]));
+                           >(val::getVal(v[X]), val::getVal(v[Y]), val::getLoc(v[X]), val::getLoc(v[Y]));
 }
 
 
@@ -180,7 +180,7 @@ struct intersect_idx_func_wrapper {
 template <typename T, typename U>
 using intersect_idx_wrapper = set_wrapper_idx<T, U, intersect_idx_func_wrapper>;
 
-val::Value funcs::intersect_idx(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic)
+val::Value funcs::intersect_idx(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic)
 {
   enum { X, Y };
   return apply_to_types_xy<intersect_idx_wrapper, 
@@ -192,7 +192,7 @@ val::Value funcs::intersect_idx(const vector<val::VBuiltinG::arg_t>& v, zcore::I
                            val::vt_string,   val::vt_string,   
                            val::vt_time,     val::vt_time,
                            val::vt_time,     val::vt_interval
-                           >(getVal(v[X]), getVal(v[Y]), getLoc(v[X]), getLoc(v[Y]));
+                           >(val::getVal(v[X]), val::getVal(v[Y]), val::getLoc(v[X]), val::getLoc(v[Y]));
 }
 
 // union_idx --------------------
@@ -217,7 +217,7 @@ struct union_idx_func_wrapper {
 template <typename T, typename U>
 using union_idx_wrapper = set_wrapper_idx<T, U, union_idx_func_wrapper>;
 
-val::Value funcs::union_idx(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic)
+val::Value funcs::union_idx(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic)
 {
   enum { X, Y };
   return apply_to_types_xy<union_idx_wrapper, 
@@ -228,7 +228,7 @@ val::Value funcs::union_idx(const vector<val::VBuiltinG::arg_t>& v, zcore::Inter
                            val::vt_interval, val::vt_interval, 
                            val::vt_string,   val::vt_string,   
                            val::vt_time,     val::vt_time
-                           >(getVal(v[X]), getVal(v[Y]), getLoc(v[X]), getLoc(v[Y]));
+                           >(val::getVal(v[X]), val::getVal(v[Y]), val::getLoc(v[X]), val::getLoc(v[Y]));
 }
 
 // setdiff_idx --------------------
@@ -240,7 +240,7 @@ struct setdiff_idx_func_wrapper {
 template <typename T, typename U>
 using setdiff_idx_wrapper = set_wrapper_idx<T, U, setdiff_idx_func_wrapper>;
 
-val::Value funcs::setdiff_idx(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic)
+val::Value funcs::setdiff_idx(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic)
 {
   enum { X, Y };
   return apply_to_types_xy<setdiff_idx_wrapper, 
@@ -252,5 +252,5 @@ val::Value funcs::setdiff_idx(const vector<val::VBuiltinG::arg_t>& v, zcore::Int
                            val::vt_string,   val::vt_string,   
                            val::vt_time,     val::vt_time,
                            val::vt_time,     val::vt_interval
-                           >(getVal(v[X]), getVal(v[Y]), getLoc(v[X]), getLoc(v[Y]));
+                           >(val::getVal(v[X]), val::getVal(v[Y]), val::getLoc(v[X]), val::getLoc(v[Y]));
 }

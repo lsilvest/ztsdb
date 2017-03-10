@@ -44,7 +44,7 @@ static function<string(string)> gensym = GensymFun();
 
 /// Read in a source file. The file is parsed and the result of the
 /// parsing is inserted as the next continuation.
-val::Value funcs::source(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::source(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   ParserCtx pctx;
 #if 0 //def DEBUG
   pctx.trace_scanning = true;
@@ -53,13 +53,13 @@ val::Value funcs::source(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCt
   pctx.trace_scanning = false;
   pctx.trace_parsing  = false;
 #endif
-  const auto& filename = val::get_scalar<arr::zstring>(getVal(v[0]));
+  const auto& filename = val::get_scalar<arr::zstring>(val::getVal(v[0]));
   int res;
   try {
     res = pctx.parsefile(filename);
   }
   catch (const std::exception& e) {
-    throw interp::EvalException("cannot read file '"s + filename + "': " + e.what(), getLoc(v[0]));
+    throw interp::EvalException("cannot read file '"s + filename + "': " + e.what(), val::getLoc(v[0]));
   }
   if (res == 0) {
     anf::convertToANF(pctx.prog.get());
@@ -124,31 +124,31 @@ static BaseFrame* getEnv(shpfrm env, val::Value envir, yy::location envirloc) {
 
 
 /// Find a variable in the specified environment.
-val::Value funcs::getvar(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::getvar(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { X, ENVIR, INHERIT };
 
-  const string x = val::get_scalar<arr::zstring>(getVal(v[X]));
-  const bool inherits = val::get_scalar<bool>(getVal(v[INHERIT]));
-  const auto env = getEnv(ic.s->k->r->up, getVal(v[ENVIR]), getLoc(v[ENVIR]));
+  const string x = val::get_scalar<arr::zstring>(val::getVal(v[X]));
+  const bool inherits = val::get_scalar<bool>(val::getVal(v[INHERIT]));
+  const auto env = getEnv(ic.s->k->r->up, val::getVal(v[ENVIR]), val::getLoc(v[ENVIR]));
   return inherits ? env->find(x) : env->findLocal(x);
 } 
 
 /// Build a list of variable names in the specified environment.
-val::Value funcs::ls(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  const auto env = getEnv(ic.s->k->r->up, getVal(v[0]), getLoc(v[0]));
+val::Value funcs::ls(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  const auto env = getEnv(ic.s->k->r->up, val::getVal(v[0]), val::getLoc(v[0]));
   return env->getNames();
 } 
 
 
 /// Assign a variable to a variable in the specified environment.
-val::Value funcs::assign(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::assign(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { X, VALUE, ENVIR, INHERIT };
 
-  const string x = val::get_scalar<arr::zstring>(getVal(v[X]));
-  auto value = getVal(v[VALUE]);
-  const bool inherit = val::get_scalar<bool>(getVal(v[INHERIT]));
+  const string x = val::get_scalar<arr::zstring>(val::getVal(v[X]));
+  auto value = val::getVal(v[VALUE]);
+  const bool inherit = val::get_scalar<bool>(val::getVal(v[INHERIT]));
 
-  auto env = getEnv(ic.s->k->r->up, getVal(v[ENVIR]), getLoc(v[ENVIR]));
+  auto env = getEnv(ic.s->k->r->up, val::getVal(v[ENVIR]), val::getLoc(v[ENVIR]));
 
   if (inherit) {
     env->addSpecial(x, std::move(value));
@@ -156,23 +156,23 @@ val::Value funcs::assign(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCt
   else {
     env->add(x, std::move(value));
   }
-  return getVal(v[VALUE]);
+  return val::getVal(v[VALUE]);
 }
 
 
 /// Remove a variable from the specified environment.
-val::Value funcs::rm(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::rm(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { LIST, ENVIR, INHERIT };
-  const auto& list = get<val::SpVAS>(getVal(v[LIST]));
-  const bool inherit = val::get_scalar<bool>(getVal(v[2]));
+  const auto& list = get<val::SpVAS>(val::getVal(v[LIST]));
+  const bool inherit = val::get_scalar<bool>(val::getVal(v[2]));
 
-  auto env = getEnv(ic.s->k->r->up, getVal(v[ENVIR]), getLoc(v[ENVIR]));
+  auto env = getEnv(ic.s->k->r->up, val::getVal(v[ENVIR]), val::getLoc(v[ENVIR]));
   
   // eliminate any variable/string present in the ellipsis:
   for (size_t i=3; i<v.size(); ++i) {
     // it's a VCode (for sure, since it's not evaluated) in which
     // there is either a symbol or a string
-    const auto& code = get<val::VCode>(getVal(v[i]));
+    const auto& code = get<val::VCode>(val::getVal(v[i]));
     auto e = code.expr.get();
     if (e->etype == etexprlist) {
       e = (static_cast<const El*>(e))->begin->e;
@@ -213,7 +213,7 @@ val::Value funcs::rm(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& i
 } 
 
 
-val::Value funcs::tryCatch(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::tryCatch(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   auto expr = get<val::VCode>(ic.s->k->r->find("expr"));
   auto catchcode = get<val::VCode>(ic.s->k->r->find("catch"));
 
@@ -247,7 +247,7 @@ val::Value funcs::tryCatch(const vector<val::VBuiltinG::arg_t>& v, zcore::Interp
 } 
 
 
-val::Value funcs::do_call(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::do_call(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   auto what = get<1>(v[0]);      // String, VBuiltinG or VClos!
   auto args = get<val::SpVList>(get<1>(v[1])); // VList
 
@@ -288,40 +288,40 @@ val::Value funcs::do_call(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpC
 }
 
 
-val::Value funcs::print(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::print(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { X, TZ };
   // if we have a time, interval or zts we take into account argument
   // TZ in order to allow printout in a defined time-zone:
-  const std::string tz = val::get_scalar<arr::zstring>(getVal(v[TZ]));
+  const std::string tz = val::get_scalar<arr::zstring>(val::getVal(v[TZ]));
   if (tz.length()) {
     static cfg::CfgMap localCfg;
     localCfg.set("timezone", tz);
 
-    switch (getVal(v[X]).which()) {
+    switch (val::getVal(v[X]).which()) {
     case val::vt_time: {
-      const auto& a = get<val::SpVADT>(getVal(v[X]));
+      const auto& a = get<val::SpVADT>(val::getVal(v[X]));
       cout << val::display(*a, a->getnames(0).names, localCfg) << endl;
     }
     break;
     case val::vt_interval: {
-      const auto& a = get<val::SpVAIVL>(getVal(v[X]));
+      const auto& a = get<val::SpVAIVL>(val::getVal(v[X]));
       cout << val::display(*a, a->getnames(0).names, localCfg) << endl;
     }
     break;
     case val::vt_zts: {
-      const auto& a = get<val::SpZts>(getVal(v[X]));
+      const auto& a = get<val::SpZts>(val::getVal(v[X]));
       cout << val::display(a->getArray(), a->getIndex().getcol(0), localCfg) << endl;
     }
     break;
     default:
-      cout << val::display(getVal(v[X])) << endl;
+      cout << val::display(val::getVal(v[X])) << endl;
     }
   }
   else {
-    cout << val::display(getVal(v[X])) << endl;
+    cout << val::display(val::getVal(v[X])) << endl;
   }      
   ic.s->k->next->next->atype |= interp::Kont::SILENT; // while () while () will not work? LLL
-  return getVal(v[X]);
+  return val::getVal(v[X]);
 }
 
 
@@ -473,7 +473,7 @@ static void names_set_hl(const val::Value& v0, const T& l, arr::idx_type d) {
 
 
 template<arr::idx_type D>
-static val::Value names(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+static val::Value names(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   if (v.size() == 1) {
     return names_get_hl(get<1>(v[0]), D);
   }
@@ -494,28 +494,28 @@ static val::Value names(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx
 }
 
 
-val::Value funcs::colnames(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::colnames(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   return names<1>(v, ic);
 }
 
 
-val::Value funcs::rownames(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::rownames(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   return names<0>(v, ic);
 }
 
 
-val::Value funcs::dimnames(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::dimnames(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   return names<std::numeric_limits<arr::idx_type>::max()>(v, ic);
 }
 
 
-val::Value funcs::stop(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  const auto& errorstr = val::get_scalar<zstring>(getVal(v[0]));
-  throw interp::EvalException(errorstr, getLoc(v[0]));
+val::Value funcs::stop(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  const auto& errorstr = val::get_scalar<zstring>(val::getVal(v[0]));
+  throw interp::EvalException(errorstr, val::getLoc(v[0]));
 }
 
 
-val::Value funcs::system(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::system(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   // system(command, intern = FALSE,
   //      ignore.stdout = FALSE, ignore.stderr = FALSE,
   //      wait = TRUE, input = NULL, show.output.on.console = TRUE,
@@ -646,7 +646,7 @@ val::Value funcs::system(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCt
 }
 
 
-val::Value funcs::stats_msg(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::stats_msg(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   const auto& stats = ic.getMsgStats();
   // create a vector with the obtained values:
   auto a = arr::make_cow<arr::Array<double>>
@@ -680,7 +680,7 @@ val::Value funcs::stats_msg(const vector<val::VBuiltinG::arg_t>& v, zcore::Inter
        {"value"}
      }
      );
-  auto reset = val::get_scalar<bool>(getVal(v[0]));
+  auto reset = val::get_scalar<bool>(val::getVal(v[0]));
   if (reset) {
     ic.resetMsgStats();
   }
@@ -688,7 +688,7 @@ val::Value funcs::stats_msg(const vector<val::VBuiltinG::arg_t>& v, zcore::Inter
 }
 
 
-val::Value funcs::stats_net(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::stats_net(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   const auto& stats = ic.getNetStats();
   // create a vector with the obtained values:
   auto a = arr::make_cow<arr::Array<double>>
@@ -729,7 +729,7 @@ val::Value funcs::stats_net(const vector<val::VBuiltinG::arg_t>& v, zcore::Inter
      }
      );
 
-  auto reset = val::get_scalar<bool>(getVal(v[0]));
+  auto reset = val::get_scalar<bool>(val::getVal(v[0]));
   if (reset) {
     ic.resetNetStats();
   }
@@ -737,7 +737,7 @@ val::Value funcs::stats_net(const vector<val::VBuiltinG::arg_t>& v, zcore::Inter
 }
 
 
-val::Value funcs::stats_ctx(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::stats_ctx(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   const auto& stats = ic.getCtxStats();
   // create a vector with the obtained values:
   auto a = arr::make_cow<arr::Array<double>>
@@ -776,7 +776,7 @@ val::Value funcs::stats_ctx(const vector<val::VBuiltinG::arg_t>& v, zcore::Inter
      }
      );
 
-  auto reset = val::get_scalar<bool>(getVal(v[0]));
+  auto reset = val::get_scalar<bool>(val::getVal(v[0]));
   if (reset) {
     ic.resetCtxStats();
   }
@@ -785,7 +785,7 @@ val::Value funcs::stats_ctx(const vector<val::VBuiltinG::arg_t>& v, zcore::Inter
 
 
 // provide a first approximation of the info (can be extended)
-val::Value funcs::info_net(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::info_net(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   // the info we have is:
   // - the connections
   // - the fdToId mapping
@@ -829,7 +829,7 @@ val::Value funcs::info_net(const vector<val::VBuiltinG::arg_t>& v, zcore::Interp
 }
 
 
-val::Value funcs::info_msg(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::info_msg(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   // incoming requests ctx
   // incoming responses ctx
   auto info = ic.getMsgInfo();
@@ -862,7 +862,7 @@ val::Value funcs::info_msg(const vector<val::VBuiltinG::arg_t>& v, zcore::Interp
 }
 
 
-val::Value funcs::info_ctx(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::info_ctx(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   // we potentially have:
   // - current state
   // - requests
@@ -883,8 +883,8 @@ val::Value funcs::info_ctx(const vector<val::VBuiltinG::arg_t>& v, zcore::Interp
 }
 
 
-val::Value funcs::str(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  std::cout << val::str(getVal(v[0]), cfg::cfgmap) << std::endl;
+val::Value funcs::str(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  std::cout << val::str(val::getVal(v[0]), cfg::cfgmap) << std::endl;
   ic.s->k->next->next->atype |= interp::Kont::SILENT;
   return val::VNull();
 }
@@ -911,7 +911,7 @@ static cfg::CfgVariant valToCfg(const val::Value& v) {
 }
 
 
-val::Value funcs::_options(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::_options(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   // works the same way as in R.
   if (v.empty()) {
     // if no args build a list from the config map and return:
@@ -926,16 +926,16 @@ val::Value funcs::_options(const vector<val::VBuiltinG::arg_t>& v, zcore::Interp
     auto vl = arr::make_cow<val::VList>(false, vector<pair<string, val::Value>>{});
     for (const auto e: v) {
       try {
-        cfg::cfgmap.set(getName(e), valToCfg(getVal(e)));
-        vl->push_back(std::make_pair(getName(e), getVal(e)));
+        cfg::cfgmap.set(val::getName(e), valToCfg(val::getVal(e)));
+        vl->push_back(std::make_pair(val::getName(e), val::getVal(e)));
       }
       catch (std::out_of_range&) {
-        throw interp::EvalException("unknown config variable '"s + getName(e) + "':", 
-                                    getLoc(e));
+        throw interp::EvalException("unknown config variable '"s + val::getName(e) + "':", 
+                                    val::getLoc(e));
       }
       catch (std::invalid_argument&) {
-        throw interp::EvalException("invalid type for config variable '"s + getName(e) + "':", 
-                                    getLoc(e));
+        throw interp::EvalException("invalid type for config variable '"s + val::getName(e) + "':", 
+                                    val::getLoc(e));
       }
     }
     // because it would not be efficient to read from the map at each
@@ -948,35 +948,35 @@ val::Value funcs::_options(const vector<val::VBuiltinG::arg_t>& v, zcore::Interp
 }
 
 
-val::Value funcs::make_connection(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::make_connection(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum {IP, PORT};
-  auto ip   = val::get_scalar<arr::zstring>(getVal(v[IP]));
-  int  port = val::get_scalar<double>(getVal(v[PORT]));
+  auto ip   = val::get_scalar<arr::zstring>(val::getVal(v[IP]));
+  int  port = val::get_scalar<double>(val::getVal(v[PORT]));
   auto id = ic.connect(ip, port);
   return val::VConn(ip, port, id);
 }
 
 
-val::Value funcs::connection_port(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::connection_port(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { CONN };
-  auto connection = get<val::VConn>(getVal(v[CONN]));
+  auto connection = get<val::VConn>(val::getVal(v[CONN]));
   
   return val::make_array(static_cast<double>(connection.port));
 }
 
 
-val::Value funcs::connection_address(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::connection_address(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { CONN };
-  auto connection = get<val::VConn>(getVal(v[CONN]));
+  auto connection = get<val::VConn>(val::getVal(v[CONN]));
   
   return val::make_array(arr::zstring(connection.ip));
 }
 
 
-val::Value funcs::make_timer(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::make_timer(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { DURATION, LOOP_MAX };
-  const std::chrono::nanoseconds nanosecs = val::get_scalar<Global::duration>(getVal(v[DURATION]));
-  const double loop_max = val::get_scalar<double>(getVal(v[LOOP_MAX]));
+  const std::chrono::nanoseconds nanosecs = val::get_scalar<Global::duration>(val::getVal(v[DURATION]));
+  const double loop_max = val::get_scalar<double>(val::getVal(v[LOOP_MAX]));
   auto loop = get<val::VCode>(ic.s->k->r->find("loop"));
   auto once = get<val::VCode>(ic.s->k->r->find("once"));
   auto timer = std::make_shared<val::VTimer>(nanosecs.count(), loop.expr, once.expr, loop_max);
@@ -1000,9 +1000,9 @@ struct msync_wrapper {
   }
 };
 
-val::Value funcs::msync(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::msync(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { X, ASYNC };
-  auto async = val::get_scalar<bool>(getVal(v[ASYNC]));
+  auto async = val::get_scalar<bool>(val::getVal(v[ASYNC]));
   ic.s->k->next->next->atype |= interp::Kont::SILENT;
   return apply_to_types2<msync_wrapper, 
                          bool,   // type of argument 1 for sort_wrapper::f()
@@ -1012,8 +1012,8 @@ val::Value funcs::msync(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx
                          val::vt_string, 
                          val::vt_duration, 
                          val::vt_zts,
-                         val::vt_interval>(getVal(v[X]), async, 
-                                           getLoc(v[X]), getLoc(v[ASYNC]));  
+                         val::vt_interval>(val::getVal(v[X]), async, 
+                                           val::getLoc(v[X]), val::getLoc(v[ASYNC]));  
 }
 
 static std::string extract_string_elt(const val::Value& a, size_t idx) {
@@ -1056,25 +1056,25 @@ static std::string extract_string_elt(const val::Value& a, size_t idx) {
 }
 
 
-val::Value funcs::paste(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  const std::string sep = (*get<val::SpVAS>(getVal(v[0])))[0];
+val::Value funcs::paste(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  const std::string sep = (*get<val::SpVAS>(val::getVal(v[0])))[0];
 
   // all the others arguments are from the ellipsis:
   // get the max size of the elts:
   size_t maxlen = std::accumulate(v.begin()+2, v.end(), static_cast<size_t>(0),
                                     [](size_t a, const val::VBuiltinG::arg_t& b) {
-                                      auto l = val::size(getVal(b));
+                                      auto l = val::size(val::getVal(b));
                                       return l <= a ? a : l;
                                     });
 
   // in the case where the collapse argument is a string, we return a
   // collapsed vector, i.e. a string array of one element:
-  if (getVal(v[1]).which() == val::vt_string) {
-    const string collapse = (*get<val::SpVAS>(getVal(v[1])))[0];
+  if (val::getVal(v[1]).which() == val::vt_string) {
+    const string collapse = (*get<val::SpVAS>(val::getVal(v[1])))[0];
     std::string s;
     for (size_t j=0; j<maxlen; ++j) {
       for (auto i=v.begin()+2; i!=v.end(); ++i) { 
-        s += extract_string_elt(getVal(*i), j) + (i+1 != v.end() ? sep : "");
+        s += extract_string_elt(val::getVal(*i), j) + (i+1 != v.end() ? sep : "");
       }
       s += j < maxlen - 1 ? collapse : "";
     }
@@ -1087,7 +1087,7 @@ val::Value funcs::paste(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx
     for (size_t j=0; j<maxlen; ++j) {
       std::string s;
       for (auto i=v.begin()+2; i!=v.end(); ++i) { 
-        s += extract_string_elt(getVal(*i), j) + (i+1 != v.end() ? sep : "");
+        s += extract_string_elt(val::getVal(*i), j) + (i+1 != v.end() ? sep : "");
       }
       a->concat(s, "");
    }
@@ -1096,20 +1096,20 @@ val::Value funcs::paste(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx
 }
 
 
-val::Value funcs::cat(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::cat(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { FILE, SEP, FILL, LABELS, APPEND };
-  const auto& file   = val::get_scalar<arr::zstring>(getVal(v[FILE]));
-  const auto& sep    = val::get_scalar<arr::zstring>(getVal(v[SEP]));
-  const auto labelsflag = getVal(v[3]).which() == val::vt_string;
-  const auto& labels = labelsflag ? get<val::SpVAS>(getVal(v[LABELS])) : 
+  const auto& file   = val::get_scalar<arr::zstring>(val::getVal(v[FILE]));
+  const auto& sep    = val::get_scalar<arr::zstring>(val::getVal(v[SEP]));
+  const auto labelsflag = val::getVal(v[3]).which() == val::vt_string;
+  const auto& labels = labelsflag ? get<val::SpVAS>(val::getVal(v[LABELS])) : 
     make_cow<val::VArrayS>(false, arr::idx_type{0});
-  const auto& append = val::get_scalar<bool>(getVal(v[APPEND]));
+  const auto& append = val::get_scalar<bool>(val::getVal(v[APPEND]));
   const int ellipsispos = 5;
 
   // fill can be double or bool; if it's bool and it's true, then we use width from config:
-  size_t fill = getVal(v[FILL]).which() == val::vt_double ?
-    static_cast<size_t>(val::get_scalar<double>(getVal(v[FILL]))) :
-    (val::get_scalar<bool>(getVal(v[FILL])) ? static_cast<size_t>(get<int64_t>(cfg::cfgmap.get("width"s))) :
+  size_t fill = val::getVal(v[FILL]).which() == val::vt_double ?
+    static_cast<size_t>(val::get_scalar<double>(val::getVal(v[FILL]))) :
+    (val::get_scalar<bool>(val::getVal(v[FILL])) ? static_cast<size_t>(get<int64_t>(cfg::cfgmap.get("width"s))) :
      std::numeric_limits<size_t>::max());
   
   std::ofstream of;
@@ -1121,9 +1121,9 @@ val::Value funcs::cat(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& 
   size_t linesz = 0;                               
   bool isnewline = true;
   for (auto e=v.begin()+ellipsispos; e!=v.end(); ++e) {
-    auto eltsz = val::size(getVal(*e)); 
+    auto eltsz = val::size(val::getVal(*e)); 
     for (size_t j=0; j<eltsz; ++j) {
-      const auto& es = extract_string_elt(getVal(*e), j);
+      const auto& es = extract_string_elt(val::getVal(*e), j);
       isnewline = linesz + es.size() + sep.size() > fill;
       if (isnewline) {
         if (labelsflag && labels->size()) {

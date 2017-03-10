@@ -69,6 +69,7 @@ namespace val {
   struct VCode;
   struct VFuture;
   struct VTimer;
+  struct VPtr;
 
   struct VNull { };
 
@@ -153,7 +154,8 @@ namespace val {
     vt_connection,
     vt_timer,
     vt_named, // used exclusively by encode to transmit name/value pairs
-    vt_error  // used exclusively to transmit an error over TCP
+    vt_error, // used exclusively to transmit an error over TCP
+    vt_ptr    // used exclusively by interpreter to keep original address
   };
 
 
@@ -177,7 +179,8 @@ namespace val {
     {16, "connection"},
     {17, "timer"},
     {18, "named"},
-    {19, "error"}
+    {19, "error"},
+    {20, "vptr"}
   };
 
 
@@ -236,6 +239,7 @@ namespace val {
                   ,SpTimer
                   ,recursive_wrapper<VNamed>
                   ,VError
+                  ,recursive_wrapper<VPtr>
                   > Value;
 
 
@@ -244,6 +248,20 @@ namespace val {
     VCode(const E* e) : expr(e->clone()) { }
     VCode(shared_ptr<E> e) : expr(e) { }
     shared_ptr<E> expr;
+  };
+
+
+  struct VPtr {
+    VPtr(Value& val) {
+      if (val.which() == vt_ptr) {
+        auto& vp = get<VPtr>(val);
+        p = vp.p;
+      }
+      else {
+        p = &val;
+      }
+    }
+    Value* p;
   };
 
 
@@ -450,11 +468,13 @@ namespace val {
   inline bool operator==(const SpVList& p1, const SpVList& p2) { return p1->a == p2->a; }
   inline bool operator==(const VError&  p1, const VError&  p2) { return p1.what == p2.what; }
 
+  // for these it's preferable to throw "not implemented"
   inline bool operator==(const VCode&   p1, const VCode&   p2) { return false; }
   inline bool operator==(const VClos&   p1, const VClos&   p2) { return false; }
   inline bool operator==(const VConn&   p1, const VConn&   p2) { return false; }
   inline bool operator==(const VTimer&  p1, const VTimer&  p2) { return false; }
   inline bool operator==(const VBuiltinG&  p1, const VBuiltinG&  p2) { return false; }
+  inline bool operator==(const VPtr&  p1, const VPtr&  p2)     { return false; }
 
   inline size_t size(const val::Value& v) { return apply_visitor(val::SizeOf(), v); }
 

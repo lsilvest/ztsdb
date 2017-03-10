@@ -20,6 +20,7 @@
 #include "parser_utils.hpp"
 #include "timezone/ztime.hpp"
 #include "parser.hpp"           // bison-generated
+#include "display.hpp"
 
 extern tz::Zones tzones;
 
@@ -93,7 +94,9 @@ inline void evalunop_inplace(arr::Array<T>& d, int op) {
     evalunop_inplace<T,OP...>(d, op);
 }
 
-val::Value funcs::evalunop(val::Value v, int op) {
+val::Value funcs::evalunop(val::Value vv, int op) {
+  auto& v = val::gval(vv);
+
   static std::set<int> arithmetic{
     yy::parser::token::PLUS, 
     yy::parser::token::MINUS};
@@ -440,7 +443,10 @@ static const tz::Zone& getTzone(const val::Value& val) {
 
 
 /// This is the main switch function for binary operations on the Variant 'Value'.
-val::Value funcs::evalbinop(val::Value v1, const val::Value& v2, int op, const val::Value& attrib) {
+val::Value funcs::evalbinop(val::Value vv1, const val::Value& vv2, int op, const val::Value& attrib) {
+  auto& v1 = val::gval(vv1);
+  const auto& v2 = val::gval(vv2); 
+  
   static std::set<int> arithmetic{
     yy::parser::token::PLUS, 
     yy::parser::token::MINUS,

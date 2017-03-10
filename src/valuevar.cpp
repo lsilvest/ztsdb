@@ -247,7 +247,7 @@ void val::setRef(val::Value& v) {
                  val::vt_period, 
                  val::vt_string, 
                  val::vt_zts,
-                 val::vt_list>(v);
+                 val::vt_list>(val::gval(v));
 }
 
 
@@ -269,7 +269,7 @@ void val::resetRef(val::Value& v) {
                  val::vt_period, 
                  val::vt_string, 
                  val::vt_zts,
-                 val::vt_list>(v);
+                 val::vt_list>(val::gval(v));
 }
 
 

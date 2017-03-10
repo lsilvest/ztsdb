@@ -203,14 +203,15 @@ actuals :   aarg[a]                                 { $$ = new El($a); }
         |   actuals[as] COMMA aarg[a]               { $$ = ($as)->add($a); }
         ;
 
-aarg    :   %prec EMPTY_ARG                      { $$ = new Null(@$); }
-        |   REF SYMBOL[s]                        { $$ = new Symbol($s, @$, true);   }       
-        |   expr[e]                              { $$ = $e; }
-        |   SYMBOL[s1] EQ_ASSIGN REF SYMBOL[s2]  { $$ = new TaggedExpr(new Symbol($s1, @s1), new Symbol($s2, @s2, true), @$); }
-        |   SYMBOL[s]  EQ_ASSIGN expr[e]         { $$ = new TaggedExpr(new Symbol($s, @s), $e, @$); }
-        |   STRING[s1] EQ_ASSIGN REF SYMBOL[s2]  { $$ = new TaggedExpr(new Symbol($s1, @s1), new Symbol($s2, @s2, true), @$); }
-        |   STRING[s]  EQ_ASSIGN expr[e]         { $$ = new TaggedExpr(new Symbol($s, @s), $e, @$); }
+aarg    :   %prec EMPTY_ARG                      { $$ = new Arg(false, new Null(@$), @$); }
+        |   expr[e]                              { $$ = new Arg(false, $e, @$); }
+        |   REF expr[e]                          { $$ = new Arg(true,  $e, @$); }
+        |   SYMBOL[s] EQ_ASSIGN expr[e]          { $$ = new TaggedExpr(new Symbol($s, @s), $e, @$); }
+        |   SYMBOL[s] EQ_ASSIGN REF expr[e]      { $$ = new TaggedExpr(new Symbol($s, @s, true), $e, @$); }
+        |   STRING[s] EQ_ASSIGN expr[e]          { $$ = new TaggedExpr(new Symbol($s, @s), $e, @$); }
+        |   STRING[s] EQ_ASSIGN REF expr[e]      { $$ = new TaggedExpr(new Symbol($s, @s, true), $e, @$); }
         ;
+
 
 // expressions
 // -----------
@@ -255,8 +256,6 @@ expr    :       LPAR expr[e]        RPAR         { $$ = $e;           }
         |       MINUS expr[e] %prec UMINUS       { $$ = new Unop(parser::token::MINUS, $e, @$); }
         |       PLUS  expr[e] %prec UPLUS        { $$ = new Unop(parser::token::PLUS,  $e, @$); }
         |       NOT   expr[e] %prec UNOT         { $$ = new Unop(parser::token::NOT,   $e, @$); }
-        |       OP[op] LPAR expr[e] RPAR         { $$ = new Unop($op, $e, @$); }
-        |       OP[op] LPAR REF SYMBOL[s] RPAR   { $$ = new Unop($op, new Symbol($s, @s, true), @$); }
 
 // binary operators (including function call style (i.e. `+`(x, y) and `+`(x, y, tz))
         |       expr[e1] PLUS  expr[e2]  { $$ = new Binop(parser::token::PLUS,  $e1, $e2, @$); }
@@ -265,7 +264,7 @@ expr    :       LPAR expr[e]        RPAR         { $$ = $e;           }
         |       expr[e1] DIV   expr[e2]  { $$ = new Binop(parser::token::DIV,   $e1, $e2, @$); }
         |       expr[e1] MOD   expr[e2]  { $$ = new Binop(parser::token::MOD,   $e1, $e2, @$); }
         |       expr[e1] POWER expr[e2]  { $$ = new Binop(parser::token::POWER, $e1, $e2, @$); }
-        |       expr[e1] COLON expr[e2]  { $$ = new Funcall(new Symbol("seq", @$), (new El($e2))->addfirst($e1)); }
+        |       expr[e1] COLON expr[e2]  { $$ = new Funcall(new Symbol("seq", @$), (new El(new Arg(false, $e2, @e2)))->addfirst(new Arg(false, $e1, @e1))); }
         |       expr[e1] EQ    expr[e2]  { $$ = new Binop(parser::token::EQ,    $e1, $e2, @$); }
         |       expr[e1] NE    expr[e2]  { $$ = new Binop(parser::token::NE,    $e1, $e2, @$); }
         |       expr[e1] LT    expr[e2]  { $$ = new Binop(parser::token::LT,    $e1, $e2, @$); } 
@@ -276,10 +275,8 @@ expr    :       LPAR expr[e]        RPAR         { $$ = $e;           }
         |       expr[e1] AND2  expr[e2]  { $$ = new Binop(parser::token::AND2,  $e1, $e2, @$); }
         |       expr[e1] OR    expr[e2]  { $$ = new Binop(parser::token::OR,    $e1, $e2, @$); }
         |       expr[e1] OR2   expr[e2]  { $$ = new Binop(parser::token::OR2,   $e1, $e2, @$); }
-        |       OP[op] LPAR expr[e1] COMMA expr[e2] RPAR { $$ = new Binop($op,  $e1, $e2, @$); }
-        |       OP[op] LPAR expr[e1] COMMA expr[e2] COMMA expr[e3] RPAR { $$ = new Binop($op, $e1, $e2, @$, $e3); }
-        |       OP[op] LPAR REF SYMBOL[s1] COMMA expr[e2] RPAR { $$ = new Binop($op, new Symbol($s1, @s1, true), $e2, @$); }
-        |       OP[op] LPAR REF SYMBOL[s1] COMMA expr[e2] COMMA expr[e3] RPAR { $$ = new Binop($op, new Symbol($s1, @s1, true), $e2, @$, $e3); }
+// this covers both 'unop' and 'binop':
+        |       OP[op] LPAR actuals[sl] RPAR  %prec FUNCALL { $$ = new Funcall(new Symbol("op", @$), ($sl)->addfirst(new Arg(false, new Double($op, @op), @op))); }
 
 // function definition:
         |       FUNCTION LPAR formals[fl] RPAR expr[e] %prec FUNCTION { $$ = new Function($fl, $e, @$); }
@@ -290,7 +287,7 @@ expr    :       LPAR expr[e]        RPAR         { $$ = $e;           }
 // function call
         |       expr[e]   LPAR actuals[sl] RPAR %prec FUNCALL { $$ = new Funcall($e, $sl); }
         |       SYMBOL[s] LPAR actuals[sl] RPAR %prec FUNCALL { $$ = new Funcall(new Symbol($s, @s), $sl); }
-        |       SYMBOL[s] LPAR actuals[sl] RPAR LEFT_ASSIGN expr[e] { $$ = new Funcall(new Symbol($s, @s), ($sl)->add($e)); }
+        |       SYMBOL[s] LPAR actuals[sl] RPAR LEFT_ASSIGN expr[e] { $$ = new Funcall(new Symbol($s, @s), ($sl)->add(new Arg(false, $e, @e))); }
         |       expr[e] LPAR RPAR      %prec EMPTY_FUNCALL    { $$ = new Funcall($e, new El()); }
         |       SYMBOL[s] LPAR RPAR    %prec EMPTY_FUNCALL    { $$ = new Funcall(new Symbol($s, @s), new El()); }
 
@@ -300,38 +297,38 @@ expr    :       LPAR expr[e]        RPAR         { $$ = $e;           }
 //     to function calls with the symbol or expression on which the operation is taking place as
 //     first argument. Treating them as functions has a performance penalty, but it simplifies the
 //     interpreter considerably.
-        |       expr[e]   LSQUARE actuals[sl] RSQUARE %prec SUBSET { $$ = new Funcall(new Symbol("subset", @$), ($sl)->addfirst($e)); }
-        |       SYMBOL[s] LSQUARE actuals[sl] RSQUARE %prec SUBSET { $$ = new Funcall(new Symbol("subset", @$), ($sl)->addfirst(new Symbol($s, @s))); }
+        |       expr[e]   LSQUARE actuals[sl] RSQUARE %prec SUBSET { $$ = new Funcall(new Symbol("subset", @$), ($sl)->addfirst(new Arg(false, $e, @e))); }
+        |       SYMBOL[s] LSQUARE actuals[sl] RSQUARE %prec SUBSET { $$ = new Funcall(new Symbol("subset", @$), ($sl)->addfirst(new Arg(false, new Symbol($s, @s), @s))); }
         |       expr[e]   LSQUARE actuals[sl] RSQUARE LEFT_ASSIGN expr[e2] { $$ = new Funcall(new Symbol("subassign", @$), 
-                                                                                                   (($sl)->addfirst($e2))->addfirst($e)); }
+                                                                                              (($sl)->addfirst(new Arg(false, $e2, @e2))->addfirst(new Arg(true, $e, @e)))); }
 //     Symbol subassign is a special case because when subsetting symbols, the symbol itself must be
 //     modified, so the 'Symbol' created must have its ref flag set to true.
         |       SYMBOL[s] LSQUARE actuals[sl] RSQUARE LEFT_ASSIGN expr[e2] { $$ = new Funcall(new Symbol("subassign", yy::missing_loc()), 
-                                                                                                   (($sl)->addfirst($e2))->addfirst(new Symbol($s, @s, true))); }
+                                                                                              (($sl)->addfirst(new Arg(false, $e2, @e2)))->addfirst(new Arg(true, new Symbol($s, @s, true), @s))); }
         |       expr[e]   LLSQUARE actuals[sl] RSQUARE RSQUARE %prec DBLSUBSET { $$ = new Funcall(new Symbol("dblsubset", yy::missing_loc()), 
-                                                                               ($sl)->addfirst($e)); }
+                                                                                                  ($sl)->addfirst(new Arg(true, $e, @e))); }
         |       SYMBOL[s] LLSQUARE actuals[sl] RSQUARE RSQUARE %prec DBLSUBSET { $$ = new Funcall(new Symbol("dblsubset", yy::missing_loc()), 
-                                                                               ($sl)->addfirst(new Symbol($s, @s))); }
+                                                                                                  ($sl)->addfirst(new Arg(true, new Symbol($s, @s), @s))); }
         |       expr[e]   LLSQUARE actuals[sl] RSQUARE RSQUARE LEFT_ASSIGN expr[e2] { $$ = new Funcall(new Symbol("dblsubassign", yy::missing_loc()), 
-                                                                                                                    (($sl)->addfirst($e2))->addfirst($e)); }
+                                                                                                       (($sl)->addfirst(new Arg(false, $e2, @e2)))->addfirst(new Arg(true, $e, @e))); }
         |       SYMBOL[s] LLSQUARE actuals[sl] RSQUARE RSQUARE LEFT_ASSIGN expr[e2] { $$ = new Funcall(new Symbol("dblsubassign", yy::missing_loc()), 
-                                                                                                      (($sl)->addfirst($e2))->addfirst(new Symbol($s, @s, true))); }
+                                                                                                       (($sl)->addfirst(new Arg(false, $e2, @e2)))->addfirst(new Arg(true, new Symbol($s, @s, true), @s))); }
         |       expr[e] DOLLAR SYMBOL[s] %prec SUBSET { $$ = new Funcall(new Symbol("dblsubset", yy::missing_loc()), 
-                                                                    (new El(new String($s, @s)))->addfirst($e)); }
+                                                                         (new El(new Arg(false, new String($s, @s), @s)))->addfirst(new Arg(true, $e, @e))); }
         |       expr[e] DOLLAR STRING[s] %prec SUBSET { $$ = new Funcall(new Symbol("dblsubset", yy::missing_loc()), 
-                                                                    (new El(new String($s, @s)))->addfirst($e)); }
+                                                                         (new El(new Arg(false, new String($s, @s), @s)))->addfirst(new Arg(true, $e, @e))); }
         |       SYMBOL[s1] DOLLAR SYMBOL[s2] %prec SUBSET { $$ = new Funcall(new Symbol("dblsubset", yy::missing_loc()), 
-                                                                    (new El(new String($s2, @s2)))->addfirst(new Symbol($s1, @s1))); }
+                                                                             (new El(new Arg(false, new String($s2, @s2), @s2)))->addfirst(new Arg(true, new Symbol($s1, @s1), @1))); }
         |       SYMBOL[s1] DOLLAR STRING[s2] %prec SUBSET { $$ = new Funcall(new Symbol("dblsubset", yy::missing_loc()), 
-                                                                    (new El(new String($s2, @s2)))->addfirst(new Symbol($s1, @s1))); }
+                                                                             (new El(new Arg(false, new String($s2, @s2), @s2)))->addfirst(new Arg(true, new Symbol($s1, @s1), @1))); }
         |       expr[e] DOLLAR SYMBOL[s] LEFT_ASSIGN expr[e2]  { $$ = new Funcall(new Symbol("dblsubassign", yy::missing_loc()), 
-                                                                                         (new El(new String($s, @s)))->addfirst($e2)->addfirst($e)); }
+                                                                                  (new El(new Arg(false, new String($s, @s), @s)))->addfirst(new Arg(false, $e2, @e2))->addfirst(new Arg(true, $e, @e))); }
         |       SYMBOL[s1] DOLLAR SYMBOL[s2] LEFT_ASSIGN expr[e2]  { $$ = new Funcall(new Symbol("dblsubassign", yy::missing_loc()), 
-                                                                                         (new El(new String($s2, @s2)))->addfirst($e2)->addfirst(new Symbol($s1, @s1, true))); }
+                  (new El(new Arg(false, new String($s2, @s2), @s2)))->addfirst(new Arg(false, $e2, @s2))->addfirst(new Arg(true, new Symbol($s1, @s1, true), @s1))); }
         |       expr[e] DOLLAR STRING[s] LEFT_ASSIGN expr[e2]  { $$ = new Funcall(new Symbol("dblsubassign", yy::missing_loc()), 
-                                                                                         (new El(new String($s, @s)))->addfirst($e2)->addfirst($e)); }
+                  (new El(new Arg(false, new String($s, @s), @s)))->addfirst(new Arg(false, $e2, @e2))->addfirst(new Arg(true, $e, @e))); }
         |       SYMBOL[s1] DOLLAR STRING[s2] LEFT_ASSIGN expr[e2]  { $$ = new Funcall(new Symbol("dblsubassign", yy::missing_loc()), 
-                                                                                         (new El(new String($s2, @s2)))->addfirst($e2)->addfirst(new Symbol($s1, @s1, true))); }
+                  (new El(new Arg(false, new String($s2, @s2), @s2)))->addfirst(new Arg(false, $e2, @e2))->addfirst(new Arg(true, new Symbol($s1, @s1, true), @s1))); }
         ;
 
 %%

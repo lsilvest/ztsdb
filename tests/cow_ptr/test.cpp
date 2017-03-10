@@ -35,7 +35,7 @@ struct A {
 TEST(cow_ptr_constructor_and_deref) {
   int check_a = 0;
   {
-    auto a = arr::make_cow<A>(false, 2, check_a);
+    auto a = arr::make_cow<A>(arr::NOFLAGS, 2, check_a);
     ASSERT_TRUE(a->a == 2);     // const access
     ASSERT_TRUE((*a).a == 2);   // const access
   }
@@ -57,7 +57,7 @@ TEST(cow_ptr_arrow_deref_no_copy) {
   int check_a = 0;
   {
     auto pa = new A(3, check_a);
-    auto a = arr::cow_ptr<A>(false, pa);
+    auto a = arr::cow_ptr<A>(arr::NOFLAGS, pa);
     a->a = 4;   // non-const access, but only one instance so no copy 
     ASSERT_TRUE(a->a == 4);
     ASSERT_TRUE((*a).a == 4);
@@ -68,7 +68,7 @@ TEST(cow_ptr_arrow_deref_no_copy) {
 TEST(cow_ptr_arrow_deref_copy) {
   int check_ab = 0;
   {
-    auto b = arr::make_cow<A>(false, 3, check_ab);
+    auto b = arr::make_cow<A>(arr::NOFLAGS, 3, check_ab);
     auto a = b;
     a->a = 2;   // non-const access, with multiple instances, so copy
     a->a = 3;   // unique again now, so no copy
@@ -83,7 +83,7 @@ TEST(cow_ptr_arrow_deref_copy) {
 TEST(cow_ptr_star_deref_copy) {
   int check_ab = 0;
   {
-    auto b = arr::make_cow<A>(false, 3, check_ab);
+    auto b = arr::make_cow<A>(arr::NOFLAGS, 3, check_ab);
     auto a = b;
     (*a).a = 2;   // non-const access, with multiple instances, so copy
     (*a).a = 3;   // unique again now, so no copy
@@ -95,35 +95,64 @@ TEST(cow_ptr_star_deref_copy) {
   }
   ASSERT_TRUE(check_ab == 2);   // destroyed in initial instance and in copy!
 }
-TEST(cow_ptr_arrow_deref_force_no_copy) {
+TEST(cow_ptr_star_locked) {
   int check_ab = 0;
-  {
-    auto b = arr::make_cow<A>(true, 3, check_ab);
-    auto a = b;
-    a->a = 2;   // copy was forbidden by setting nocopy flag
-    a->a = 3;   // same
-    a->a = 4;   // same
-    ASSERT_TRUE(a->a == 4);
-    ASSERT_TRUE((*a).a == 4);
-    ASSERT_TRUE(b->a == 4);
-    ASSERT_TRUE((*b).a == 4);
-  }
-  ASSERT_TRUE(check_ab == 1);
+  auto a = arr::make_cow<A>(arr::LOCKED, 3, check_ab);
+  // this is OK because no copy is made as we have only one reference:
+  (*a).a = 4;
+  ASSERT_TRUE(a->a == 4);
+  ASSERT_TRUE((*a).a == 4);
 }
-TEST(cow_ptr_star_deref_force_no_copy) {
+TEST(cow_ptr_star_locked_copy_attempt) {
   int check_ab = 0;
-  {
-    auto b = arr::make_cow<A>(true, 3, check_ab);
-    auto a = b;
-    (*a).a = 2;   // copy was forbidden by setting nocopy flag
-    (*a).a = 3;   // same
-    (*a).a = 4;   // same
-    ASSERT_TRUE(a->a == 4);
-    ASSERT_TRUE((*a).a == 4);
-    ASSERT_TRUE(b->a == 4);
-    ASSERT_TRUE((*b).a == 4);
-  }
-  ASSERT_TRUE(check_ab == 1);
+  auto a = arr::make_cow<A>(arr::LOCKED, 3, check_ab);
+  const auto b = a;
+  ASSERT_TRUE(b->a == b->a);
+  ASSERT_TRUE((*b).a == (*b).a);
+  // with 'b', we now have two references so non-const dereference will throw
+  ASSERT_THROW((*a).a = 2, std::range_error, "cannot copy locked object");
+  ASSERT_THROW(a->a = 2, std::range_error, "cannot copy locked object");
+}
+TEST(cow_ptr_star_const) {
+  int check_ab = 0;
+  auto a = arr::make_cow<A>(arr::CONSTREF, 3, check_ab);
+  // even without one reference we can't non const dereference const:
+  ASSERT_THROW((*a).a = 2, std::range_error, "cannot modify const object");
+  ASSERT_THROW(a->a = 2, std::range_error, "cannot modify const object");
+}
+TEST(cow_ptr_last) {
+  // verify last does not increase use_count
+  int check_ab = 0;
+  auto a = arr::make_cow<A>(arr::CONSTREF, 3, check_ab);
+  auto b = a;
+  auto c = b;
+  ASSERT_TRUE(a.use_count() == 3);
+  ASSERT_TRUE(b.use_count() == 3);
+  ASSERT_TRUE(c.use_count() == 3);
+  ASSERT_FALSE(a.isLast());
+  ASSERT_FALSE(b.isLast());
+  ASSERT_FALSE(c.isLast());
+  a.setLast();
+  ASSERT_TRUE(a.isLast());
+  ASSERT_FALSE(b.isLast());
+  ASSERT_FALSE(c.isLast());
+  ASSERT_TRUE(a.use_count() == 2);
+  ASSERT_TRUE(b.use_count() == 2);
+  ASSERT_TRUE(c.use_count() == 2);
+}
+TEST(cow_ptr_const) {
+  int check_ab = 0;
+  auto a = arr::make_cow<A>(arr::NOFLAGS, 3, check_ab);
+  auto b = a;
+  ASSERT_TRUE(a.use_count() == 2);
+  ASSERT_TRUE(b.use_count() == 2);
+  ASSERT_FALSE(a.isConst());
+  ASSERT_FALSE(b.isConst());
+  b.setConst();
+  ASSERT_TRUE(a.use_count() == 2);
+  ASSERT_TRUE(b.use_count() == 2);
+  ASSERT_FALSE(a.isConst());
+  ASSERT_TRUE(b.isConst());
 }
 
 

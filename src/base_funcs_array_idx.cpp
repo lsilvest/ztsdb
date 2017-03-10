@@ -43,13 +43,13 @@ static vector<Index> convertToIndex(const vector<val::VBuiltinG::arg_t>::const_i
   vector<Index> vi;
   unsigned j = 0;
   for (auto e = begin; e != end; ++e) {
-    switch (getVal(*e).which()) {
+    switch (val::getVal(*e).which()) {
     case val::vt_null:
       vi.push_back(NullIndex{z.getdim(j)});
       break;      
     case val::vt_double: {
       // - 1, like in R: indices start at 1:
-      const auto& idx = get<val::SpVAD>(getVal(*e));
+      const auto& idx = get<val::SpVAD>(val::getVal(*e));
       if (idx->size() == 0) {
         vi.push_back(IntIndex(Vector<size_t>()));
       }
@@ -63,39 +63,39 @@ static vector<Index> convertToIndex(const vector<val::VBuiltinG::arg_t>::const_i
       }
       break; }
     case val::vt_bool: {
-      const auto& idx = get<val::SpVAB>(getVal(*e));
+      const auto& idx = get<val::SpVAB>(val::getVal(*e));
       if (!idx->isVector()) {
-        throw interp::EvalException("boolean index is not a vector", getLoc(*e));
+        throw interp::EvalException("boolean index is not a vector", val::getLoc(*e));
       }
       if (z.getdim(j) != idx->getdim(0)) {
-        throw interp::EvalException("boolean index not equal to array extent", getLoc(*e));
+        throw interp::EvalException("boolean index not equal to array extent", val::getLoc(*e));
       }
       vi.push_back(BoolIndex{idx->getcol(0)});
       break; }
     case val::vt_string: {
-      const auto& idx = get<val::SpVAS>(getVal(*e));
+      const auto& idx = get<val::SpVAS>(val::getVal(*e));
       vi.push_back(NameIndex{arr::stdvector<string, arr::zstring>(*idx), z.getArray().getnames(j)});
       break;
     }
     case val::vt_time: {
       if (e != begin) {
-        throw interp::EvalException("zts: can't use a time index into dimension > 1", getLoc(*e));
+        throw interp::EvalException("zts: can't use a time index into dimension > 1", val::getLoc(*e));
       }
-      const auto& idx = get<val::SpVADT>(getVal(*e));
+      const auto& idx = get<val::SpVADT>(val::getVal(*e));
       vi.push_back(DtimeIndex{idx->getcol(0), z.getIndex().getcol(0)});
       break;
     }
     case val::vt_interval: {
       if (e != begin) {
         throw interp::EvalException("zts: can't use an interval index into dimension > 1", 
-                                    getLoc(*e));
+                                    val::getLoc(*e));
       }
-      const auto& idx = get<val::SpVAIVL>(getVal(*e));
+      const auto& idx = get<val::SpVAIVL>(val::getVal(*e));
       vi.push_back(IntervalIndex{idx->getcol(0), z.getIndex().getcol(0)});
       break;
     }
     default:
-      throw interp::EvalException("convertToIndex incorrect type", getLoc(*e));
+      throw interp::EvalException("convertToIndex incorrect type", val::getLoc(*e));
     }
     ++j;
   }
@@ -155,7 +155,7 @@ static vector<Index> convertToIndex(const vector<val::VBuiltinG::arg_t>::const_i
   // if there is only one null index, then the intent is to select
   // the whole of the array, even in an n>1 case; so we push back
   // dim.size() Nulls, and we are done:
-  if (end - begin == 1 && getVal(*begin).which() == val::vt_null) {
+  if (end - begin == 1 && val::getVal(*begin).which() == val::vt_null) {
     for (unsigned i=0; i<a.getdim().size(); ++i) {
       vi.push_back(NullIndex{a.getdim(i)});
     }
@@ -165,12 +165,12 @@ static vector<Index> convertToIndex(const vector<val::VBuiltinG::arg_t>::const_i
   }
   else {
     for (auto e = begin; e != end; ++e) {
-      switch (getVal(*e).which()) {
+      switch (val::getVal(*e).which()) {
       case val::vt_null:
         vi.push_back(NullIndex{a.getdim(j)});
         break;      
       case val::vt_double: {
-        const auto& idx = get<val::SpVAD>(getVal(*e));
+        const auto& idx = get<val::SpVAD>(val::getVal(*e));
         if (idx->size() == 0) {
           vi.push_back(IntIndex(Vector<size_t>()));
         }
@@ -192,38 +192,38 @@ static vector<Index> convertToIndex(const vector<val::VBuiltinG::arg_t>::const_i
         break; 
       }
       case val::vt_bool: {
-        const auto& idx = get<val::SpVAB>(getVal(*e));
+        const auto& idx = get<val::SpVAB>(val::getVal(*e));
         if (a.getdim(j) != idx->getdim(0) && a.size() != idx->size()) {
-          throw interp::EvalException("boolean index not equal to array extent", getLoc(*e));
+          throw interp::EvalException("boolean index not equal to array extent", val::getLoc(*e));
         }        
         vi.push_back(BoolIndex{idx->getcol(0)});
         break; 
       }
       case val::vt_string: {
-        const auto& idx = get<val::SpVAS>(getVal(*e));
+        const auto& idx = get<val::SpVAS>(val::getVal(*e));
         vi.push_back(NameIndex{arr::stdvector<string, arr::zstring>(*idx), a.getnames(j)});
         break; 
       }
       case val::vt_time: {
         if (!a.isVector()) {
-          throw interp::EvalException("time point index into non-vector", getLoc(*e));
+          throw interp::EvalException("time point index into non-vector", val::getLoc(*e));
         }
-        const auto& idx = get<val::SpVADT>(getVal(*e));
-        push_back_dtime_index(vi, *idx, getLoc(*e), a); 
+        const auto& idx = get<val::SpVADT>(val::getVal(*e));
+        push_back_dtime_index(vi, *idx, val::getLoc(*e), a); 
         break;
       }
       case val::vt_interval: {
         if (!a.isVector()) {
-          throw interp::EvalException("interval index into non-vector", getLoc(*e));
+          throw interp::EvalException("interval index into non-vector", val::getLoc(*e));
         }
-        const auto& idx = get<val::SpVAIVL>(getVal(*e));
-        push_back_interval_index(vi, *idx, getLoc(*e), a); 
+        const auto& idx = get<val::SpVAIVL>(val::getVal(*e));
+        push_back_interval_index(vi, *idx, val::getLoc(*e), a); 
         break;
       }
         /// case val::vt_arraydur:
         /// can't make an index from a duration
       default:
-        throw interp::EvalException("incorrect index type", getLoc(*e));
+        throw interp::EvalException("incorrect index type", val::getLoc(*e));
       }
       ++j;
     }
@@ -233,13 +233,13 @@ static vector<Index> convertToIndex(const vector<val::VBuiltinG::arg_t>::const_i
 
 
 /// subset an array: 
-val::Value funcs::subset(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::subset(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { DROP, A };             // and the following ones are the indices (from the ellipsis)
-  auto a = getVal(v[A]);
+  auto& a = val::getVal(v[A]);
 
   bool drop_p;
   try {
-    drop_p = val::get_scalar<bool>(funcs::convert_logical(getVal(v[DROP])));
+    drop_p = val::get_scalar<bool>(funcs::convert_logical(val::getVal(v[DROP])));
   }
   catch (std::exception& e) {
     throw std::range_error("cannot convert 'drop' parameter to boolean");
@@ -247,49 +247,49 @@ val::Value funcs::subset(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCt
 
   switch (a.which()) {
   case val::vt_zts: {
-    const auto z = get<val::SpZts>(a);
+    const auto& z = get<val::SpZts>(a);
     auto i = convertToIndex(v.begin()+2, v.end(), *z);
     return arr::make_cow<arr::zts>(false, (*z)(i, drop_p));
   }
   case val::vt_double: {
-    const auto ad = get<val::SpVAD>(a);
+    const auto& ad = get<val::SpVAD>(a);
     auto i = convertToIndex(v.begin()+2, v.end(), *ad);
     auto r = (*ad)(i, drop_p);
     return arr::make_cow<val::VArrayD>(false, std::move(r));
   }
   case val::vt_list: {
-    const auto l = get<val::SpVList>(a);
+    const auto& l = get<val::SpVList>(a);
     auto i = convertToIndex(v.begin()+2, v.end(), l->a);
     auto r = (l->a)(i, drop_p);
     // as in R, list does not revert to scalars or it would lose its list semantics:
     return arr::make_cow<val::VList>(false, std::move(r));
   }    
   case val::vt_string: {
-    const auto ai = get<val::SpVAS>(a); // const necessary for disambiguation of subset function
+    const auto& ai = get<val::SpVAS>(a); // const necessary for disambiguation of subset function
     auto i = convertToIndex(v.begin()+2, v.end(), *ai);
     auto r = (*ai)(i, drop_p);
     return val::Value(arr::make_cow<val::VArrayS>(false, std::move(r)));
   }
   case val::vt_bool: {
-    const auto ai = get<val::SpVAB>(a);
+    const auto& ai = get<val::SpVAB>(a);
     auto i = convertToIndex(v.begin()+2, v.end(), *ai);
     auto r = (*ai)(i, drop_p);
     return val::Value(arr::make_cow<val::VArrayB>(false, std::move(r)));
   }
   case val::vt_time: {
-    const auto adt = get<val::SpVADT>(a);
+    const auto& adt = get<val::SpVADT>(a);
     auto i = convertToIndex(v.begin()+2, v.end(), *adt);
     auto r = (*adt)(i, drop_p);
     return val::Value(arr::make_cow<val::VArrayDT>(false, std::move(r)));
   }
   case val::vt_duration: {
-    const auto adt = get<val::SpVADUR>(a);
+    const auto& adt = get<val::SpVADUR>(a);
     auto i  = convertToIndex(v.begin()+2, v.end(), *adt);
     auto r = (*adt)(i, drop_p);
     return val::Value(arr::make_cow<val::VArrayDUR>(false, std::move(r)));
   }
   case val::vt_period: {
-    const auto adt = get<val::SpVAPRD>(a);
+    const auto& adt = get<val::SpVAPRD>(a);
     auto i  = convertToIndex(v.begin()+2, v.end(), *adt);
     auto r = (*adt)(i, drop_p);
     return val::Value(arr::make_cow<val::VArrayPRD>(false, std::move(r)));
@@ -318,66 +318,68 @@ static void checkScalarIndex(const vector<Index>& idx) {
 
 
 /// Double subset an array e.g. do 'x[[y]]'. 
-val::Value funcs::dblsubset(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  auto a = getVal(v[0]);
+val::Value funcs::dblsubset(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  auto a = val::getVal(v[0]);
 
   switch (a.which()) {
   case val::vt_zts: {
-    const auto z = get<val::SpZts>(a);
+    const auto& z = get<val::SpZts>(a);
     auto i = convertToIndex(v.begin()+1, v.end(), *z);
     checkScalarIndex(i);
-    return arr::make_cow<arr::zts>(false, (*z)(i, true));
+    return arr::make_cow<arr::zts>(arr::NOFLAGS, (*z)(i, true));
   }
   case val::vt_double: {
-    const auto ad = get<val::SpVAD>(a);
+    const auto& ad = get<val::SpVAD>(a);
     auto i = convertToIndex(v.begin()+1, v.end(), *ad);
     checkScalarIndex(i);
     auto r = (*ad)(i, true);
-    return arr::make_cow<val::VArrayD>(false, std::move(r));
+    return arr::make_cow<val::VArrayD>(arr::NOFLAGS, std::move(r));
   }
   case val::vt_list: {
-    const auto l = get<val::SpVList>(a);
-    auto i = convertToIndex(v.begin()+1, v.end(), l->a);
+    auto& l = get<val::SpVList>(a);
+    auto i = convertToIndex(v.begin()+1, v.end(), l.get()->a); // don't make a copy of l!
     checkScalarIndex(i);
-    auto r = (l->a)(i, true);
-    auto a = r[0];
-    setRef(a);
-    return a;
+    idx_type iv=0, ii=0; 
+    if (!i[0].getfirst(iv, ii)) {
+      throw interp::EvalException("invalid index", val::getLoc(v[0]));
+    }
+    auto& a = l.get()->a.getcol(0)[iv]; // don't make a copy of l!
+    return val::VPtr(a);
   }    
   case val::vt_string: {
-    const auto ai = get<val::SpVAS>(a); // const necessary for disambiguation of subset function
+    const auto& ai = get<val::SpVAS>(a); // const necessary for disambiguation of subset function
     auto i = convertToIndex(v.begin()+1, v.end(), *ai);
     checkScalarIndex(i);
     auto r = (*ai)(i, true);
-    return val::Value(arr::make_cow<val::VArrayS>(false, std::move(r)));
+    return val::Value(arr::make_cow<val::VArrayS>(arr::NOFLAGS, std::move(r)));
   }
   case val::vt_bool: {
-    const auto ai = get<val::SpVAB>(a);
+    const auto& ai = get<val::SpVAB>(a);
     auto i = convertToIndex(v.begin()+1, v.end(), *ai);
     checkScalarIndex(i);
     auto r = (*ai)(i, true);
-    return val::Value(arr::make_cow<val::VArrayB>(false, std::move(r)));
+    return val::Value(arr::make_cow<val::VArrayB>(arr::NOFLAGS, std::move(r)));
   }
   case val::vt_time: {
-    const auto adt = get<val::SpVADT>(a);
+    const auto& adt = get<val::SpVADT>(a);
     auto i = convertToIndex(v.begin()+1, v.end(), *adt);
     checkScalarIndex(i);
     auto r = (*adt)(i, true);
-    return val::Value(arr::make_cow<val::VArrayDT>(false, std::move(r)));
+    return val::Value(arr::make_cow<val::VArrayDT>(arr::NOFLAGS, std::move(r)));
   }
   case val::vt_duration: {
-    const auto adt = get<val::SpVADUR>(a);
+    const auto& adt = get<val::SpVADUR>(a);
     auto i  = convertToIndex(v.begin()+1, v.end(), *adt);
     checkScalarIndex(i);
     auto r = (*adt)(i, true);
-    return val::Value(arr::make_cow<val::VArrayDUR>(false, std::move(r)));
+    return val::Value(arr::make_cow<val::VArrayDUR>(arr::NOFLAGS, std::move(r)));
   }
   case val::vt_interval: {
-    const auto adt = get<val::SpVAIVL>(a);
+    const auto& adt = get<val::SpVAIVL>(a);
     auto i = convertToIndex(v.begin()+1, v.end(), *adt);
     checkScalarIndex(i);
     auto r = (*adt)(i, true);
-    return val::Value(arr::make_cow<val::VArrayIVL>(false, std::move(r)));
+    return val::Value(arr::make_cow<val::VArrayIVL>(arr::NOFLAGS, std::move(r)));
   }
   default:
     throw std::domain_error(apply_visitor(val::Typeof(), a) + " cannot be double subsetted");
@@ -447,10 +449,10 @@ val::Value funcs::subassign(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& 
   // handle case a[] <- x, when dim(a) > 1 LLL
 
   enum { A, B };
-  //  const auto name_a = val::get_scalar<arr::zstring>(getVal(v[NAME_A]));
-  //auto& a = name_a.size() == 0 ? getVal(v[A]) : ic.s->k->next->r->findR(name_a);
-  auto& a = getVal(v[A]);
-  auto& b = getVal(v[B]);
+  //  const auto name_a = val::get_scalar<arr::zstring>(val::getVal(v[NAME_A]));
+  //auto& a = name_a.size() == 0 ? val::getVal(v[A]) : ic.s->k->next->r->findR(name_a);
+  auto& a = val::getVal(v[A]);
+  auto& b = val::getVal(v[B]);
   const size_t IDXOFF = 2;
 
   switch (a.which()) {
@@ -514,9 +516,9 @@ val::Value funcs::dblsubassign(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCt
   enum { A, B };
   try {
     ic.s->k->next->next->atype |= interp::Kont::SILENT;
-    auto& a = getVal(v[A]);
+    auto& a = val::getVal(v[A]);
     if (a.which() == val::vt_list) {
-      auto& b = getVal(v[B]);
+      auto& b = val::getVal(v[B]);
       auto& al = get<val::SpVList>(a);
       const auto i = convertToIndex(v.begin()+2, v.end(), al->a);
       try {
@@ -538,6 +540,6 @@ val::Value funcs::dblsubassign(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCt
     }
   }
   catch (std::exception& e) {
-    throw interp::EvalException(e.what(), getLoc(*(v.begin()+2)));
+    throw interp::EvalException(e.what(), val::getLoc(*(v.begin()+2)));
   }
 }

@@ -65,6 +65,7 @@ enum Etype {
   etfunction,
   etfuncall,
   etcode,
+  etarg,
 };
 
 using loc_t = yy::location;
@@ -436,6 +437,24 @@ private:
   TaggedExpr(const TaggedExpr& te) :
     E(ettaggedexpr, te.loc), symb(te.symb->clone()), e(te.e->clone()) { }
 };
+
+
+struct Arg : E {
+  Arg(bool ref_p, E* e_p, loc_t l) : E(etarg, l), ref(ref_p), e(e_p) { }
+  virtual Arg* clone() const { return new Arg(*this); }
+  virtual bool operator==(const Arg& a) const { 
+    return ref == a.ref ? (*e == *a.e) : false;
+  }
+
+  bool ref;
+  E* e;
+  ~Arg() { delete e; }
+
+private:
+  Arg(const Arg& a) :
+    E(etarg, a.loc), ref(a.ref), e(a.e->clone()) { }
+};
+
 
 struct Function : E {
   Function(E* b, loc_t l) : E(etfunction, l), formlist(nullptr), body(b) { }

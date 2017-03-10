@@ -387,6 +387,11 @@ static string display_static(const val::Value& v, const cfg::CfgMap& cfg) {
     ss << "[" << val::display(a.name) << "; " << val::display(a.val) << "]";
     break;
   }
+  case val::vt_ptr: {
+    const auto& a = get<const val::VPtr>(v);
+    ss << (val::isRef(v) ? "ref: " : "not_ref: ") << a.p ? val::display(*a.p) : "vptr(null)";
+    break;
+  }
   case val::vt_future: {
     const auto& f = get<const val::SpFuture>(v);
     ss << "Future(" << f->to_string() << ")";
@@ -523,6 +528,9 @@ string val::to_string(const arr::zstring& s, const cfg::CfgMap& cfg, bool fast) 
 }
 string val::to_string(const VError& e, const cfg::CfgMap& cfg, bool fast) {
   return e.what;
+}
+string val::to_string(const VPtr& p, const cfg::CfgMap& cfg, bool fast) {
+  return p.p == nullptr ? "vptr(null)" : to_string(*p.p);
 }
 
 template <>

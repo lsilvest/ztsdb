@@ -48,14 +48,14 @@ static val::ValType getCType(vector<val::VBuiltinG::arg_t>::const_iterator b,
                     e, 
                     val::vt_null, 
                     [](val::ValType x, const val::VBuiltinG::arg_t& y) {
-                      auto yt = equiv(static_cast<val::ValType>(getVal(y).which()));
+                      auto yt = equiv(static_cast<val::ValType>(val::getVal(y).which()));
                       return funcs::operator<(x, yt) ? yt : x; 
                     });
 } 
 
 
 template <typename T>
-static Array<T> makeVector(const vector<val::VBuiltinG::arg_t>& v) {
+static Array<T> makeVector(vector<val::VBuiltinG::arg_t>& v) {
 #ifdef DEBUG_BFA
   cout << "makeVector<T>: " << endl;
 #endif
@@ -65,42 +65,42 @@ static Array<T> makeVector(const vector<val::VBuiltinG::arg_t>& v) {
 #ifdef DEBUG_BFA
     std::cout << "loop makeVector..." << std::endl;
     std::cout << "the name is: " << std::endl;
-    std::cout << getName(e) << std::endl;
+    std::cout << val::getName(e) << std::endl;
     std::cout << "got name" << std::endl;
 #endif
-    switch (getVal(e).which()) {
+    switch (val::getVal(e).which()) {
     case val::vt_double: 
-      r.concat(vectorize(*get<val::SpVAD>(getVal(e))), getName(e));
+      r.concat(vectorize(*get<val::SpVAD>(val::getVal(e))), val::getName(e));
       break;
     case val::vt_bool: 
-      r.concat(vectorize(*get<val::SpVAB>(getVal(e))), getName(e));
+      r.concat(vectorize(*get<val::SpVAB>(val::getVal(e))), val::getName(e));
       break;
     case val::vt_string: 
-      r.concat(vectorize(*get<val::SpVAS>(getVal(e))), getName(e));
+      r.concat(vectorize(*get<val::SpVAS>(val::getVal(e))), val::getName(e));
       break;
     case val::vt_time: 
-      r.concat(vectorize(*get<val::SpVADT>(getVal(e))), getName(e));
+      r.concat(vectorize(*get<val::SpVADT>(val::getVal(e))), val::getName(e));
       break;
     case val::vt_duration: 
-      r.concat(vectorize(*get<val::SpVADUR>(getVal(e))), getName(e));
+      r.concat(vectorize(*get<val::SpVADUR>(val::getVal(e))), val::getName(e));
       break;
     case val::vt_period: 
-      r.concat(vectorize(*get<val::SpVAPRD>(getVal(e))), getName(e));
+      r.concat(vectorize(*get<val::SpVAPRD>(val::getVal(e))), val::getName(e));
       break;
     case val::vt_interval: 
-      r.concat(vectorize(*get<val::SpVAIVL>(getVal(e))), getName(e));
+      r.concat(vectorize(*get<val::SpVAIVL>(val::getVal(e))), val::getName(e));
       break;
     case val::vt_null:          // like in R, NULLs are just ignored in 'c'
       break;
     default:
-      throw interp::EvalException("invalid type", getLoc(e));
+      throw interp::EvalException("invalid type", val::getLoc(e));
     }
   }
   return r;
 }
 
 
-val::Value funcs::c(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::c(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
 #ifdef DEBUG_BFA
   std::cout << "c..." << std::endl;
 #endif
@@ -124,48 +124,48 @@ val::Value funcs::c(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic
   case val::vt_list: {
     vector<pair<string, val::Value>> m;
     for (auto& e : v) {
-      m.push_back(make_pair(getName(e), getVal(e)));
+      m.push_back(make_pair(val::getName(e), val::getVal(e)));
     }
     return arr::make_cow<val::VList>(false, m, true); // concat=true
   }
   case val::vt_null:
     return val::VNull();
   default:
-    throw interp::EvalException("invalid type", getLoc(v[0]));
+    throw interp::EvalException("invalid type", val::getLoc(v[0]));
   }
 }
 
 
-val::Value funcs::length(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  return val::make_array(static_cast<double>(size(getVal(v[0]))));
+val::Value funcs::length(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  return val::make_array(static_cast<double>(size(val::getVal(v[0]))));
 }
 
 
-val::Value funcs::t(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  switch (getVal(v[0]).which()) {
+val::Value funcs::t(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  switch (val::getVal(v[0]).which()) {
   case val::vt_double:
-    return arr::make_cow<val::VArrayD>(false, arr::transpose(*get<val::SpVAD>(getVal(v[0]))));
+    return arr::make_cow<val::VArrayD>(false, arr::transpose(*get<val::SpVAD>(val::getVal(v[0]))));
     break;
   case val::vt_bool:
-    return arr::make_cow<val::VArrayB>(false, arr::transpose(*get<val::SpVAB>(getVal(v[0]))));
+    return arr::make_cow<val::VArrayB>(false, arr::transpose(*get<val::SpVAB>(val::getVal(v[0]))));
     break;
   case val::vt_string:
-    return arr::make_cow<val::VArrayS>(false, arr::transpose(*get<val::SpVAS>(getVal(v[0]))));
+    return arr::make_cow<val::VArrayS>(false, arr::transpose(*get<val::SpVAS>(val::getVal(v[0]))));
     break;
   case val::vt_time:
-    return arr::make_cow<val::VArrayDT>(false, arr::transpose(*get<val::SpVADT>(getVal(v[0]))));
+    return arr::make_cow<val::VArrayDT>(false, arr::transpose(*get<val::SpVADT>(val::getVal(v[0]))));
     break;
   case val::vt_duration:
-    return arr::make_cow<val::VArrayDUR>(false, arr::transpose(*get<val::SpVADUR>(getVal(v[0]))));
+    return arr::make_cow<val::VArrayDUR>(false, arr::transpose(*get<val::SpVADUR>(val::getVal(v[0]))));
     break;
   case val::vt_period:
-    return arr::make_cow<val::VArrayPRD>(false, arr::transpose(*get<val::SpVAPRD>(getVal(v[0]))));
+    return arr::make_cow<val::VArrayPRD>(false, arr::transpose(*get<val::SpVAPRD>(val::getVal(v[0]))));
     break;
   case val::vt_interval:
-    return arr::make_cow<val::VArrayIVL>(false, arr::transpose(*get<val::SpVAIVL>(getVal(v[0]))));
+    return arr::make_cow<val::VArrayIVL>(false, arr::transpose(*get<val::SpVAIVL>(val::getVal(v[0]))));
     break;
   default: 
-    throw interp::EvalException("argument is not a matrix", getLoc(v[0]));
+    throw interp::EvalException("argument is not a matrix", val::getLoc(v[0]));
   }
 }
   
@@ -248,32 +248,32 @@ val::Value make_array_helper(const val::Value& v,
 }
 
 
-val::Value funcs::make_matrix(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::make_matrix(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
 #ifdef DEBUG_BFA
   std::cout << "make_matrix..." << std::endl;
 #endif
   enum { DATA, NROW, NCOL, BYROW, DIMNAMES, FILE };
 
-  auto idx = Vector<idx_type>{static_cast<idx_type>(val::get_scalar<double>(getVal(v[NROW]))), 
-                              static_cast<idx_type>(val::get_scalar<double>(getVal(v[NCOL])))};
-  // auto byrow = val::get_scalar<bool>(getVal(v[BYROW])); LLL
-  const auto& dimnames = convertToDnames(getVal(v[DIMNAMES]));
-  const auto& filename = val::get_scalar<arr::zstring>(getVal(v[FILE]));
+  auto idx = Vector<idx_type>{static_cast<idx_type>(val::get_scalar<double>(val::getVal(v[NROW]))), 
+                              static_cast<idx_type>(val::get_scalar<double>(val::getVal(v[NCOL])))};
+  // auto byrow = val::get_scalar<bool>(val::getVal(v[BYROW])); LLL
+  const auto& dimnames = convertToDnames(val::getVal(v[DIMNAMES]));
+  const auto& filename = val::get_scalar<arr::zstring>(val::getVal(v[FILE]));
  
-  return make_array_helper(getVal(v[DATA]), idx, dimnames, filename);
+  return make_array_helper(val::getVal(v[DATA]), idx, dimnames, filename);
 }
 
 
-val::Value funcs::make_array(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::make_array(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { DATA, DIM, DIMNAMES, FILE };
 
-  auto& idxOrig = *get<val::SpVAD>(getVal(v[DIM]));
+  auto& idxOrig = *get<val::SpVAD>(val::getVal(v[DIM]));
   // doesn't Meyer warn about this way of using auto: LLL
   const auto& idx = Vector<arr::idx_type>(idxOrig.v[0]->begin(), idxOrig.v[0]->end());
-  const auto& dimnames = convertToDnames(getVal(v[DIMNAMES]));
-  const auto& filename = val::get_scalar<arr::zstring>(getVal(v[FILE]));
+  const auto& dimnames = convertToDnames(val::getVal(v[DIMNAMES]));
+  const auto& filename = val::get_scalar<arr::zstring>(val::getVal(v[FILE]));
  
-  return make_array_helper(getVal(v[DATA]), idx, dimnames, filename);
+  return make_array_helper(val::getVal(v[DATA]), idx, dimnames, filename);
 }
 
 
@@ -311,12 +311,12 @@ static val::Value make_vector_helper(const arr::zstring& mode,
 }
 
 
-val::Value funcs::make_vector(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::make_vector(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { MODE, LENGTH, FILE };
-  const auto& mode     = val::get_scalar<arr::zstring>(getVal(v[MODE]));
-  const auto& modeLoc  = getLoc(v[MODE]);
-  const auto& length   = val::get_scalar<double>(getVal(v[LENGTH]));
-  const auto& filename = val::get_scalar<arr::zstring>(getVal(v[FILE]));
+  const auto& mode     = val::get_scalar<arr::zstring>(val::getVal(v[MODE]));
+  const auto& modeLoc  = val::getLoc(v[MODE]);
+  const auto& length   = val::get_scalar<double>(val::getVal(v[LENGTH]));
+  const auto& filename = val::get_scalar<arr::zstring>(val::getVal(v[FILE]));
   vector<Vector<zstring>> dimnames;
   const Vector<idx_type> idx{static_cast<idx_type>(length)};
 
@@ -345,7 +345,7 @@ template <typename A>
 using ndim_col = ndim_I<1, A>;
 
 
-val::Value funcs::ncol(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::ncol(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   return apply_to_types_null<ndim_col, 
                              val::vt_double, 
                              val::vt_bool, 
@@ -353,10 +353,10 @@ val::Value funcs::ncol(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx&
                              val::vt_duration, 
                              val::vt_interval, 
                              val::vt_string, 
-                             val::vt_zts>(getVal(v[0]), getLoc(v[0]));
+                             val::vt_zts>(val::getVal(v[0]), val::getLoc(v[0]));
 }
 
-val::Value funcs::nrow(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::nrow(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   return apply_to_types_null<ndim_row, 
                              val::vt_double, 
                              val::vt_bool, 
@@ -364,7 +364,7 @@ val::Value funcs::nrow(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx&
                              val::vt_duration, 
                              val::vt_interval, 
                              val::vt_string, 
-                             val::vt_zts>(getVal(v[0]), getLoc(v[0]));
+                             val::vt_zts>(val::getVal(v[0]), val::getLoc(v[0]));
 }
 
 
@@ -381,7 +381,7 @@ struct dim_helper {
 };
 
 
-val::Value funcs::dim(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::dim(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   return apply_to_types_null<dim_helper, 
                              val::vt_double, 
                              val::vt_bool, 
@@ -389,7 +389,7 @@ val::Value funcs::dim(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& 
                              val::vt_duration, 
                              val::vt_interval, 
                              val::vt_string, 
-                             val::vt_zts>(getVal(v[0]), getLoc(v[0]));
+                             val::vt_zts>(val::getVal(v[0]), val::getLoc(v[0]));
 }
 
 
@@ -406,30 +406,30 @@ static Array<T>* bindVector(Array<T>& r,
 #endif
   
   for (auto e = begin; e != end; ++e) {
-    switch (getVal(*e).which()) {
+    switch (val::getVal(*e).which()) {
     case val::vt_double: {
-      const auto& a = get<val::SpVAD>(getVal(*e));
-      r.abind(*a, dim, getName(*e));
+      const auto& a = get<val::SpVAD>(val::getVal(*e));
+      r.abind(*a, dim, val::getName(*e));
       break; }
     case val::vt_bool: {
-      const auto& a = get<val::SpVAB>(getVal(*e));
-      r.abind(*a, dim, getName(*e));
+      const auto& a = get<val::SpVAB>(val::getVal(*e));
+      r.abind(*a, dim, val::getName(*e));
       break; }
     case val::vt_string: {
-      const auto& a = get<val::SpVAS>(getVal(*e));
-      r.abind(*a, dim, getName(*e));
+      const auto& a = get<val::SpVAS>(val::getVal(*e));
+      r.abind(*a, dim, val::getName(*e));
         break; }
     case val::vt_time: {
-      const auto& a = get<val::SpVADT>(getVal(*e));
-      r.abind(*a, dim, getName(*e));
+      const auto& a = get<val::SpVADT>(val::getVal(*e));
+      r.abind(*a, dim, val::getName(*e));
       break; }
     case val::vt_duration: {
-      const auto& a = get<val::SpVADUR>(getVal(*e));
-      r.abind(*a, dim, getName(*e));
+      const auto& a = get<val::SpVADUR>(val::getVal(*e));
+      r.abind(*a, dim, val::getName(*e));
       break; }
     case val::vt_interval: {
-      const auto& a = get<val::SpVAIVL>(getVal(*e));
-      r.abind(*a, dim, getName(*e));
+      const auto& a = get<val::SpVAIVL>(val::getVal(*e));
+      r.abind(*a, dim, val::getName(*e));
       break; }
     default:
       throw std::domain_error("bindVector<T> incorrect type");
@@ -450,16 +450,16 @@ static zts* bindVector(zts& r,
 #endif
   
   for (auto e = begin; e != end; ++e) {
-    switch (getVal(*e).which()) {
+    switch (val::getVal(*e).which()) {
     case val::vt_double: {
-      const auto& a = get<val::SpVAD>(getVal(*e));
+      const auto& a = get<val::SpVAD>(val::getVal(*e));
       r.abind(a->isVector() && dim==0 ? transpose(*a) : *a, 
               dim,              // in which dimension
-              getName(*e));     // the prefix to add to the bind
+              val::getName(*e));     // the prefix to add to the bind
       break; }
     case val::vt_zts: {
-      const auto& z = get<val::SpZts>(getVal(*e));
-      r.abind(*z, dim, getName(*e));
+      const auto& z = get<val::SpZts>(val::getVal(*e));
+      r.abind(*z, dim, val::getName(*e));
       break; }
     default:
       throw std::domain_error("bindVector<T> incorrect type");
@@ -475,21 +475,21 @@ static void checkZtsBindInDim0(vector<val::VBuiltinG::arg_t>::const_iterator beg
   const arr::zts* zp_prev = nullptr;
   const arr::zts* zp_cur   = nullptr;
   for (auto iter=begin; iter!=end; ++iter) {
-    if (getVal(*iter).which() != val::vt_zts) {
+    if (val::getVal(*iter).which() != val::vt_zts) {
       throw interp::EvalException("'zts' bind in first dimension requires zts 'argument'", 
-                                  getLoc(*iter));    
+                                  val::getLoc(*iter));    
     }
     zp_prev = zp_cur;
-    zp_cur = get<val::SpZts>(getVal(*iter)).get();
+    zp_cur = get<val::SpZts>(val::getVal(*iter)).get();
     if (zp_prev) {
       if (!Array<double>::checkdims(zp_prev->getdim(), zp_cur->getdim(), 0)) {
-        throw interp::EvalException("invalid dimensions for abind", getLoc(*iter));    
+        throw interp::EvalException("invalid dimensions for abind", val::getLoc(*iter));    
       }
       idx_type prev_rows = zp_prev->getdim(0);
       idx_type cur_rows  = zp_cur->getdim(0);
       if (prev_rows && cur_rows && 
           zp_prev->getIndex()[prev_rows-1] >= zp_cur->getIndex()[cur_rows-1]) {
-        throw interp::EvalException("non-ascending index for rbind", getLoc(*iter));
+        throw interp::EvalException("non-ascending index for rbind", val::getLoc(*iter));
       }
     }
   }
@@ -506,9 +506,9 @@ checkZtsBindInDimGt0(vector<val::VBuiltinG::arg_t>::const_iterator begin,
 
   // traverse the list and find the first zts; assign its array and idx
   for (auto iter=begin; iter!=end; ++iter) {
-    if (getVal(*iter).which() == val::vt_zts) {
-      a = &get<val::SpZts>(getVal(*iter))->getArray();
-      idx = &get<val::SpZts>(getVal(*iter))->getIndex();
+    if (val::getVal(*iter).which() == val::vt_zts) {
+      a = &get<val::SpZts>(val::getVal(*iter))->getArray();
+      idx = &get<val::SpZts>(val::getVal(*iter))->getIndex();
       break;
     }
   }
@@ -519,19 +519,19 @@ checkZtsBindInDimGt0(vector<val::VBuiltinG::arg_t>::const_iterator begin,
   }
 
   for (auto iter=begin+1; iter!=end; ++iter) {
-    if (getVal(*iter).which() == val::vt_zts) {
-      const auto& zcur = get<val::SpZts>(getVal(*iter));
+    if (val::getVal(*iter).which() == val::vt_zts) {
+      const auto& zcur = get<val::SpZts>(val::getVal(*iter));
       if (zcur->getIndex().getcol(0) != idx->getcol(0)) {
-        throw interp::EvalException("'zts' index mismatch for abind", getLoc(*iter));
+        throw interp::EvalException("'zts' index mismatch for abind", val::getLoc(*iter));
       }
       if (!Array<double>::checkdims(a->getdim(), zcur->getdim(), dim)) {
-        throw interp::EvalException("invalid dimensions for abind", getLoc(*iter));
+        throw interp::EvalException("invalid dimensions for abind", val::getLoc(*iter));
       }
     }
-    else if (getVal(*iter).which() == val::vt_double) {
-      const auto& acur = get<val::SpVAD>(getVal(*iter));
+    else if (val::getVal(*iter).which() == val::vt_double) {
+      const auto& acur = get<val::SpVAD>(val::getVal(*iter));
       if (!Array<double>::checkdims(a->getdim(), acur->getdim(), dim)) {
-        throw interp::EvalException("invalid dimensions for abind", getLoc(*iter));
+        throw interp::EvalException("invalid dimensions for abind", val::getLoc(*iter));
       }
     }
   }
@@ -549,11 +549,11 @@ static val::Value bindHelper(vector<val::VBuiltinG::arg_t>::iterator begin,
 
   // LLL ahead of time, check the validity of the bind, so we don't
   // end up with partially modified first arg !!!
-  switch (getVal(*begin).which()) {
+  switch (val::getVal(*begin).which()) {
   case val::vt_double: {
-    auto& a = get<val::SpVAD>(getVal(*begin));
+    auto& a = get<val::SpVAD>(val::getVal(*begin));
     if (a.isRef()) {
-      a.get()->addprefix(getName(*begin), a.get()->isVector() ? 0 : dim);
+      a.get()->addprefix(val::getName(*begin), a.get()->isVector() ? 0 : dim);
       bindVector(*a.get(), begin+1, end, dim);
       return a;
     } else {
@@ -561,9 +561,9 @@ static val::Value bindHelper(vector<val::VBuiltinG::arg_t>::iterator begin,
     }
   }
   case val::vt_bool: {
-    auto& a = get<val::SpVAB>(getVal(*begin));
+    auto& a = get<val::SpVAB>(val::getVal(*begin));
     if (a.isRef()) {
-      a->addprefix(getName(*begin), a->isVector() ? 0 : dim);
+      a->addprefix(val::getName(*begin), a->isVector() ? 0 : dim);
       bindVector(*a, begin+1, end, dim);
       return a;
     } else {
@@ -571,9 +571,9 @@ static val::Value bindHelper(vector<val::VBuiltinG::arg_t>::iterator begin,
     }
   }
   case val::vt_time: {
-    auto& a = get<val::SpVADT>(getVal(*begin));
+    auto& a = get<val::SpVADT>(val::getVal(*begin));
     if (a.isRef()) {
-      a->addprefix(getName(*begin), a->isVector() ? 0 : dim);
+      a->addprefix(val::getName(*begin), a->isVector() ? 0 : dim);
       bindVector(*a, begin+1, end, dim);
       return a;
     } else {
@@ -581,9 +581,9 @@ static val::Value bindHelper(vector<val::VBuiltinG::arg_t>::iterator begin,
     }
   }
   case val::vt_duration: {
-    auto& a = get<val::SpVADUR>(getVal(*begin));
+    auto& a = get<val::SpVADUR>(val::getVal(*begin));
     if (a.isRef()) {
-      a->addprefix(getName(*begin), a->isVector() ? 0 : dim);
+      a->addprefix(val::getName(*begin), a->isVector() ? 0 : dim);
       bindVector(*a, begin+1, end, dim);
       return a;
     } else {
@@ -591,9 +591,9 @@ static val::Value bindHelper(vector<val::VBuiltinG::arg_t>::iterator begin,
     }
   }
   case val::vt_interval: {
-    auto& a = get<val::SpVAIVL>(getVal(*begin));
+    auto& a = get<val::SpVAIVL>(val::getVal(*begin));
     if (a.isRef()) {
-      a->addprefix(getName(*begin), a->isVector() ? 0 : dim);
+      a->addprefix(val::getName(*begin), a->isVector() ? 0 : dim);
       bindVector(*a, begin+1, end, dim);
       return a;
     } else {
@@ -601,9 +601,9 @@ static val::Value bindHelper(vector<val::VBuiltinG::arg_t>::iterator begin,
     }
   }
   case val::vt_string: {
-    auto& a = get<val::SpVAS>(getVal(*begin));
+    auto& a = get<val::SpVAS>(val::getVal(*begin));
     if (a.isRef()) {
-      a->addprefix(getName(*begin), a->isVector() ? 0 : dim);
+      a->addprefix(val::getName(*begin), a->isVector() ? 0 : dim);
       bindVector(*a, begin+1, end, dim);
       return a;
     } else {
@@ -611,14 +611,14 @@ static val::Value bindHelper(vector<val::VBuiltinG::arg_t>::iterator begin,
     }
   }
   case val::vt_zts: {
-    auto& z = get<val::SpZts>(getVal(*begin));
+    auto& z = get<val::SpZts>(val::getVal(*begin));
     if (z.isRef()) {
       if (dim == 0) {
         checkZtsBindInDim0(begin, end);
       }
       else {
         checkZtsBindInDimGt0(begin, end, dim);
-        z->addprefix(getName(*begin), dim);
+        z->addprefix(val::getName(*begin), dim);
       }
       bindVector(*z, begin+1, end, dim);
       return z;
@@ -669,7 +669,7 @@ static val::Value bindHelper(vector<val::VBuiltinG::arg_t>::iterator begin,
   case val::vt_zts: {
     if (dim == 0) {
       checkZtsBindInDim0(begin, end);
-      auto z = get<val::SpZts>(getVal(*begin));
+      auto z = get<val::SpZts>(val::getVal(*begin));
       auto first = make_cow<arr::zts>(true, z->getIndex(), z->getArray()); // copy!
       bindVector(*first, begin+1, end, dim);
       return first;
@@ -695,7 +695,7 @@ static val::Value bindHelper(vector<val::VBuiltinG::arg_t>::iterator begin,
 
 
 val::Value funcs::abind(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  auto dim = val::get_scalar<double>(getVal(v[0])) - 1; // -1 as R starts from 1
+  auto dim = val::get_scalar<double>(val::getVal(v[0])) - 1; // -1 as R starts from 1
   return bindHelper(v.begin()+1, v.end(), dim);
 }
 
@@ -720,15 +720,15 @@ static std::unique_ptr<arr::AllocFactory> getAllocFactoryZts(const fsys::path& f
 }
 
 
-val::Value funcs::make_zts(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::make_zts(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { IDX, DATA, DIM, DIMNAMES, FILE };
 
-  const auto& tidx = get<val::SpVADT>(getVal(v[IDX]));
-  const auto& data = get<val::SpVAD>(getVal(v[DATA]));
-  const auto& dimOrig = get<val::SpVAD>(getVal(v[DIM]));
+  const auto& tidx = get<val::SpVADT>(val::getVal(v[IDX]));
+  const auto& data = get<val::SpVAD>(val::getVal(v[DATA]));
+  const auto& dimOrig = get<val::SpVAD>(val::getVal(v[DIM]));
   Vector<arr::idx_type> dim(dimOrig->v[0]->begin(), dimOrig->v[0]->end());
-  const auto& dimnames = convertToDnames(getVal(v[DIMNAMES]));
-  const auto& filename = fsys::path(std::string(val::get_scalar<arr::zstring>(getVal(v[FILE]))));
+  const auto& dimnames = convertToDnames(val::getVal(v[DIMNAMES]));
+  const auto& filename = fsys::path(std::string(val::get_scalar<arr::zstring>(val::getVal(v[FILE]))));
   const auto& filename_idx = filename.string().size() ? filename / "idx" : filename;
   try {
     unsigned flags = filename.string().size() ? arr::LOCKED | arr::TMP: 0; // with TMP instead of 0, avoid a copy? LLL
@@ -743,10 +743,10 @@ val::Value funcs::make_zts(const vector<val::VBuiltinG::arg_t>& v, zcore::Interp
                                    std::move(allocf_idx));
   }
   catch (arr::UnorderedIndex& e) {
-    throw interp::EvalException(e.what(), getLoc(v[IDX]));    
+    throw interp::EvalException(e.what(), val::getLoc(v[IDX]));    
   }
   catch (arr::LengthMismatch& e) {
-    throw interp::EvalException(e.what(), getLoc(v[DATA]));
+    throw interp::EvalException(e.what(), val::getLoc(v[DATA]));
   }
   catch (...) {
     throw;
@@ -754,24 +754,24 @@ val::Value funcs::make_zts(const vector<val::VBuiltinG::arg_t>& v, zcore::Interp
 }
 
 
-val::Value funcs::zts_idx(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::zts_idx(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { ZTS };
-  auto& zts = *get<val::SpZts>(getVal(v[ZTS]));
+  auto& zts = *get<val::SpZts>(val::getVal(v[ZTS]));
   return arr::cow_ptr<val::VArrayDT>(arr::LOCKED | arr::CONSTREF, zts.getIndexPtr());
 }
 
 
-val::Value funcs::zts_data(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::zts_data(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { ZTS };
-  auto& zts = *get<val::SpZts>(getVal(v[ZTS]));
+  auto& zts = *get<val::SpZts>(val::getVal(v[ZTS]));
   return arr::cow_ptr<val::VArrayD>(arr::LOCKED | arr::CONSTREF, zts.getArrayPtr());
 }
 
 
 
 
-val::Value funcs::load(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  const string dirname = val::get_scalar<arr::zstring>(getVal(v[0]));
+val::Value funcs::load(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  const string dirname = val::get_scalar<arr::zstring>(val::getVal(v[0]));
   struct stat st = {0};
   if (stat((fsys::path(dirname) / "idx").c_str(), &st) == 0) {
     // this is a zts
@@ -837,9 +837,9 @@ struct sort_wrapper {
 };
 
 
-val::Value funcs::_sort(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::_sort(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { X, DECREASING };
-  auto decreasing = val::get_scalar<bool>(getVal(v[DECREASING]));
+  auto decreasing = val::get_scalar<bool>(val::getVal(v[DECREASING]));
   return apply_to_types2<sort_wrapper, 
                          bool,   // type of argument 1 for sort_wrapper::f()
                          val::vt_double, 
@@ -848,13 +848,13 @@ val::Value funcs::_sort(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx
                          val::vt_string, 
                          val::vt_duration, 
 //                         val::vt_zts,
-                         val::vt_interval>(getVal(v[X]), decreasing, 
-                                           getLoc(v[X]), yy::missing_loc());
+                         val::vt_interval>(val::getVal(v[X]), decreasing, 
+                                           val::getLoc(v[X]), yy::missing_loc());
 }
 
 
-val::Value funcs::is_ordered(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  const auto& val = getVal(v[0]);
+val::Value funcs::is_ordered(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  const auto& val = val::getVal(v[0]);
   switch (val.which()) {
   case val::vt_double:
     return val::make_array(get<val::SpVAD>(val).get()->isOrdered());
@@ -867,7 +867,7 @@ val::Value funcs::is_ordered(const vector<val::VBuiltinG::arg_t>& v, zcore::Inte
   case val::vt_string:
     return val::make_array(get<val::SpVAS>(val).get()->isOrdered());
   default:
-    throw interp::EvalException("incorrect argument type", getLoc(v[0]));
+    throw interp::EvalException("incorrect argument type", val::getLoc(v[0]));
 };
 
 
@@ -888,9 +888,9 @@ struct sort_idx_wrapper {
 };
 
 
-val::Value funcs::_sort_idx(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::_sort_idx(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { X, DECREASING };
-  auto decreasing = val::get_scalar<bool>(getVal(v[DECREASING]));
+  auto decreasing = val::get_scalar<bool>(val::getVal(v[DECREASING]));
   return apply_to_types2<sort_idx_wrapper, 
                          bool,   // type of argument 1 for sort_wrapper_idx::f()
                          val::vt_double, 
@@ -899,8 +899,8 @@ val::Value funcs::_sort_idx(const vector<val::VBuiltinG::arg_t>& v, zcore::Inter
                          val::vt_duration, 
                          val::vt_interval, 
                          val::vt_string, 
-                         val::vt_interval>(getVal(v[X]), decreasing, 
-                                           getLoc(v[X]), yy::missing_loc());
+                         val::vt_interval>(val::getVal(v[X]), decreasing, 
+                                           val::getLoc(v[X]), yy::missing_loc());
 }
 
 
@@ -908,9 +908,6 @@ template <typename T, typename A1>
 struct head_helper {
   static val::Value f(const val::Value& x, A1 n, const yy::location& lx, const yy::location& ln) {
     const auto& a = get<T>(x);
-    if (a.isRef()) {
-      throw interp::EvalException("this function does not allow pass by reference", lx);
-    }
     if (n >= 0) {
       if (static_cast<size_t>(n) >= a->getdim(0)) {
         return x;
@@ -931,11 +928,11 @@ struct head_helper {
 
 
 
-val::Value funcs::head(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) 
+val::Value funcs::head(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) 
 {
   enum { X, N };
 
-  auto n = val::get_scalar<double>(getVal(v[N]));
+  auto n = val::get_scalar<double>(val::getVal(v[N]));
   return apply_to_types2<head_helper, 
                          ssize_t,   // type of argument 1 for head_helper::f()
                          val::vt_double, 
@@ -945,7 +942,7 @@ val::Value funcs::head(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx&
                          val::vt_duration, 
                          val::vt_interval, 
                          val::vt_string, 
-                         val::vt_list>(getVal(v[X]), n, getLoc(v[X]), getLoc(v[N]));
+                         val::vt_list>(val::getVal(v[X]), n, val::getLoc(v[X]), val::getLoc(v[N]));
 }
 
 
@@ -954,9 +951,6 @@ struct tail_helper {
   static val::Value f(const val::Value& x, A1 n, A2 addrownums, 
                       const yy::location& lx, const yy::location& ln) {
     const auto& a = get<T>(x);
-    if (a.isRef()) {
-      throw interp::EvalException("this function does not allow pass by reference", lx);
-    }
     if (a->getdim().size() <= 1) {
       addrownums = false;
     }
@@ -983,12 +977,12 @@ struct tail_helper {
 };
 
 
-val::Value funcs::tail(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) 
+val::Value funcs::tail(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) 
 {
   enum { X, N, ADDROWNUMS };
 
-  auto n = val::get_scalar<double>(getVal(v[N]));
-  auto addrownums = val::get_scalar<bool>(getVal(v[ADDROWNUMS]));
+  auto n = val::get_scalar<double>(val::getVal(v[N]));
+  auto addrownums = val::get_scalar<bool>(val::getVal(v[ADDROWNUMS]));
   return apply_to_types3<tail_helper, 
                          ssize_t,   // type of argument 1 for tail_helper::f()
                          bool,      // type of argument 2 for tail_helper::f()
@@ -1000,28 +994,28 @@ val::Value funcs::tail(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx&
                          val::vt_interval, 
                          val::vt_string, 
                          val::vt_time, 
-                         val::vt_list>(getVal(v[X]), n, addrownums, getLoc(v[X]), getLoc(v[N]));
+                         val::vt_list>(val::getVal(v[X]), n, addrownums, val::getLoc(v[X]), val::getLoc(v[N]));
 }
 
 
 static std::random_device rd;
 static std::mt19937_64 gen(rd());
 
-val::Value funcs::set_seed(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::set_seed(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { X };
-  auto x = static_cast<idx_type>(val::get_scalar<double>(getVal(v[X])));
+  auto x = static_cast<idx_type>(val::get_scalar<double>(val::getVal(v[X])));
   gen.seed(x);
   return val::VNull();
 }
 
 template <typename DIS>
-static val::Value random_helper(const vector<val::VBuiltinG::arg_t>& v, DIS& dis) {
+static val::Value random_helper(vector<val::VBuiltinG::arg_t>& v, DIS& dis) {
   enum { X };
   // if x is scalar, then we create a new vector of specified size
-  if (getVal(v[X]).which() == val::vt_double) {
-    auto x = get<val::SpVAD>(getVal(v[X]));
+  if (val::getVal(v[X]).which() == val::vt_double) {
+    auto x = get<val::SpVAD>(val::getVal(v[X]));
     if (x->isScalar()) {
-      auto len = static_cast<idx_type>(val::get_scalar<double>(getVal(v[X])));
+      auto len = static_cast<idx_type>(val::get_scalar<double>(val::getVal(v[X])));
       auto a = arr::make_cow<val::VArrayD>(false, noinit_tag, Vector<idx_type>{len});
       for (size_t i = 0; i<len; ++i) {
         setv(*a, i, dis(gen));
@@ -1036,7 +1030,7 @@ static val::Value random_helper(const vector<val::VBuiltinG::arg_t>& v, DIS& dis
     }
   }
   else {
-    auto x = get<val::SpZts>(getVal(v[X]));
+    auto x = get<val::SpZts>(val::getVal(v[X]));
     for (size_t i = 0; i<x->getArray().size(); ++i) {
       arr::setv(*x->getArrayPtr(), i, dis(gen));     /// \todo not very efficient
       // define setv for zts! LLL
@@ -1045,22 +1039,22 @@ static val::Value random_helper(const vector<val::VBuiltinG::arg_t>& v, DIS& dis
   }
 }
 
-val::Value funcs::runif(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::runif(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { X, MIN, MAX };
 
-  auto minp = val::get_scalar<double>(getVal(v[MIN]));
-  auto maxp = val::get_scalar<double>(getVal(v[MAX]));
+  auto minp = val::get_scalar<double>(val::getVal(v[MIN]));
+  auto maxp = val::get_scalar<double>(val::getVal(v[MAX]));
   std::uniform_real_distribution<> dis(minp, maxp);
   return random_helper(v, dis);
 }
 
 
 // combine this code with the code for unif
-val::Value funcs::rnorm(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::rnorm(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { N, MEAN, SD };
 
-  auto mean = val::get_scalar<double>(getVal(v[MEAN]));
-  auto sd   = val::get_scalar<double>(getVal(v[SD]));
+  auto mean = val::get_scalar<double>(val::getVal(v[MEAN]));
+  auto sd   = val::get_scalar<double>(val::getVal(v[SD]));
   std::normal_distribution<double> dis(mean, sd);
   return random_helper(v, dis);
 }
@@ -1080,7 +1074,7 @@ struct alloc_dirname_wrapper {
 };
 
 
-val::Value funcs::alloc_dirname(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::alloc_dirname(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { X };
   return apply_to_types<alloc_dirname_wrapper,
                         val::vt_double, 
@@ -1089,7 +1083,7 @@ val::Value funcs::alloc_dirname(const vector<val::VBuiltinG::arg_t>& v, zcore::I
                         val::vt_string, 
                         val::vt_duration, 
                         val::vt_zts,
-                        val::vt_interval>(getVal(v[X]), getLoc(v[X]));    
+                        val::vt_interval>(val::getVal(v[X]), val::getLoc(v[X]));    
 }
 
 
@@ -1108,22 +1102,22 @@ static ssize_t getIndex(const arr::zts& z, const val::Value& i) {
 }
 
 
-val::Value funcs::zts_resize(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::zts_resize(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { X, START, END };
     
-  auto x = get<val::SpZts>(getVal(v[X]));
+  auto& x = get<val::SpZts>(val::getVal(v[X]));
   if (!x.get()->getdim().size()) return x;
-  auto start_idx = getIndex(*x.get(), getVal(v[START]));
-  auto end_idx   = getIndex(*x.get(), getVal(v[END]));
+  auto start_idx = getIndex(*x.get(), val::getVal(v[START]));
+  auto end_idx   = getIndex(*x.get(), val::getVal(v[END]));
 
   if (start_idx < 0) {
-    throw interp::EvalException("start out of bounds", getLoc(v[START]));  
+    throw interp::EvalException("start out of bounds", val::getLoc(v[START]));  
   }
   if (end_idx < 0) {
-    throw interp::EvalException("end out of bounds", getLoc(v[END]));  
+    throw interp::EvalException("end out of bounds", val::getLoc(v[END]));  
   }
   if (start_idx > end_idx) {
-    throw interp::EvalException("start must be <= to end", getLoc(v[START]));  
+    throw interp::EvalException("start must be <= to end", val::getLoc(v[START]));  
   }
 
   auto sz = end_idx - start_idx; // include the end index
@@ -1132,16 +1126,16 @@ val::Value funcs::zts_resize(const vector<val::VBuiltinG::arg_t>& v, zcore::Inte
 }
 
 
-val::Value funcs::zts_truncate(const vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+val::Value funcs::zts_truncate(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { X, END };
-  auto x = get<val::SpZts>(getVal(v[X]));
-  auto end_idx = getIndex(*x.get(), getVal(v[END]));
+  auto x = get<val::SpZts>(val::getVal(v[X]));
+  auto end_idx = getIndex(*x.get(), val::getVal(v[END]));
   if (end_idx < 0) {
-    throw interp::EvalException("argument cannot be negative", getLoc(v[END]));
+    throw interp::EvalException("argument cannot be negative", val::getLoc(v[END]));
   }
   auto nrows = x.get()->getdim(0); // get() to avoid a copy!
   if (static_cast<size_t>(end_idx) > nrows) {
-    throw interp::EvalException("end out of bounds", getLoc(v[END]));  
+    throw interp::EvalException("end out of bounds", val::getLoc(v[END]));  
   }
   x->resize(0, end_idx);
   return x;

@@ -42,6 +42,7 @@ static bool isAtomic(const E* e) {
   case etdtime:
   case etinterval:
   case ettaggedexpr:
+  case etarg:
     return true;
   default:
     return false;
@@ -162,8 +163,11 @@ static E* norm(E*& e, El* el, ElNode*& eln, El* top, ElNode*& topn, bool doBndVa
         if (elnfl->e->etype == ettaggedexpr) {
           auto te = static_cast<TaggedExpr*>(elnfl->e);
           normTerm(te->e, top, topn, doBndVar);
+        } else if (elnfl->e->etype == etarg) {
+          auto a = static_cast<Arg*>(elnfl->e);
+          normTerm(a->e, top, topn, doBndVar);
         } else {
-          normTerm(elnfl->e, top, topn, doBndVar);
+          throw domain_error("anf::norm: argument is not a tagged expression or an arg");
         }
         elnfl = elnfl->next;
       }    

@@ -275,21 +275,21 @@ TEST(anf_doublesubset_atomic_noargs) {
   anf::convertToANF(aout.get());
   cout << to_string(*aout) << endl;
   ASSERT_TRUE(to_string(*aout) == 
-              "dblsubset(a, NULL)");
+              "dblsubset(ref: a, NULL)");
 }
 TEST(anf_doublesubset_atomic_args) {
   auto aout = parse("a[[1, 2, 3]]\n");
   anf::convertToANF(aout.get());
   cout << to_string(*aout) << endl;
   ASSERT_TRUE(to_string(*aout) == 
-              "dblsubset(a, 1, 2, 3)");
+              "dblsubset(ref: a, 1, 2, 3)");
 }
 TEST(anf_doublesubset_non_atomic_1arg) {
   auto aout = parse("a[[f(1)+f(2)]]\n");
   anf::convertToANF(aout.get());
   cout << to_string(*aout) << endl;
   ASSERT_TRUE(to_string(*aout) == 
-              "dblsubset(a, {?anf1 <- f(1)\n"
+              "dblsubset(ref: a, {?anf1 <- f(1)\n"
               "?anf2 <- f(2)\n"
               "(?anf1+?anf2)})");
 }
@@ -298,7 +298,7 @@ TEST(anf_doublesubset_non_atomic_2args) {
   anf::convertToANF(aout.get());
   cout << to_string(*aout) << endl;
   ASSERT_TRUE(to_string(*aout) == 
-              "dblsubset(a, {?anf1 <- f(1)\n"
+              "dblsubset(ref: a, {?anf1 <- f(1)\n"
               "?anf2 <- f(2)\n"
               "(?anf1+?anf2)}, {?anf3 <- f(3)\n"
               "?anf4 <- f(4)\n"

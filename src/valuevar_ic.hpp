@@ -1,4 +1,4 @@
-// (C) 2015 Leonardo Silvestri
+// (C) 2015-2017 Leonardo Silvestri
 //
 // This file is part of ztsdb.
 //
@@ -19,10 +19,11 @@
   /// information to make a C++ call. A flag controls if the
   /// parameters are executed or if a VCode is returned instead for
   /// each parameter.
+
   struct VBuiltinG {
 
     typedef std::tuple<std::string, Value, yy::location> arg_t;
-
+    
     struct ArgInfo {
       const set<val::ValType> typeset;
       const bool doEval;
@@ -48,3 +49,34 @@
     Value operator()(interp::BuiltinFrame& a, zcore::InterpCtx& ic) const;
     void checkArgs(const interp::BuiltinFrame& r) const;
   };
+
+  inline Value& gval(Value& val) {
+    if (val.which()!=vt_ptr) {
+      return val;
+    }
+    else {
+      auto& ptr = get<VPtr>(val);
+      if (ptr.p == nullptr)
+        throw std::out_of_range("gval: null ptr!");
+      return *ptr.p;
+    }
+  }
+
+  inline const Value& gval(const Value& val) {
+    if (val.which()!=vt_ptr)
+      return val;
+    else {
+      const auto& ptr = get<VPtr>(val);
+      if (ptr.p == nullptr)
+        throw std::out_of_range("gval: null ptr!");
+      return *ptr.p;
+    }
+  }
+  
+  // access the tuples of 'val::VBuiltinG::arg_t' clearer.
+  inline const std::string& getName(const VBuiltinG::arg_t& x) { return get<0>(x); }
+  inline Value& getVal(VBuiltinG::arg_t& x) { return gval(get<1>(x)); } 
+  inline const Value& getVal(const VBuiltinG::arg_t& x) { return gval(get<1>(x)); } 
+  inline const yy::location& getLoc(const VBuiltinG::arg_t& x) { return get<2>(x); }
+
+

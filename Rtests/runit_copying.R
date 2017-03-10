@@ -20,8 +20,6 @@
 ## memory-mapped objects have different copying semantics.
 
 
-source("zts.R") 
-
 
 ## a copy is appropriately made of y
 RUnit_vars <- function() {
@@ -35,13 +33,14 @@ RUnit_vars <- function() {
 
 ## test that zts.idx and zts.data are const ref but that we can get a
 ## copy with the subscript operator
+source("zts.R")
 RUnit_zts_parts_constref <- function() {
     i <- zts.idx(z1)[]
     d <- zts.data(z1)[,]
     tryCatch(zts.idx(z1) <- 1, TRUE) &
-        tryCatch(zts.data(z1) <- 1, TRUE) &
-            all(dim(i) == dim(zts.idx(z1))) &
-                all(dim(d) == dim(zts.data(z1)))
+    tryCatch(zts.data(z1) <- 1, TRUE) &
+    all(dim(i) == dim(zts.idx(z1))) &
+    all(dim(d) == dim(zts.data(z1)))
 }
 
 
@@ -50,16 +49,13 @@ RUnit_array_locked <- function() {
     dir <- system("mktemp -d", intern=T)
     system(paste("rmdir", dir))         # remove it as it will be recreated by 'matrix'
     a <- matrix(1:9, 3, 3, file=dir)
-    tryCatch(b <- a, TRUE)
+    b <- a
+    tryCatch(sin(--b), TRUE)
 }
-
-
-
 
 ## LLL
 ## test all builtin that should be constant
 
-source("zts.R")
 RUnit_zts_bind_locked <- function() {
     dir <- system("mktemp -d", intern=T)
     system(paste("rmdir", dir))         # remove it as it will be recreated by 'matrix'
@@ -68,8 +64,7 @@ RUnit_zts_bind_locked <- function() {
                                   ## cannot bind to self. need to look
                                   ## at the error LLL
 }
-
-RUnit_zts_bind_locked <- function() {
+RUnit_array_bind_locked <- function() {
     dir <- system("mktemp -d", intern=T)
     system(paste("rmdir", dir))         # remove it as it will be recreated by 'matrix'
     a <- matrix(1:9, 3, 3, file=dir)

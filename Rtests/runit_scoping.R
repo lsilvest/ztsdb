@@ -38,7 +38,6 @@ RUnit_outer_outer_write <- function() {
     f()
     x == 5
 }
-
 RUnit_fun_fun <- function() {
     f <- function() function(x) x
     g <- f()
@@ -49,4 +48,3 @@ RUnit_list_of_funcs <- function() {
     l <- list(f(), f())
     l[[1]](1) + l[[2]](2) == 3
 }
-

@@ -23,7 +23,7 @@
 
 
 bool funcs::isTrue(val::Value x) {
-  return val::get_scalar<bool>(funcs::value_convert<bool>(x));
+  return val::get_scalar<bool>(funcs::value_convert<bool>(val::gval(x)));
 }
 
 

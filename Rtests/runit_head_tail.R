@@ -65,11 +65,6 @@ RUnit_head_zts_m6 <- function() {
 RUnit_head_zts_m1 <- function() {
     all.equal(head(z1, -1), z1[1:(nrow(z1)-1),])
 }
-## errors
-## RUnit_head_ref <- function() {
-##     tryCatch(head(--z1), .Last.error == "this function does not allow pass by reference") 
-## }
-
 
 ## Tail ----------------------------
 ## double
@@ -137,11 +132,4 @@ RUnit_tail_zts_m6 <- function() {
 }
 RUnit_tail_zts_m1 <- function() {
     all.equal(tail(z1, -1), z1[2:9,])
-}
-## errors
-RUnit_head_ref <- function() {
-    tryCatch(head(--z1), .Last.error == "this function does not allow pass by reference") 
-}
-RUnit_tail_ref <- function() {
-    tryCatch(tail(--z1), .Last.error == "this function does not allow pass by reference") 
 }
