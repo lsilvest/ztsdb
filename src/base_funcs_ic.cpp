@@ -821,11 +821,10 @@ val::Value funcs::info_net(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& i
      }
      );
   // organize as list of "connections", "buffering"
-  return arr::make_cow<val::VList>
-    (false, 
-     vector<pair<string, val::Value>>{
-       std::make_pair("connections"s, connections),
-       std::make_pair("buffering"s, buffering)});
+  auto l = arr::make_cow<val::VList>(arr::NOFLAGS);
+  l->a.concat(connections, "connections"s);
+  l->a.concat(buffering,   "buffering"s);
+  return l;
 }
 
 
@@ -854,11 +853,10 @@ val::Value funcs::info_msg(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& i
      }
      );
 
-  return arr::make_cow<val::VList>
-    (false, 
-     vector<pair<string, val::Value>>{
-       std::make_pair("req contexts"s, areqs),
-       std::make_pair("rsp contexts"s, arsps)});
+  auto l = arr::make_cow<val::VList>(arr::NOFLAGS);
+  l->a.concat(areqs, "req contexts"s);
+  l->a.concat(arsps, "rsp contexts"s);
+  return l;
 }
 
 
@@ -915,7 +913,7 @@ val::Value funcs::_options(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& i
   // works the same way as in R.
   if (v.empty()) {
     // if no args build a list from the config map and return:
-    auto vl = arr::make_cow<val::VList>(false, vector<pair<string, val::Value>>{});
+    auto vl = arr::make_cow<val::VList>(arr::NOFLAGS);
     for (const auto& e: cfg::cfgmap) {
       vl->push_back(std::make_pair(e.first, cfgToVal(e.second)));
     }
@@ -923,7 +921,7 @@ val::Value funcs::_options(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& i
   }
   else {
     // else, for each arg, get and set, and return the sublist we've set:
-    auto vl = arr::make_cow<val::VList>(false, vector<pair<string, val::Value>>{});
+    auto vl = arr::make_cow<val::VList>(false);
     for (const auto e: v) {
       try {
         cfg::cfgmap.set(val::getName(e), valToCfg(val::getVal(e)));
@@ -1147,3 +1145,69 @@ val::Value funcs::cat(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   ic.s->k->next->next->atype |= interp::Kont::SILENT;
   return val::VNull();
 }
+
+
+template<typename T>
+struct lock_wrapper {
+  static val::Value& f(val::Value& val, const yy::location& loc_val) {
+    if (!val::isRef(val)) {
+      throw interp::EvalException("cannot lock non-reference argument", loc_val);
+    }
+    try {
+      val::setLock(val);
+      return val;
+    }
+    catch (const std::exception& e) {
+      throw interp::EvalException(e.what(), loc_val);
+    }
+  }
+};
+
+
+val::Value funcs::lock(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  enum { X };
+  apply_to_types<lock_wrapper,
+                 val::vt_double, 
+                 val::vt_bool, 
+                 val::vt_time, 
+                 val::vt_string, 
+                 val::vt_duration, 
+                 val::vt_zts,
+                 val::vt_interval>(val::getVal(v[X]), val::getLoc(v[X]));
+  ic.s->k->next->next->atype |= interp::Kont::SILENT;
+  return val::VNull();
+}
+
+
+template<typename T>
+struct resetlock_wrapper {
+  static val::Value& f(val::Value& val, const yy::location& loc_val) {
+    if (!val::isRef(val)) {
+      throw interp::EvalException("cannot unlock non-reference argument", loc_val);
+    }
+    try {
+      val::resetLock(val);
+      return val;
+    }
+    catch (const std::exception& e) {
+      throw interp::EvalException(e.what(), loc_val);
+    }
+  }
+};
+
+
+val::Value funcs::unlock(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  enum { X };
+  apply_to_types<resetlock_wrapper,
+                 val::vt_double, 
+                 val::vt_bool, 
+                 val::vt_time, 
+                 val::vt_string, 
+                 val::vt_duration, 
+                 val::vt_zts,
+                 val::vt_interval>(val::getVal(v[X]), val::getLoc(v[X]));
+  ic.s->k->next->next->atype |= interp::Kont::SILENT;
+  return val::VNull();
+}
+
+

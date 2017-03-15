@@ -273,6 +273,9 @@ void core::loadBuiltinFunctions(interp::BaseFrame* r) {
   val::VBuiltinG(r, "alloc.dirname", "function(x) NULL\n", funcs::alloc_dirname, true); 
   val::VBuiltinG(r, "msync", "function(x, async=FALSE) NULL\n", funcs::msync, true,
                  {{"async", {{val::vt_bool}, true}}});
+  val::VBuiltinG(r, "lock", "function(x) NULL\n", funcs::lock, true); 
+  val::VBuiltinG(r, "unlock", "function(x) NULL\n", funcs::unlock, true); 
+  val::VBuiltinG(r, "is.locked", "function(x) NULL\n", funcs::islocked, true); 
 
   val::VBuiltinG(r, "typeof", "function(x) NULL\n", funcs::get_typeof, false);
   val::VBuiltinG(r,

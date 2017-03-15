@@ -449,8 +449,8 @@ string val::to_string(const val::VClos& v, const cfg::CfgMap& cfg, bool fast) {
 string val::to_string(const val::VNull& v, const cfg::CfgMap& cfg, bool fast) { 
   return "NULL"; 
 }
-string val::to_string(const val::VBuiltinG& v, const cfg::CfgMap& cfg, bool fast) { 
-  return "native: " + to_string(*v.signature); 
+string val::to_string(const std::shared_ptr<val::VBuiltinG>& v, const cfg::CfgMap& cfg, bool fast) { 
+  return "native: " + to_string(*v->signature); 
 }
 string val::to_string(const val::SpFuture& v, const cfg::CfgMap& cfg, bool fast) { 
   return v->to_string();  
@@ -581,6 +581,9 @@ string val::str(const val::VClos& vl, const cfg::CfgMap& cfg, std::string prefix
 
 
 string val::str(const val::Value& v, const cfg::CfgMap& cfg, std::string prefix) {
+
+  // use visitor LLL
+  
   stringstream ss;
 
   switch (v.which()) {
@@ -616,6 +619,9 @@ string val::str(const val::Value& v, const cfg::CfgMap& cfg, std::string prefix)
     break;
   default:
     ss << ' ' << val::to_string(v, cfg);
+  }
+  if (val::isLocked(v)) {
+    ss << ", locked";
   }
   return ss.str();
 }

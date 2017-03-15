@@ -60,9 +60,9 @@ val::Value zcore::convertToList(const vector<unique_ptr<arr::Dname>>& names) {
 #ifdef DEBUG
   cout << "val::Value zcore::convertToList(const vector<arr::Dname>& names)" << endl;
 #endif
-  auto nameslist = make_cow<val::VList>(false, vector<pair<string, val::Value>>());
+  auto nameslist = make_cow<val::VList>(arr::NOFLAGS);
   for (idx_type j=0; j<names.size(); ++j) {
-    auto dimnameslist = make_cow<val::VList>(false, vector<pair<string, val::Value>>());
+    auto dimnameslist = make_cow<val::VList>(arr::NOFLAGS);
     for (arr::idx_type k=0; k<names[j]->names.size(); ++k) {
       dimnameslist->push_back(make_pair("", std::string((*names[j])[k])));
     }
@@ -362,7 +362,7 @@ static zcore::Encode& writeCode(zcore::Encode& ec, const E* e) {
   }
   case etarg: {
     auto a = static_cast<const Arg*>(e);
-    ec << static_cast<BOOL_T>(a->ref); // cast as it needs to be encoded over 8 bytes
+    ec << static_cast<BOOL_T>(a->symb->ref); // cast as it needs to be encoded over 8 bytes
     writeCode(ec, a->e);
     break;
   }
@@ -659,7 +659,7 @@ static val::Value make_value(val::ValType vt) {
   case val::vt_null:
     return val::VNull();
   case val::vt_list:
-    return val::Value(make_cow<val::VList>(false, vector<pair<string, val::Value>>()));
+    return val::Value(make_cow<val::VList>(arr::NOFLAGS));
   case val::vt_double:
     return make_cow<val::VArrayD>(false, val::VArrayD(rsv, idx));
   case val::vt_bool:

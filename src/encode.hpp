@@ -113,7 +113,7 @@ namespace zcore {
       *this << t.size();
 
       // an array is a list of 3 (stage 0)
-      auto rlist = val::VList(vector<pair<string, val::Value>>());
+      auto rlist = val::VList();
       rlist.push_back(make_pair("", val::Value(make_shared<val::VI>(t.dim))));
       rlist.push_back(make_pair("", convertToList(t.names)));
       rlist.push_back(make_pair("", getOrderedVector(t)));

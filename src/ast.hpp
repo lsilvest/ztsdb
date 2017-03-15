@@ -422,37 +422,27 @@ using Interval=EData<etinterval, tz::interval>;
 using Dtime=EData<etdtime, Global::dtime>;
 using String=EData<etstring, arr::zstring>;
 
-struct TaggedExpr : E {
-  TaggedExpr(Symbol* s, E* e_p, loc_t l) : E(ettaggedexpr, l), symb(s), e(e_p) { }
-  virtual TaggedExpr* clone() const { return new TaggedExpr(*this); }
-  virtual bool operator==(const TaggedExpr& te) const { 
+template<Etype t>
+struct GenArg : E {
+  GenArg(Symbol* s, E* e_p, loc_t l) : E(t, l), symb(s), e(e_p) { }
+  virtual GenArg* clone() const { return new GenArg(*this); }
+  virtual bool operator==(const GenArg& te) const { 
     return *symb == *te.symb ? (*e == *te.e) : false;
   }
 
-  Symbol* symb;                 // a string would do? LLL
+  Symbol* symb;
   E* e;
-  ~TaggedExpr() { delete symb; delete e; }
+  ~GenArg() { delete symb; delete e; }
 
 private:
-  TaggedExpr(const TaggedExpr& te) :
-    E(ettaggedexpr, te.loc), symb(te.symb->clone()), e(te.e->clone()) { }
+  GenArg(const GenArg& te) :
+    E(t, te.loc), symb(te.symb->clone()), e(te.e->clone()) { }
 };
 
+using TaggedExpr=GenArg<ettaggedexpr>;
 
-struct Arg : E {
-  Arg(bool ref_p, E* e_p, loc_t l) : E(etarg, l), ref(ref_p), e(e_p) { }
-  virtual Arg* clone() const { return new Arg(*this); }
-  virtual bool operator==(const Arg& a) const { 
-    return ref == a.ref ? (*e == *a.e) : false;
-  }
-
-  bool ref;
-  E* e;
-  ~Arg() { delete e; }
-
-private:
-  Arg(const Arg& a) :
-    E(etarg, a.loc), ref(a.ref), e(a.e->clone()) { }
+struct Arg : GenArg<etarg> {
+  Arg(bool ref_p, E* e_p, loc_t l) : GenArg(new Symbol("", l, ref_p), e_p, l) { }
 };
 
 

@@ -337,19 +337,17 @@ val::Value funcs::interval_eopen(vector<val::VBuiltinG::arg_t>& v, zcore::Interp
 
 
 val::Value funcs::vlist(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) { 
-  vector<pair<string, val::Value>> m;
+  val::VList l;
   for (auto& e : v) {
-    m.push_back(make_pair(get<0>(e), val::getVal(e)));
+    l.a.concat(val::getVal(e), val::getName(e));
   }
-  return make_cow<val::VList>(false, m); 
+  return make_cow<val::VList>(arr::NOFLAGS, l); 
 } 
 
 
 val::Value funcs::is_null(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   return val::make_array(val::getVal(v[0]).which() == val::vt_null);
 }
-
-
 
 
 val::Value funcs::get_typeof(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {

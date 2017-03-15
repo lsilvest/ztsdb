@@ -218,7 +218,8 @@ string to_string(const E& e) {
   }
   case etarg: {
     auto& a = static_cast<const Arg&>(e);
-    return (a.ref ? "ref: "s : ""s) + to_string(*a.e); 
+    auto symb = to_string(*a.symb);
+    return (symb == "--" ? "ref: " : "") + to_string(*a.e); 
   }
   case etfunction: {
     auto& f = static_cast<const Function&>(e);
@@ -385,8 +386,8 @@ bool isEqual(const E* e1, const E* e2) {
     auto a1 = static_cast<const Arg*>(e1);
     auto a2 = static_cast<const Arg*>(e2);
     return 
-      a1->ref == a2->ref && 
-      isEqual(a1->e,   a2->e);
+      isEqual(a1->symb, a2->symb) && 
+      isEqual(a1->e,    a2->e);
     break;
   }
   case etfunction: {

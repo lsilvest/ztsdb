@@ -89,9 +89,8 @@ namespace arr {                 // should be in tz? LLL
       }
 
       // find the closest point in the interval:
-      while (ix < x.size() && x[ix] <= yend && 
-             tz::abs(x[ix-1] - y[iy]) > tz::abs(x[ix] - y[iy])) ++ix;
-      res.push_back(ix - 1 + 1);     // +1 because of R numbering start convention
+      while (ix+1 < x.size() && x[ix+1] <= yend && tz::abs(x[ix] - y[iy]) > tz::abs(x[ix+1] - y[iy])) ++ix;
+      res.push_back(ix + 1);     // +1 because of R numbering start convention
     }
     return res;
   }
@@ -122,14 +121,15 @@ namespace arr {                 // should be in tz? LLL
       // advance until we have a point in x that is in the interval
       // defined around yi:
       while (ix < x.size() && x[ix] < ystart) ++ix;
-      if (ix >= x.size() || x[ix] > yend) {
+      if (ix > x.size() || x[ix] > yend) {
         ydata.push_back(NANF::f());
         continue;
       }
 
       // find the closest point in the interval:
-      while (ix < x.size() && x[ix] <= yend && tz::abs(x[ix-1] - y[iy]) > tz::abs(x[ix] - y[iy])) ++ix;
-      ydata.push_back(xdata[ix - 1]);     // +1 because of R numbering start convention
+      while (ix+1 < x.size() && x[ix+1] <= yend && tz::abs(x[ix] - y[iy]) > tz::abs(x[ix+1] - y[iy]))
+        ++ix;
+      ydata.push_back(xdata[ix]);
     }
   }
 
@@ -158,7 +158,7 @@ namespace arr {                 // should be in tz? LLL
       auto iter = std::lower_bound(x.begin() + ix, x.end(), ystart);
       ix = iter - x.begin();
       
-      if (ix >= x.size() || x[ix] >= yend) {
+      if (ix > x.size() || x[ix] >= yend) {
         ydata.push_back(F::f(xdata.end(), xdata.end())); // empty interval
         continue;
       }
@@ -167,7 +167,8 @@ namespace arr {                 // should be in tz? LLL
 
       // find the last point in the interval:
       iter = std::lower_bound(x.begin() + ix, x.end(), yend);
-      ix = iter - x.begin();while (ix < x.size() && x[ix] < yend) ++ix;
+      ix = iter - x.begin();
+      while (ix < x.size() && x[ix] < yend) ++ix;
       typename arr::Vector<T>::const_iterator iend(xdata, ix);
 
       ydata.push_back(F::f(istart, iend));

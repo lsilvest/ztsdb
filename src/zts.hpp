@@ -144,6 +144,8 @@ namespace arr {
     zts& abind(const zts& z, idx_type d, const string& prefix="");
     zts& abind(const Array<double>& u, idx_type d, const string& prefix="");
 
+    inline bool isPersistent() const { return a->isPersistent(); }
+
   private:
     // can we please get rid of the mutable here? LLL
     mutable std::shared_ptr<Array<double>> a;

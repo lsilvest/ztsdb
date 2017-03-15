@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <random>
 #include "base_funcs.hpp"
+#include "base_types.hpp"
 #include "valuevar.hpp"
 #include "conversion_funcs.hpp"
 #include "display.hpp"
@@ -32,6 +33,7 @@ static val::ValType equiv(val::ValType vt)  {
   case val::vt_clos:	
   case val::vt_builting:	
   case val::vt_connection:
+  case val::vt_timer:
     return val::vt_list;
   default:
     return vt;
@@ -54,19 +56,29 @@ static val::ValType getCType(vector<val::VBuiltinG::arg_t>::const_iterator b,
 } 
 
 
+// conversions to Value
+namespace arr {
+  template<> val::Value convert(const double& u) { return val::make_array(u); }
+  template<> val::Value convert(const bool& u) { return val::make_array(u); }
+  template<> val::Value convert(const Global::dtime& u) { return val::make_array(u); }
+  template<> val::Value convert(const Global::duration& u) { return val::make_array(u); }
+  template<> val::Value convert(const tz::period& u) { return val::make_array(u); }
+  template<> val::Value convert(const tz::interval& u) { return val::make_array(u); }
+  template<> val::Value convert(const arr::zstring& u) { return val::make_array(u); }
+}
+
 template <typename T>
-static Array<T> makeVector(vector<val::VBuiltinG::arg_t>& v) {
+static Array<T> makeVector(arr::Array<T>& r,
+                           vector<val::VBuiltinG::arg_t>::iterator begin,
+                           vector<val::VBuiltinG::arg_t>::iterator end) {
 #ifdef DEBUG_BFA
   cout << "makeVector<T>: " << endl;
 #endif
 
-  auto r = Array<T>(rsv, Vector<idx_type>{0});
-  for (auto e : v) {
+  for (auto iter=begin; iter!=end; ++iter) {
+    auto& e = *iter;
 #ifdef DEBUG_BFA
-    std::cout << "loop makeVector..." << std::endl;
-    std::cout << "the name is: " << std::endl;
-    std::cout << val::getName(e) << std::endl;
-    std::cout << "got name" << std::endl;
+    std::cout << "| name: " << val::getName(e) << std::endl;
 #endif
     switch (val::getVal(e).which()) {
     case val::vt_double: 
@@ -90,6 +102,15 @@ static Array<T> makeVector(vector<val::VBuiltinG::arg_t>& v) {
     case val::vt_interval: 
       r.concat(vectorize(*get<val::SpVAIVL>(val::getVal(e))), val::getName(e));
       break;
+    case val::vt_list: 
+      r.concat(vectorize(get<val::SpVList>(val::getVal(e))->a), val::getName(e));
+      break;
+    case val::vt_builting:
+    case val::vt_clos:
+    case val::vt_connection:
+    case val::vt_timer:
+      r.concat(val::getVal(e), val::getName(e));    
+      break;
     case val::vt_null:          // like in R, NULLs are just ignored in 'c'
       break;
     default:
@@ -100,34 +121,70 @@ static Array<T> makeVector(vector<val::VBuiltinG::arg_t>& v) {
 }
 
 
+template <val::ValType vt>
+static val::Value& cHelper(val::Value& val, vector<val::VBuiltinG::arg_t>& v) {
+  using T  = typename val::getelttype<vt>::TP;
+  using SP = typename val::gettype<vt>::TP;
+  if (val.which() == vt && val::isRef(val)) {
+    auto& a = get<SP>(val);
+    a->addprefix(val::getName(v[0]), 0);
+    makeVector<T>(*a, v.begin()+1, v.end()); // potentially inplace
+    return val;
+  }
+  else {
+    if (val::isRef(val)) {
+      throw interp::EvalException("cannot convert the type of a reference", val::getLoc(v[0]));
+    }
+    auto a = Array<T>(rsv, Vector<idx_type>{0});
+    val = arr::make_cow<Array<T>>(arr::NOFLAGS, makeVector<T>(a, v.begin(), v.end())); // copy
+    return val;
+  }
+}
+
+
+template <>
+val::Value& cHelper<val::vt_list>(val::Value& val, vector<val::VBuiltinG::arg_t>& v) {
+  if (val.which() == val::vt_list && val::isRef(val)) {
+    auto& l = get<val::SpVList>(val);
+    l->a.addprefix(val::getName(v[0]), 0);
+    makeVector<val::Value>(l->a, v.begin()+1, v.end()); // potentially inplace
+    return val;
+  }
+  else {
+    if (val::isRef(val)) {
+      throw interp::EvalException("cannot convert the type of a reference", val::getLoc(v[0]));
+    }
+    auto a = Array<val::Value>(rsv, Vector<idx_type>{0});
+    val = arr::make_cow<val::VList>(arr::NOFLAGS,
+                                    makeVector<val::Value>(a, v.begin(), v.end())); // copy
+    return val;
+  }
+}
+
+
 val::Value funcs::c(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
 #ifdef DEBUG_BFA
   std::cout << "c..." << std::endl;
 #endif
   auto vt = getCType(v.cbegin(), v.cend()); // examines all elts to determine type of vector
-
+  
   switch (vt) {
   case val::vt_double:
-    return arr::make_cow<val::VArrayD>(false, makeVector<double>(v));
+    return cHelper<val::vt_double>(val::getVal(v[0]), v);
   case val::vt_bool:
-    return arr::make_cow<val::VArrayB>(false, makeVector<bool>(v));
+    return cHelper<val::vt_bool>(val::getVal(v[0]), v);
   case val::vt_string:
-    return arr::make_cow<val::VArrayS>(false, makeVector<arr::zstring>(v));
+    return cHelper<val::vt_string>(val::getVal(v[0]), v);
   case val::vt_time:
-    return arr::make_cow<val::VArrayDT>(false, makeVector<Global::dtime>(v));
+    return cHelper<val::vt_time>(val::getVal(v[0]), v);
   case val::vt_duration:
-    return arr::make_cow<val::VArrayDUR>(false, makeVector<Global::duration>(v));
+    return cHelper<val::vt_duration>(val::getVal(v[0]), v);
   case val::vt_period:
-    return arr::make_cow<val::VArrayPRD>(false, makeVector<tz::period>(v));
+    return cHelper<val::vt_period>(val::getVal(v[0]), v);
   case val::vt_interval:
-    return arr::make_cow<val::VArrayIVL>(false, makeVector<tz::interval>(v));
-  case val::vt_list: {
-    vector<pair<string, val::Value>> m;
-    for (auto& e : v) {
-      m.push_back(make_pair(val::getName(e), val::getVal(e)));
-    }
-    return arr::make_cow<val::VList>(false, m, true); // concat=true
-  }
+    return cHelper<val::vt_interval>(val::getVal(v[0]), v);
+  case val::vt_list:
+    return cHelper<val::vt_list>(val::getVal(v[0]), v);
   case val::vt_null:
     return val::VNull();
   default:
@@ -1084,6 +1141,12 @@ val::Value funcs::alloc_dirname(vector<val::VBuiltinG::arg_t>& v, zcore::InterpC
                         val::vt_duration, 
                         val::vt_zts,
                         val::vt_interval>(val::getVal(v[X]), val::getLoc(v[X]));    
+}
+
+
+val::Value funcs::islocked(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  enum { X };
+  return val::make_array<bool>(val::isLocked(val::getVal(v[X])));
 }
 
 

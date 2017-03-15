@@ -112,23 +112,6 @@ std::string val::VFuture::to_string() const {
 val::VList::VList() : a(arr::rsv, {0}) { }
 val::VList::VList(const Array<Value>& a_p) : a(a_p) { }
 val::VList::VList(const VList& l) : a(l.a) { }
-val::VList::VList(const vector<pair<string, Value>>& l_p, bool concat) : a(rsv, {0}) 
-{
-  for (auto& p : l_p) {
-    if (!concat || p.second.which() != vt_list) {
-      a.concat(p.second, p.first);
-    } else {
-      auto& alist = get<SpVList>(p.second);
-      for (size_t i=0; i<alist->size(); i++) {
-        const auto& e = alist->a[i]; 
-        const auto& ename = alist->a.getnames(0)[i];
-        auto aname = p.first=="" ?
-          ename : p.first + (ename=="" ? std::to_string(i+1) : '.' + ename); 
-        a.concat(e, aname);
-      }
-    }
-  }
-}
 
 
 // to reduce boilerplate switch code:
@@ -226,6 +209,50 @@ void val::setLast(val::Value& v) {
                  val::vt_string, 
                  val::vt_zts,
                  val::vt_list>(v);
+}
+
+
+template<typename T>
+struct setLock_helper {
+  static void f(val::Value& v) {
+    auto& a = get<T>(v);
+    a.setLock();
+  }
+};
+
+void val::setLock(val::Value& v) {
+  apply_to_types<setLock_helper, 
+                 val::vt_double, 
+                 val::vt_bool, 
+                 val::vt_time, 
+                 val::vt_duration, 
+                 val::vt_interval, 
+                 val::vt_period, 
+                 val::vt_string, 
+                 val::vt_zts>(v);
+}
+
+template<typename T>
+struct resetLock_helper {
+  static void f(val::Value& v) {
+    auto& a = get<T>(v);
+    if (a.get()->isPersistent()) {
+      throw std::out_of_range("cannot unlock file mapped object");
+    }
+    a.resetLock();
+  }
+};
+
+void val::resetLock(val::Value& v) {
+  apply_to_types<resetLock_helper, 
+                 val::vt_double, 
+                 val::vt_bool, 
+                 val::vt_time, 
+                 val::vt_duration, 
+                 val::vt_interval, 
+                 val::vt_period, 
+                 val::vt_string, 
+                 val::vt_zts>(val::gval(v));
 }
 
 

@@ -325,9 +325,28 @@ val::Value funcs::prod(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
 
 
 
-template <class F>
-static val::Value minMax(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-
+template <template <typename Type> class F>
+static val::Value minMax(vector<val::VBuiltinG::arg_t>& v) {
+  if (val::getVal(v[0]).which() == val::vt_zts) {
+    const auto& z = get<val::SpZts>(val::getVal(v[0]));
+    auto s = z->getArray().for_each(Aggr<double,
+                                    F<double>>(std::numeric_limits<double>::max()));
+    return val::make_array(s.res);
+  }
+  else if (val::getVal(v[0]).which() == val::vt_double) {
+    const auto& a = get<val::SpVAD>(val::getVal(v[0]));
+    auto s = a->for_each(Aggr<double, F<double>>(std::numeric_limits<double>::max()));
+    return val::make_array(s.res);
+  }
+  else if (val::getVal(v[0]).which() == val::vt_duration) {
+    const auto& a = get<val::SpVADUR>(val::getVal(v[0]));
+    auto s = a->for_each(Aggr<Global::duration,
+                         F<Global::duration>>(std::numeric_limits<Global::duration>::max()));
+    return val::make_array(s.res);
+  }
+  else {
+    throw interp::EvalException("invalid type", val::getLoc(v[0]));
+  }
 }
 
 template <typename T>
@@ -336,26 +355,7 @@ struct Min {
 };
 
 val::Value funcs::_min(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  if (val::getVal(v[0]).which() == val::vt_zts) {
-    const auto& z = get<val::SpZts>(val::getVal(v[0]));
-    auto s = z->getArray().for_each(Aggr<double,
-                                    Min<double>>(std::numeric_limits<double>::max()));
-    return val::make_array(s.res);
-  }
-  else if (val::getVal(v[0]).which() == val::vt_double) {
-    const auto& a = get<val::SpVAD>(val::getVal(v[0]));
-    auto s = a->for_each(Aggr<double, Min<double>>(std::numeric_limits<double>::max()));
-    return val::make_array(s.res);
-  }
-  else if (val::getVal(v[0]).which() == val::vt_duration) {
-    const auto& a = get<val::SpVADUR>(val::getVal(v[0]));
-    auto s = a->for_each(Aggr<Global::duration,
-                         Min<Global::duration>>(std::numeric_limits<Global::duration>::max()));
-    return val::make_array(s.res);
-  }
-  else {
-    throw interp::EvalException("invalid type", val::getLoc(v[0]));
-  }
+  return minMax<Min>(v);
 }
 
 
@@ -365,24 +365,5 @@ struct Max {
 };
 
 val::Value funcs::_max(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  if (val::getVal(v[0]).which() == val::vt_zts) {
-    const auto& z = get<val::SpZts>(val::getVal(v[0]));
-    auto s = z->getArray().for_each(Aggr<double,
-                                    Max<double>>(std::numeric_limits<double>::min()));
-    return val::make_array(s.res);
-  }
-  else if (val::getVal(v[0]).which() == val::vt_double) {
-    const auto& a = get<val::SpVAD>(val::getVal(v[0]));
-    auto s = a->for_each(Aggr<double, Max<double>>(std::numeric_limits<double>::min()));
-    return val::make_array(s.res);
-  }
-  else if (val::getVal(v[0]).which() == val::vt_duration) {
-    const auto& a = get<val::SpVADUR>(val::getVal(v[0]));
-    auto s = a->for_each(Aggr<Global::duration,
-                         Max<Global::duration>>(std::numeric_limits<Global::duration>::min()));
-    return val::make_array(s.res);
-  }
-  else {
-    throw interp::EvalException("invalid type", val::getLoc(v[0]));
-  }
+  return minMax<Max>(v);
 }

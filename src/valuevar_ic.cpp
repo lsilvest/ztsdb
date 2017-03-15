@@ -48,7 +48,7 @@ val::VBuiltinG::VBuiltinG(interp::BaseFrame* r,
   else {
     throw std::range_error("error parsing builtin signature: " + name + " <- " + signature_s);
   }
-  r->add(name, *this);
+  r->add(name, std::make_shared<VBuiltinG>(*this));
 }
 
 

@@ -318,65 +318,79 @@ static void checkScalarIndex(const vector<Index>& idx) {
 
 
 /// Double subset an array e.g. do 'x[[y]]'. 
-val::Value funcs::dblsubset(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  auto a = val::getVal(v[0]);
+static val::Value dblsubsetHelper(val::Value& a,
+                                  const yy::location& loc,
+                                  std::vector<val::VBuiltinG::arg_t>::iterator begin,
+                                  std::vector<val::VBuiltinG::arg_t>::iterator end) {
 
   switch (a.which()) {
   case val::vt_zts: {
     const auto& z = get<val::SpZts>(a);
-    auto i = convertToIndex(v.begin()+1, v.end(), *z);
+    auto i = convertToIndex(begin, end, *z);
     checkScalarIndex(i);
     return arr::make_cow<arr::zts>(arr::NOFLAGS, (*z)(i, true));
   }
   case val::vt_double: {
     const auto& ad = get<val::SpVAD>(a);
-    auto i = convertToIndex(v.begin()+1, v.end(), *ad);
+    auto i = convertToIndex(begin, end, *ad);
     checkScalarIndex(i);
     auto r = (*ad)(i, true);
     return arr::make_cow<val::VArrayD>(arr::NOFLAGS, std::move(r));
   }
   case val::vt_list: {
     auto& l = get<val::SpVList>(a);
-    auto i = convertToIndex(v.begin()+1, v.end(), l.get()->a); // don't make a copy of l!
-    checkScalarIndex(i);
+    // raise exception if more than one index LLL
+    auto i = convertToIndex(begin, begin+1, l.get()->a); // don't make a copy of l!
     idx_type iv=0, ii=0; 
     if (!i[0].getfirst(iv, ii)) {
-      throw interp::EvalException("invalid index", val::getLoc(v[0]));
+      throw interp::EvalException("invalid index", loc);
     }
-    auto& a = l.get()->a.getcol(0)[iv]; // don't make a copy of l!
-    return val::VPtr(a);
+    auto* a = &l.get()->a.getcol(0)[iv]; // don't make a copy of l!
+    for (unsigned u=1; u<i[0].size(); ++u) {
+      if (!i[0].getnext(iv, ii)) break;
+      if (a->which() == val::vt_list) {
+        auto& l = get<val::SpVList>(*a);
+        a = &l.get()->a.getcol(0)[iv];
+      }
+      else {
+        using arg_t = val::VBuiltinG::arg_t;
+        auto arg = vector<arg_t>{arg_t{"", val::make_array(static_cast<double>(iv+1)), loc}};
+        return dblsubsetHelper(*a, loc, arg.begin(), arg.end());
+      }
+    }
+    return val::VPtr(*a);
   }    
   case val::vt_string: {
     const auto& ai = get<val::SpVAS>(a); // const necessary for disambiguation of subset function
-    auto i = convertToIndex(v.begin()+1, v.end(), *ai);
+    auto i = convertToIndex(begin, end, *ai);
     checkScalarIndex(i);
     auto r = (*ai)(i, true);
     return val::Value(arr::make_cow<val::VArrayS>(arr::NOFLAGS, std::move(r)));
   }
   case val::vt_bool: {
     const auto& ai = get<val::SpVAB>(a);
-    auto i = convertToIndex(v.begin()+1, v.end(), *ai);
+    auto i = convertToIndex(begin, end, *ai);
     checkScalarIndex(i);
     auto r = (*ai)(i, true);
     return val::Value(arr::make_cow<val::VArrayB>(arr::NOFLAGS, std::move(r)));
   }
   case val::vt_time: {
     const auto& adt = get<val::SpVADT>(a);
-    auto i = convertToIndex(v.begin()+1, v.end(), *adt);
+    auto i = convertToIndex(begin, end, *adt);
     checkScalarIndex(i);
     auto r = (*adt)(i, true);
     return val::Value(arr::make_cow<val::VArrayDT>(arr::NOFLAGS, std::move(r)));
   }
   case val::vt_duration: {
     const auto& adt = get<val::SpVADUR>(a);
-    auto i  = convertToIndex(v.begin()+1, v.end(), *adt);
+    auto i  = convertToIndex(begin, end, *adt);
     checkScalarIndex(i);
     auto r = (*adt)(i, true);
     return val::Value(arr::make_cow<val::VArrayDUR>(arr::NOFLAGS, std::move(r)));
   }
   case val::vt_interval: {
     const auto& adt = get<val::SpVAIVL>(a);
-    auto i = convertToIndex(v.begin()+1, v.end(), *adt);
+    auto i = convertToIndex(begin, end, *adt);
     checkScalarIndex(i);
     auto r = (*adt)(i, true);
     return val::Value(arr::make_cow<val::VArrayIVL>(arr::NOFLAGS, std::move(r)));
@@ -386,48 +400,52 @@ val::Value funcs::dblsubset(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& 
   }
 }
 
+val::Value funcs::dblsubset(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  return dblsubsetHelper(val::getVal(v[0]), val::getLoc(v[0]), v.begin()+1, v.end());
+}
+
+
 
 /// make subassignment when type of a > type of b, i.e. result must be of type a.
 template<typename A>
 static void doSubassign(A& a, 
                         const val::Value& b, 
-                        const vector<Index> i,
-                        zcore::InterpCtx& ic) 
+                        const vector<Index> i) 
 {
   switch (b.which()) {
   case val::vt_double: {
-    const auto& bi = *get<val::SpVAD>(b);
-    bi.size() > 1 ? a(i, bi) : a(i, bi[0]);
+    const auto& bi = get<val::SpVAD>(b);
+    bi->size() > 1 ? a(i, *bi) : a(i, (*bi)[0]);
     break;
   }
   case val::vt_bool: {
-    auto& bi = *get<val::SpVAB>(b);
-    bi.size() > 1 ? a(i, bi) : a(i, bi[0]);
+    const auto& bi = get<val::SpVAB>(b);
+    bi->size() > 1 ? a(i, *bi) : a(i, (*bi)[0]);
     break;
   }
   case val::vt_time: {
-    auto& bi = *get<val::SpVADT>(b);
-    bi.size() > 1 ? a(i, bi) : a(i, bi[0]);
+    const auto& bi = get<val::SpVADT>(b);
+    bi->size() > 1 ? a(i, *bi) : a(i, (*bi)[0]);
     break;
   }
   case val::vt_interval: {
-    auto& bi = *get<val::SpVAIVL>(b);
-    bi.size() > 1 ? a(i, bi) : a(i, bi[0]);
+    const auto& bi = get<val::SpVAIVL>(b);
+    bi->size() > 1 ? a(i, *bi) : a(i, (*bi)[0]);
     break;
   }
   case val::vt_duration: {
-    auto& bi = *get<val::SpVADUR>(b);
-    bi.size() > 1 ? a(i, bi) : a(i, bi[0]);
+    const auto& bi = get<val::SpVADUR>(b);
+    bi->size() > 1 ? a(i, *bi) : a(i, (*bi)[0]);
     break;
   }
   case val::vt_string: {
-    auto& bi = *get<val::SpVAS>(b);
-    bi.size() > 1 ? a(i, bi) : a(i, bi[0]);
+    const auto& bi = get<val::SpVAS>(b);
+    bi->size() > 1 ? a(i, *bi) : a(i, (*bi)[0]);
     break;
   }
   case val::vt_list: {
-    auto& l = get<val::SpVList>(b);
-    a(i, l);
+    const auto& l = get<val::SpVList>(b);
+    l->size() > 1 ?  a(i, l->a) : a(i, l->a[0]);
     break;
   }
   default:
@@ -445,99 +463,145 @@ static void doSubassign(A& a,
 /// type can be converted. Another particularity of subassign (and
 /// this is also the case in R) is that it always modifies the array
 /// (i.e. it never makes a copy).
-val::Value funcs::subassign(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  // handle case a[] <- x, when dim(a) > 1 LLL
-
-  enum { A, B };
-  //  const auto name_a = val::get_scalar<arr::zstring>(val::getVal(v[NAME_A]));
-  //auto& a = name_a.size() == 0 ? val::getVal(v[A]) : ic.s->k->next->r->findR(name_a);
-  auto& a = val::getVal(v[A]);
-  auto& b = val::getVal(v[B]);
-  const size_t IDXOFF = 2;
-
+static val::Value subassignHelper(val::Value& a,
+                                  const val::Value& b,
+                                  std::vector<val::VBuiltinG::arg_t>::iterator begin,
+                                  std::vector<val::VBuiltinG::arg_t>::iterator end)
+{  
   switch (a.which()) {
   case val::vt_zts: {
     auto& z = *get<val::SpZts>(a);
-    auto i = convertToIndex(v.begin()+IDXOFF, v.end(), z);
-    doSubassign(z, b, i, ic);
+    auto i = convertToIndex(begin, end, z);
+    doSubassign(z, b, i);
     break;
   }
   case val::vt_double: {
     auto& ai = *get<val::SpVAD>(a);
-    auto i = convertToIndex(v.begin()+IDXOFF, v.end(), ai);
-    doSubassign(ai, b, i, ic);
+    auto i = convertToIndex(begin, end, ai);
+    doSubassign(ai, b, i);
     break;
   }
   case val::vt_list: {
-    auto l = get<val::SpVList>(a);
-    auto i = convertToIndex(v.begin()+IDXOFF, v.end(), l->a);
-    doSubassign(l->a, b, i, ic);
+    auto& l = get<val::SpVList>(a);
+    auto i = convertToIndex(begin, end, l->a);
+    doSubassign(l->a, b, i);
     break;
   }
   case val::vt_bool: {
     auto& ai = *get<val::SpVAB>(a);
-    auto i = convertToIndex(v.begin()+IDXOFF, v.end(), ai);
-    doSubassign(ai, b, i, ic);
+    auto i = convertToIndex(begin, end, ai);
+    doSubassign(ai, b, i);
     break;
   }
   case val::vt_time: {
     auto& ai = *get<val::SpVADT>(a);
-    auto i = convertToIndex(v.begin()+IDXOFF, v.end(), ai);
-    doSubassign(ai, b, i, ic);
+    auto i = convertToIndex(begin, end, ai);
+    doSubassign(ai, b, i);
     break;
   }
   case val::vt_duration: {
     auto& ai = *get<val::SpVADUR>(a);
-    auto i = convertToIndex(v.begin()+IDXOFF, v.end(), ai);
-    doSubassign(ai, b, i, ic);
+    auto i = convertToIndex(begin, end, ai);
+    doSubassign(ai, b, i);
     break;
   }
   case val::vt_interval: {
     auto& ai = *get<val::SpVAIVL>(a);
-    auto i = convertToIndex(v.begin()+IDXOFF, v.end(), ai);
-    doSubassign(ai, b, i, ic);
+    auto i = convertToIndex(begin, end, ai);
+    doSubassign(ai, b, i);
     break;
   }
   case val::vt_string: {
     auto& ai = *get<val::SpVAS>(a);
-    auto i = convertToIndex(v.begin()+IDXOFF, v.end(), ai);
-    doSubassign(ai, b, i, ic);
+    auto i = convertToIndex(begin, end, ai);
+    doSubassign(ai, b, i);
     break;
   }
   default:
     throw std::domain_error(apply_visitor(val::Typeof(), a) + " cannot be subassigned");
   }
+  return a;
+}
+
+val::Value funcs::subassign(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
+  // handle case a[] <- x, when dim(a) > 1 LLL
+
+  // handle loc LLL
+  
+  enum { A, B };
+  //  const auto name_a = val::get_scalar<arr::zstring>(val::getVal(v[NAME_A]));
+  //auto& a = name_a.size() == 0 ? val::getVal(v[A]) : ic.s->k->next->r->findR(name_a);
+  auto& a = val::getVal(v[A]);
+  auto& b = val::getVal(v[B]);
+
   ic.s->k->next->next->atype |= interp::Kont::SILENT;
-  return std::move(a);
+  return subassignHelper(a, b, v.begin()+2, v.end());
 }
 
 
+static void dblsubassignHelper(val::Value& val,
+                               const val::Value& b,
+                               const yy::location& loc,
+                               std::vector<val::VBuiltinG::arg_t>::iterator begin,
+                               std::vector<val::VBuiltinG::arg_t>::iterator end) {
+  if (val.which() == val::vt_list) {
+    val::Value* a = &val;
+    auto& l = get<val::SpVList>(val);
+    const auto i = convertToIndex(begin, begin+1, l.get()->a);
+    idx_type iv=0, ii=0;
+    unsigned u=0;
+    try {
+      if (!i.size() || !i[0].getfirst(iv, ii)) {
+        throw interp::EvalException("invalid index", loc);
+      }
+      a = &l.get()->a.getcol(0)[iv]; // don't make a copy of l!
+      for (u=1; u<i[0].size(); ++u) {
+        if (!i[0].getnext(iv, ii))
+          break;
+        if (a->which() == val::vt_list) {
+          auto& l = get<val::SpVList>(*a);
+          a = &l.get()->a.getcol(0)[iv];
+        }
+        else if (u == i[0].size() - 1) {
+          // if this is the last index we allow indexing into any type of 'Value':
+          using arg_t = val::VBuiltinG::arg_t;
+          auto arg = vector<arg_t>{arg_t{"", val::make_array(static_cast<double>(iv+1)), loc}};
+          dblsubassignHelper(*a, b, loc, arg.begin(), arg.end());
+        }
+        else throw std::out_of_range("recursive indexing failed at level "s + std::to_string(u+1));
+      }
+      *a = b;
+    }
+    catch (...) {
+      // in the case of an index character that doesn't exist, we
+      // extend the list in the last position:
+      if (u == i[0].size() - 1 && i[0].idx.which() == arr::Index::it_names) {
+        const auto& name = get<arr::NameIndex>(i[0].idx).vs[iv];
+        if (a->which() == val::vt_list) {
+          auto& l = get<val::SpVList>(*a);
+          l->a.concat(b, name);
+        }
+        else throw std::out_of_range("recursive indexing failed at level "s + std::to_string(u+1));
+      }
+      else throw std::out_of_range("recursive indexing failed at level "s + std::to_string(u+1));
+    }
+  }
+  else {
+    subassignHelper(val, b, begin, end);
+  } 
+}
+
 val::Value funcs::dblsubassign(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { A, B };
+  ic.s->k->next->next->atype |= interp::Kont::SILENT;
   try {
-    ic.s->k->next->next->atype |= interp::Kont::SILENT;
     auto& a = val::getVal(v[A]);
-    if (a.which() == val::vt_list) {
-      auto& b = val::getVal(v[B]);
-      auto& al = get<val::SpVList>(a);
-      const auto i = convertToIndex(v.begin()+2, v.end(), al->a);
-      try {
-        al->a.operator()<Index, val::Value>(i, b);
-      }
-      catch (...) {
-        // in the case of an index character that doesn't exist, we
-        // extend the list in the last position:
-        if (i[0].idx.which() == arr::Index::it_names) {
-          const auto& name = get<arr::NameIndex>(i[0].idx).vs[0];
-          al->a.concat(b, name);
-        }
-        else throw;
-      }
-      return a;
-    }
-    else {
-      return subassign(v, ic);
-    }
+    const auto& b = val::getVal(v[B]);
+    dblsubassignHelper(a, b, val::getLoc(*(v.begin()+2)), v.begin()+2, v.end());
+    return b;
+  }
+  catch (interp::EvalException&) {
+    throw;
   }
   catch (std::exception& e) {
     throw interp::EvalException(e.what(), val::getLoc(*(v.begin()+2)));

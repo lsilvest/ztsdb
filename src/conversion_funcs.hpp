@@ -42,6 +42,8 @@ namespace funcs {
   template<>
   val::SpVAD array_convert(const val::SpVAB& u);
   template<>
+  val::SpVAD array_convert(const val::SpVADUR& u);
+  template<>
   val::SpVAD array_convert_from_scalar(const val::VNull& u);
 
   // to array of bool:
@@ -94,6 +96,14 @@ namespace funcs {
   template<>
   val::SpVAS array_convert(const val::SpVAB& u);
   template<>
+  val::SpVAS array_convert(const val::SpVADT& u);
+  template<>
+  val::SpVAS array_convert(const val::SpVADUR& u);
+  template<>
+  val::SpVAS array_convert(const val::SpVAIVL& u);
+  template<>
+  val::SpVAS array_convert(const val::SpVAPRD& u);
+  template<>
   val::SpVAS array_convert_from_scalar(const val::VNull& u);
 
 
@@ -106,6 +116,8 @@ namespace funcs {
       return array_convert<T, double>(get<val::SpVAD>(x));
     case val::vt_bool:
       return array_convert<T, bool>(get<val::SpVAB>(x)); 
+    case val::vt_time:
+      return array_convert<T, Global::dtime>(get<val::SpVADT>(x)); 
     case val::vt_duration:
       return array_convert<T, Global::duration>(get<val::SpVADUR>(x)); 
     case val::vt_period:

@@ -106,7 +106,10 @@ namespace funcs {
   val::Value set_seed(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value msync(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value alloc_dirname(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
-
+  val::Value lock(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
+  val::Value unlock(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
+  val::Value islocked(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
+  
   val::Value dyn_load(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
   val::Value _options(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic);
 

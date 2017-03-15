@@ -239,7 +239,6 @@ TEST(intersect_idx_sorted) {
   ASSERT_TRUE(res == exp);
 }
 // union_idx --------------------------------
-
 TEST(union_idx_sorted) {
   Vector<double> v1{1,2,3,4};
   Vector<double> v2{1,2,5,6};

@@ -147,13 +147,13 @@ static val::Value evalAtom(const E* e,
     catch (std::out_of_range& e) {
       throw interp::EvalException(e.what(), inv->loc);
     }
-    const auto& b = get<val::VBuiltinG>(bval);
+    const auto& b = get<val::SpBuiltin>(bval);
     auto& bf = static_cast<BuiltinFrame&>(*r);
     if (bf.hasFutures()) {
       throw interp::FutureException("invoke");
     }
-    b.checkArgs(bf);
-    return b(bf, ic);
+    b->checkArgs(bf);
+    return (*b)(bf, ic);
   }
   default:
     throw interp::EvalException("unknown atomic expression: " + to_string(*e), e->loc);
@@ -266,15 +266,15 @@ static vector<ArgInfo> processArgs(int ellipsisPos,
       auto a = static_cast<Arg*>(geln->e);
       if (feln->e->etype == ettaggedexpr) {
         const auto te = static_cast<TaggedExpr*>(feln->e);
-        res[fidx] = ArgInfo{te->symb, a->e, false, false, a->ref};
+        res[fidx] = ArgInfo{te->symb, a->e, false, false, a->symb->ref};
         fidx = getUnused(fidx, feln, ufargs); 
       }
       else if (feln->e->etype != etellipsis) {
-        res[fidx] = ArgInfo{feln->e, a->e, false, false, a->ref};
+        res[fidx] = ArgInfo{feln->e, a->e, false, false, a->symb->ref};
         fidx = getUnused(fidx, feln, ufargs); 
       } 
       else {
-        res.emplace_back(ArgInfo{nullptr, a->e, false, true, a->ref});
+        res.emplace_back(ArgInfo{a->symb, a->e, false, true, a->symb->ref});
       }
     }
     gidx = getUnused(gidx, geln, ugargs);
@@ -311,12 +311,6 @@ static vector<ArgInfo> processArgs(int ellipsisPos,
       }
     }      
   }
-
-  // for (const auto& i : res)
-  //   cout << to_string(*i.name) << "=" << to_string(*i.expr)
-  //        << ", isFormal: " << i.isFormal
-  //        << ", isEllipsis: " << i.isEllipsis
-  //        << ", isRef: " << i.isRef << std::endl;
 
   return res;
 } 
@@ -376,7 +370,7 @@ static shared_ptr<Kont> applyProc(val::VClos& proc,
 }
 
 
-static shared_ptr<Kont> applyBuiltin(const val::VBuiltinG& builtin,
+static shared_ptr<Kont> applyBuiltin(const val::SpBuiltin& builtin,
                                      shpfrm r, // the calling environment
                                      std::vector<shpfrm>& fstack,
                                      const El* el,
@@ -385,9 +379,9 @@ static shared_ptr<Kont> applyBuiltin(const val::VBuiltinG& builtin,
   cout << "applyBuiltin " << to_string(builtin) << endl;
   cout << "| with k: " << string(*k) << endl;
 #endif
-  auto inv = builtin.invoke.get();
-  Function* f = builtin.signature.get();
-  fstack.push_back(std::make_shared<BuiltinFrame>(r, r->ec, builtin.argMap.size()));
+  auto inv = builtin->invoke.get();
+  Function* f = builtin->signature.get();
+  fstack.push_back(std::make_shared<BuiltinFrame>(r, r->ec, builtin->argMap.size()));
   auto fenv = fstack.back();
 #ifdef DEBUG
   cout << "|  created fenv:   " << fenv << endl;
@@ -412,7 +406,7 @@ static shared_ptr<Kont> applyBuiltin(const val::VBuiltinG& builtin,
     }
   }
 
-  auto paVec = processArgs(builtin.ellipsisPos, builtin.argMap, f->formlist, el);
+  auto paVec = processArgs(builtin->ellipsisPos, builtin->argMap, f->formlist, el);
   auto kchain = make_shared<Kont>(Kont{nullptr, inv, fenv, ksentinel, Kont::NORMAL});
 
 
@@ -420,11 +414,11 @@ static shared_ptr<Kont> applyBuiltin(const val::VBuiltinG& builtin,
     const auto atype = (paVec[i].isEllipsis ? Kont::ELLIPSIS : Kont::ARG) |
                        (paVec[i].isRef ? Kont::REF : 0);
     const auto& name = static_cast<const Symbol*>(paVec[i].name);
-    const auto& info = builtin.argInfo;
+    const auto& info = builtin->argInfo;
  
     bool noEval = atype & Kont::ARG ? 
       name && info.find(name->data) != info.end() && !info.at(name->data).doEval : 
-      !builtin.evalEllipsis;
+      !builtin->evalEllipsis;
       
     if (noEval) {
       // when we have a reason we could add the ref information...
@@ -603,7 +597,6 @@ inline static shared_ptr<Kont> applyKont(shared_ptr<Kont> k,
   // (potentially) deleted only on exit of this function.
   std::vector<shpfrm> tmpenv;
   while (k->next->atype & Kont::END) {
-    //k->r->clear();              // really only for the ec and stuff...
     k->r->ec = k->r->bc = k->r->cc = nullptr;
     tmpenv.push_back(fstack.back());
     fstack.pop_back();
@@ -618,11 +611,9 @@ inline static shared_ptr<Kont> applyKont(shared_ptr<Kont> k,
   auto ar = k->next->r;
   if (k->next->atype & Kont::ELLIPSIS) {
     string sym = k->next->var ? static_cast<const Symbol*>(k->next->var)->data : "";
-    auto& valref = 
-      ar->addEllipsis(sym,
-                      std::move(val),
-                      k->control ? k->control->loc : yy::missing_loc(),
-                      k->next->atype & Kont::REF);
+    const auto loc = k->control ? k->control->loc :
+      (k->next->var ? k->next->var->loc : yy::missing_loc());
+    auto& valref = ar->addEllipsis(sym, std::move(val), loc, k->next->atype & Kont::REF);
     setIfFuture(valref, ar);
   }
   else {
@@ -635,12 +626,9 @@ inline static shared_ptr<Kont> applyKont(shared_ptr<Kont> k,
     if (k->next->var) {
       if (k->next->var->etype == etsymbol) {
         string sym = static_cast<const Symbol*>(k->next->var)->data;
+        const auto loc = k->control ? k->control->loc : k->next->var->loc;
         if (k->next->atype & Kont::ARG) {
-          auto& valref = 
-            ar->addArg(sym,
-                       std::move(val),
-                       k->control ? k->control->loc : yy::missing_loc(),
-                       k->next->atype & Kont::REF);
+          auto& valref = ar->addArg(sym, std::move(val), loc, k->next->atype & Kont::REF);
           setIfFuture(valref, ar);
         }
         else if (k->next->atype & Kont::GLOBAL) {
@@ -766,7 +754,7 @@ shared_ptr<Kont> interp::step(shared_ptr<Kont>& k, vector<shpfrm>& fstack, zcore
       // look up bound vars (::xyz)
       set<string> ss;
       getBoundVars(req->e2, ss);
-      auto vl = make_cow<val::VList>(true, val::VList(vector<pair<string, val::Value>>()));
+      auto vl = make_cow<val::VList>(true, val::VList());
       for (auto i : ss) {
         vl->push_back(make_pair(i, k->r->find(i)));
       }
@@ -799,7 +787,7 @@ shared_ptr<Kont> interp::step(shared_ptr<Kont>& k, vector<shpfrm>& fstack, zcore
                          k->next);
       }
       else if (proc.which() == val::vt_builting) {
-        return applyBuiltin(get<val::VBuiltinG>(proc), 
+        return applyBuiltin(get<val::SpBuiltin>(proc), 
                             k->r->shared_from_this(), 
                             fstack, 
                             es->el, 

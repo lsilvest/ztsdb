@@ -265,19 +265,19 @@ namespace arr {
       size_t i1 = 0, i2 = 0;
       while (i1 < v1.size() && i2 < v2.size()) {
         if (v1[i1] < v2[i2]) {
-          if (v1.size()==0 || v1[i1] != v1[i1-1]) {
+          if (i1==0 || v1[i1] != v1[i1-1]) {
             res.first.push_back(i1+1);
             res.second.push_back(NANF::f());
           }
           ++i1;
         } else if (v1[i1] > v2[i2]) {
-          if (v2.size()==0 || v2[i2] != v1[i2-1]) {
+          if (i2==0 || v2[i2] != v1[i2-1]) {
             res.first.push_back(NANF::f());
             res.second.push_back(i2+1);
           }
           ++i2;
         } else {
-          if (v1.size()==0 || v1[i1] != v1[i1-1]) {
+          if (i1==0 || v1[i1] != v1[i1-1]) {
             res.first.push_back(i1+1);
             res.second.push_back(i2+1);
           }

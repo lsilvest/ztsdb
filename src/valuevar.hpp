@@ -70,6 +70,7 @@ namespace val {
   struct VFuture;
   struct VTimer;
   struct VPtr;
+  struct VConn;
 
   struct VNull { };
 
@@ -83,17 +84,19 @@ namespace val {
   typedef Array<tz::interval>       VArrayIVL;
   typedef Array<Global::duration>   VArrayDUR;
   typedef Array<tz::period>         VArrayPRD;
-  typedef cow_ptr<VArrayD>    SpVAD;
-  typedef cow_ptr<VArrayS>    SpVAS;
-  typedef cow_ptr<VArrayB>    SpVAB;
-  typedef cow_ptr<VArrayDT>   SpVADT;
-  typedef cow_ptr<VArrayDUR>  SpVADUR;
-  typedef cow_ptr<VArrayIVL>  SpVAIVL;
-  typedef cow_ptr<VArrayPRD>  SpVAPRD;
-  typedef cow_ptr<zts>        SpZts; // zts, time series, not an Array, defined in its own header
-  typedef cow_ptr<VList>      SpVList;
-  typedef shared_ptr<VFuture> SpFuture;
-  typedef shared_ptr<VTimer>  SpTimer;
+  typedef cow_ptr<VArrayD>      SpVAD;
+  typedef cow_ptr<VArrayS>      SpVAS;
+  typedef cow_ptr<VArrayB>      SpVAB;
+  typedef cow_ptr<VArrayDT>     SpVADT;
+  typedef cow_ptr<VArrayDUR>    SpVADUR;
+  typedef cow_ptr<VArrayIVL>    SpVAIVL;
+  typedef cow_ptr<VArrayPRD>    SpVAPRD;
+  typedef cow_ptr<zts>          SpZts; // zts, time series, not an Array, defined in its own header
+  typedef cow_ptr<VList>        SpVList;
+  typedef shared_ptr<VFuture>   SpFuture;
+  typedef shared_ptr<VTimer>    SpTimer;
+  typedef shared_ptr<VBuiltinG> SpBuiltin;
+  typedef shared_ptr<VConn>     SpConn;
 
   struct VConn {
     VConn(const string& ip_p, int port_p, Global::conn_id_t id_p);
@@ -233,7 +236,7 @@ namespace val {
                   ,VNull
                   ,recursive_wrapper<VCode> // probably does not need wrapper LLL
                   ,std::shared_ptr<VClos>
-                  ,recursive_wrapper<VBuiltinG>
+                  ,SpBuiltin
                   ,SpFuture
                   ,VConn
                   ,SpTimer
@@ -358,7 +361,6 @@ namespace val {
     VList();
     VList(const Array<Value>& a_p);
     VList(const VList& l);
-    VList(const vector<pair<string, Value>>& l_p, bool concat=false);
 
     inline void push_back(pair<string, Value> p) { a.concat(p.second, p.first); }
     inline size_t size() const { return a.size(); }
@@ -500,6 +502,8 @@ namespace val {
   void resetTmp(Value& v);
   void setConst(Value& v);
   void setLast(Value& v);
+  void setLock(Value& v);
+  void resetLock(Value& v);
   void setRef(Value& v);
   void resetRef(Value& v);
   bool isLocked(const Value& v);

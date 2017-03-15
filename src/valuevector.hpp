@@ -20,8 +20,10 @@
 #define VALUE_VECTOR_HPP
 
 
+#include <cassert>
 #include "valuevar.hpp"
 #include "vector.hpp"
+#include "index.hpp"
 
 
 namespace arr { 
@@ -75,7 +77,7 @@ namespace arr {
 
     /// constructor from a mmapallocator.
     Vector(std::unique_ptr<baseallocator>&& alloc_p) {
-      // static assert false LLL
+      assert(false);
     }
 
     void swap(Vector<val::Value>& o) {
@@ -89,9 +91,24 @@ namespace arr {
 
     bool isOrdered() { return false; }
 
-    void at(arr::idx_type i, const val::Value& v) { c[i] = v; }
-    val::Value& operator[](size_t i) { return c[i]; }
-    const val::Value& operator[](size_t i) const { return c[i]; }
+    void at(arr::idx_type i, const val::Value& v) {
+      if (i > size() - 1) {
+        throw std::out_of_range("subscript out of bounds");
+      }
+      c[i] = v;
+    }
+    val::Value& operator[](size_t i) {
+      if (i > size() - 1) {
+        throw std::out_of_range("subscript out of bounds");
+      }
+      return c[i];
+    }
+    const val::Value& operator[](size_t i) const {
+      if (i > size() - 1) {
+        throw std::out_of_range("subscript out of bounds");
+      }
+      return c[i];
+    }
 
     void push_back(const val::Value& value) {
       c.push_back(value);

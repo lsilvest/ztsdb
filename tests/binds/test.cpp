@@ -88,40 +88,39 @@ TEST(binds_c_string_matrix_named) {
 
 TEST(binds_c_list) {
   auto eout = parse("c(list(1,2,3)) \n");
-  auto exp = vector<pair<string,val::Value>>{
-    make_pair("", val::make_array(1.0)),
-    make_pair("", val::make_array(2.0)),
-    make_pair("", val::make_array(3.0))};
+  auto l = make_cow<val::VList>(false);
+  l->a.concat(val::Value(val::make_array(1.0)), "");
+  l->a.concat(val::Value(val::make_array(2.0)), "");
+  l->a.concat(val::Value(val::make_array(3.0)), "");
   const auto& a = eval(eout);
-  const auto& b = make_cow<val::VList>(false, exp);
-  ASSERT_TRUE(a == b);  
+  ASSERT_TRUE(a == l);  
 }  
 
 TEST(binds_c_list_global_named) {
   auto eout = parse("c(a=list(1,2,3)) \n");
-  auto exp = vector<pair<string,val::Value>>{
-    make_pair("a1", val::make_array(1.0)),
-    make_pair("a2", val::make_array(2.0)),
-    make_pair("a3", val::make_array(3.0))};
-  ASSERT_TRUE(eval(eout) ==make_cow<val::VList>(false, exp));  
+  auto l = make_cow<val::VList>(false);
+  l->a.concat(val::Value(val::make_array(1.0)), "a1");
+  l->a.concat(val::Value(val::make_array(2.0)), "a2");
+  l->a.concat(val::Value(val::make_array(3.0)), "a3");
+  ASSERT_TRUE(eval(eout) == l);  
 }  
 TEST(binds_c_list_name_and_global_name) {
   auto eout = parse("c(a=list(1,b=2,3)) \n");
-  auto exp = vector<pair<string,val::Value>>{
-    make_pair("a1",  val::make_array(1.0)),
-    make_pair("a.b", val::make_array(2.0)),
-    make_pair("a3",  val::make_array(3.0))};
-  ASSERT_TRUE(eval(eout) ==make_cow<val::VList>(false, exp));  
+  auto l = make_cow<val::VList>(false);
+  l->a.concat(val::Value(val::make_array(1.0)), "a1");
+  l->a.concat(val::Value(val::make_array(2.0)), "a.b");
+  l->a.concat(val::Value(val::make_array(3.0)), "a3");
+  ASSERT_TRUE(eval(eout) == l);  
 }  
 TEST(binds_c_list_name_and_global_name_and_vector) {
   auto eout = parse("c(a=list(1,b=2,3,c(1,2,3))) \n");
   auto a = arr::Array<double>({3}, {1,2,3});
-  auto exp = vector<pair<string,val::Value>>{
-    make_pair("a1",  val::make_array(1.0)),
-    make_pair("a.b", val::make_array(2.0)),
-    make_pair("a3",  val::make_array(3.0)),
-    make_pair("a4",  val::Value(make_cow<val::VArrayD>(false, a)))};
-  ASSERT_TRUE(eval(eout) ==make_cow<val::VList>(false, exp));  
+  auto l = make_cow<val::VList>(false);
+  l->a.concat(val::Value(val::make_array(1.0)), "a1");
+  l->a.concat(val::Value(val::make_array(2.0)), "a.b");
+  l->a.concat(val::Value(val::make_array(3.0)), "a3");
+  l->a.concat(val::Value(make_cow<val::VArrayD>(false, a)), "a4");
+  ASSERT_TRUE(eval(eout) == l);  
 }  
 // rbind, cbind, make_cow<val::VArrayD>(false, a)bind ----- bind functions
 TEST(binds_rbind_0x0_0x0) {

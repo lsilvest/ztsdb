@@ -859,6 +859,8 @@ namespace arr {
     }
 
     inline fsys::path getAllocfDirname() const { return allocf->getDirname(); }
+    inline bool isPersistent() const { return allocf->isPersistent(); }
+
     void msync(bool async) const {
       dim.getAllocator()->msync(async);
       for (auto& col : v) {
@@ -1299,9 +1301,12 @@ namespace arr {
   /// provide a const version of the above that works only with arrays that have 1 col LLL
   
 
-  /// Return an array that is an n x 1 vector.
+  /// Return an array that is a vector of length 'n'
   template<typename T>
   Array<T> vectorize(const Array<T>& u) {
+    if (u.isVector()) {
+      return u;
+    }
     idx_type n = u.v.size() * u.dim[0];
     Array<T> r(rsv, Vector<idx_type>{n});
     for (auto& e: u.v) {

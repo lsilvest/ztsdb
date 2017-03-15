@@ -119,12 +119,14 @@ namespace arr {
 
     void setTmp()   { flags |=  TMP; }
     void setRef()   { flags |=  REF; }
+    void setLock()  { flags |=  LOCKED; }
     void setConst() { flags |=  CONSTREF; }
     void setLast()  {
       flags |=  LAST; --*count;
     }
 
     void resetTmp()  { flags &= ~TMP; }
+    void resetLock() { flags &= ~LOCKED; }
     void resetRef()  { flags &= ~REF; }
 
     unsigned getFlags() const { return flags; }

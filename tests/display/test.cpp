@@ -913,25 +913,23 @@ TEST(display_array_4x0_dtime) {
 // list ------------------------
 TEST(display_list_empty) {
   reinitOptions();
-  val::Value l = make_cow<val::VList>(false, vector<pair<string, val::Value>>());
+  val::Value l = make_cow<val::VList>(false);
   ASSERT_TRUE(val::display(l) == "list()");
 }
 TEST(display_list_double_one) {
   reinitOptions();
-  val::Value l = make_cow<val::VList>(false, 
-                                      vector<pair<string, 
-                                      val::Value>>{make_pair("name", val::make_array(1.0))});
-  ASSERT_TRUE(val::display(l) == 
+  auto l = make_cow<val::VList>(false);
+  l->a.concat(val::Value(val::make_array(1.0)), "name");
+  ASSERT_TRUE(val::display(val::Value(l)) == 
               "$name\n"
               "[1] 1\n");
 }
 TEST(display_list_double_two) {
   reinitOptions();
-  val::Value l = make_cow<val::VList>(false, 
-                                      vector<pair<string, 
-                                      val::Value>>{make_pair("name", val::make_array(1.0)), 
-                                          make_pair("", val::make_array(2.0))});
-  ASSERT_TRUE(val::display(l) == 
+  auto l = make_cow<val::VList>(false);
+  l->a.concat(val::Value(val::make_array(1.0)), "name");
+  l->a.concat(val::Value(val::make_array(2.0)), "");
+  ASSERT_TRUE(val::display(val::Value(l)) == 
               "$name\n"
               "[1] 1\n"
               "\n"
@@ -940,13 +938,14 @@ TEST(display_list_double_two) {
 }
 TEST(display_list_of_list) {
   reinitOptions();
-  val::Value l = make_cow<val::VList>(false, vector<pair<string, val::Value>>{
-      make_pair("name", val::make_array(1.0))
-      ,make_pair("", val::make_array(2.0))
-      ,make_pair("", make_cow<val::VList>(false, vector<pair<string, val::Value>>{
-      make_pair("sublist", val::make_array(1.1))
-      ,make_pair("", val::make_array(2.1))}))
-      ,make_pair("", val::make_array(3.0))});
+  auto sl = make_cow<val::VList>(false);
+  sl->a.concat(val::Value(val::make_array(1.1)), "sublist");
+  sl->a.concat(val::Value(val::make_array(2.1)), "");
+  auto l = make_cow<val::VList>(false);
+  l->a.concat(val::Value(val::make_array(1.0)), "name");
+  l->a.concat(val::Value(val::make_array(2.0)), "");
+  l->a.concat(val::Value(sl), "");
+  l->a.concat(val::Value(val::make_array(3.0)), "");
   ASSERT_TRUE(val::display(l) == 
               "$name\n"
               "[1] 1\n"
@@ -967,11 +966,11 @@ TEST(display_list_of_list) {
 }
 TEST(display_list_array) {
   reinitOptions();
-  val::Value l = make_cow<val::VList>(false, vector<pair<string, val::Value>>{
-      make_pair("name", val::make_array(1.0))
-        ,make_pair("", val::make_array(2.0))
-        ,make_pair("an_array", make_cow<val::VArrayD>(false, val::VArrayD({2,2}, {1,2,3,4})))
-        ,make_pair("", val::make_array(3.0))});
+  auto l = make_cow<val::VList>(false);
+  l->a.concat(val::Value(val::make_array(1.0)), "name");
+  l->a.concat(val::Value(val::make_array(2.0)), "");
+  l->a.concat(val::Value(make_cow<val::VArrayD>(false, val::VArrayD({2,2}, {1,2,3,4}))), "an_array");
+  l->a.concat(val::Value(val::make_array(3.0)), "");
   ASSERT_TRUE(val::display(l) ==     
               "$name\n"
               "[1] 1\n"

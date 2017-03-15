@@ -36,11 +36,10 @@ static unsigned typeRank(val::ValType vt) {
   case val::vt_time:
   case val::vt_duration:
   case val::vt_period:
+  case val::vt_interval:
     return 2;
   case val::vt_double:
     return 3;
-  case val::vt_interval:
-    return 4;
   case val::vt_string:
     return 5;
   case val::vt_zts:
@@ -49,6 +48,7 @@ static unsigned typeRank(val::ValType vt) {
   case val::vt_connection:
   case val::vt_clos:
   case val::vt_builting:
+  case val::vt_timer:
     return 7;
   default:
     throw std::range_error("typeRank: unknown type");
@@ -74,6 +74,10 @@ val::SpVAD funcs::array_convert(const val::SpVAD& u) {
 }
 template<>
 val::SpVAD funcs::array_convert(const val::SpVAB& u) {
+  return arr::make_cow<val::VArrayD>(false, val::VArrayD(convert_cons, *u));
+}
+template<>
+val::SpVAD funcs::array_convert(const val::SpVADUR& u) {
   return arr::make_cow<val::VArrayD>(false, val::VArrayD(convert_cons, *u));
 }
 template<>
@@ -184,6 +188,22 @@ val::SpVAS funcs::array_convert(const val::SpVAD& u) {
 }
 template<>
 val::SpVAS funcs::array_convert(const val::SpVAB& u) {
+  return arr::make_cow<val::VArrayS>(false, val::VArrayS(convert_cons, *u));
+}
+template<>
+val::SpVAS funcs::array_convert(const val::SpVADT& u) {
+  return arr::make_cow<val::VArrayS>(false, val::VArrayS(convert_cons, *u));
+}
+template<>
+val::SpVAS funcs::array_convert(const val::SpVADUR& u) {
+  return arr::make_cow<val::VArrayS>(false, val::VArrayS(convert_cons, *u));
+}
+template<>
+val::SpVAS funcs::array_convert(const val::SpVAIVL& u) {
+  return arr::make_cow<val::VArrayS>(false, val::VArrayS(convert_cons, *u));
+}
+template<>
+val::SpVAS funcs::array_convert(const val::SpVAPRD& u) {
   return arr::make_cow<val::VArrayS>(false, val::VArrayS(convert_cons, *u));
 }
 template<>

@@ -376,21 +376,21 @@ TEST(interp_assign_one) {
 // lists ----------------
 TEST(interp_empty_list) {
   auto eout = parse("list()\n");
-  auto exp = vector<pair<string, val::Value>>();
-  ASSERT_TRUE(eval(eout) == make_cow<val::VList>(false, exp));
+  ASSERT_TRUE(eval(eout) == make_cow<val::VList>(false));
 }
 TEST(interp_list_1_double) {
   auto eout = parse("list(1.0)\n");
-  auto exp = vector<pair<string, val::Value>>{make_pair("", val::make_array(1.0))};
-  ASSERT_TRUE(eval(eout) == make_cow<val::VList>(false, exp));
+  auto l = make_cow<val::VList>(false);
+  l->a.concat(val::Value(val::make_array(1.0)), "");
+  ASSERT_TRUE(eval(eout) == l);
 }
 TEST(interp_list_3_double) {
   auto eout = parse("list(1,2,3)\n");
-  auto exp = vector<pair<string,val::Value>>{
-    make_pair("", val::make_array(1.0)),
-    make_pair("", val::make_array(2.0)),
-    make_pair("", val::make_array(3.0))};
-  ASSERT_TRUE(eval(eout) == make_cow<val::VList>(false, exp));
+  auto l = make_cow<val::VList>(false);
+  l->a.concat(val::Value(val::make_array(1.0)), "");
+  l->a.concat(val::Value(val::make_array(2.0)), "");
+  l->a.concat(val::Value(val::make_array(3.0)), "");
+  ASSERT_TRUE(eval(eout) == l);
 }
 //   list(c("1","2"), c("one", "two"), c("un", "deux"))
 // vectors
@@ -453,18 +453,17 @@ TEST(interp_zts_3_2) {
   cout << "array: " << val::to_string(eval(eout)) << endl;
   ASSERT_TRUE(eval(eout) == make_cow<arr::zts>(false, z));
 }
-// this should get fixed and then we can uncomment this test LLL
-// TEST(interp_zts_3_2_automatic_dim) {
-//   auto eout = parse("idx <- c(|.2015-03-09 06:38:01 America/New_York.|, "
-//         "|.2015-03-09 06:38:02 America/New_York.|, "
-//         "|.2015-03-09 06:38:03 America/New_York.|);"
-//         "zts(idx=idx, data=1.0:6, dimnames=list(NULL, c(\"one\", \"two\"))) \n");
-//   auto dt1 = tz::dtime_from_string("|.2015-03-09 06:38:01 America/New_York.|", tzones);
-//   auto dt2 = tz::dtime_from_string("|.2015-03-09 06:38:02 America/New_York.|", tzones);
-//   auto dt3 = tz::dtime_from_string("|.2015-03-09 06:38:03 America/New_York.|", tzones);
-//   auto z = arr::zts({3,2}, {dt1, dt2, dt3}, {1,2,3,4,5,6}, {{}, {"one", "two"}});
-//   ASSERT_TRUE(eval(eout) == make_cow<arr::zts>(false, z));
-// }
+TEST(interp_zts_3_2_automatic_dim) {
+  auto eout = parse("idx <- c(|.2015-03-09 06:38:01 America/New_York.|, "
+        "|.2015-03-09 06:38:02 America/New_York.|, "
+        "|.2015-03-09 06:38:03 America/New_York.|);"
+        "zts(idx=idx, data=1.0:6, dimnames=list(NULL, c(\"one\", \"two\"))) \n");
+  auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
+  auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones);
+  auto dt3 = tz::dtime_from_string("2015-03-09 06:38:03 America/New_York", tzones);
+  auto z = arr::zts({3,2}, {dt1, dt2, dt3}, {1,2,3,4,5,6}, {{}, {"one", "two"}});
+  ASSERT_TRUE(eval(eout) == make_cow<arr::zts>(false, z));
+}
 TEST(interp_zts_2_2_2) {
   auto eout = parse("idx <- c(|.2015-03-09 06:38:01 America/New_York.|, "
         "|.2015-03-09 06:38:02 America/New_York.|);"

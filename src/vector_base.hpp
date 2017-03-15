@@ -280,7 +280,13 @@ namespace arr {
       return offset + copysz; 
     }
 
-    const T& operator[](size_t i) const { return c->v[i]; }
+    const T& operator[](size_t i) const {
+      if (!c || i > size() - 1) {
+        std::cout << "i: " << i << ", size(): " << size() << std::endl;
+        throw std::out_of_range("subscript out of bounds");
+      }
+      return c->v[i];
+    }
 
     void push_back(const T& value) {
       if (c->n + 1 > capacity) {

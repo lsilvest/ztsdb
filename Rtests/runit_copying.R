@@ -1,4 +1,4 @@
-## Copyright (C) 2016 Leonardo Silvestri
+## Copyright (C) 2016-2017 Leonardo Silvestri
 ##
 ## This file is part of ztsdb.
 ##
@@ -29,8 +29,6 @@ RUnit_vars <- function() {
     all(x == c(11, 2:10)) & all(y == 1:10)
 }
 
-
-
 ## test that zts.idx and zts.data are const ref but that we can get a
 ## copy with the subscript operator
 source("zts.R")
@@ -52,10 +50,6 @@ RUnit_array_locked <- function() {
     b <- a
     tryCatch(sin(--b), TRUE)
 }
-
-## LLL
-## test all builtin that should be constant
-
 RUnit_zts_bind_locked <- function() {
     dir <- system("mktemp -d", intern=T)
     system(paste("rmdir", dir))         # remove it as it will be recreated by 'matrix'
@@ -69,4 +63,49 @@ RUnit_array_bind_locked <- function() {
     system(paste("rmdir", dir))         # remove it as it will be recreated by 'matrix'
     a <- matrix(1:9, 3, 3, file=dir)
     tryCatch(cbind(--a, a), TRUE) ## if not copying we get: Error: cannot bind to self.
+}
+
+## test locking mechanism
+RUnit_lock <- function() {
+  a <- 1
+  is.null(lock(--a)) & is.locked(a)
+}
+RUnit_unlock <- function() {
+  a <- 1
+  lock(--a)
+  is.null(unlock(--a)) & !is.locked(a)
+}
+RUnit_unlock_mmapped <- function() {
+  ## can't unlock a mmaped array
+  dir <- system("mktemp -d", intern=T)
+  system(paste("rmdir", dir))         # remove it as it will be recreated by 'matrix'
+  a <- matrix(1:9, 3, 3, file=dir)
+  is.locked(a) &
+  tryCatch(unlock(--a), .Last.error == "cannot unlock file mapped object")
+}
+source("zts_large.R")
+RUnit_lock_zts <- function() {
+  z <- get_large_zts(1000)
+  is.null(lock(--z)) & is.locked(z)
+}
+RUnit_unlock_zts <- function() {
+  z <- get_large_zts(1000)
+  lock(--z)
+  is.null(unlock(--z)) & !is.locked(z)
+}
+RUnit_unlock_mmapped_zts <- function() {
+  z <- get_large_zts(1000, TRUE)
+  is.locked(z) &
+  tryCatch(unlock(--z), .Last.error == "cannot unlock file mapped object")
+}
+## should fail on other types
+RUnit_lock_unlock_builtin <- function() {
+  !is.locked(sin) &
+  tryCatch(unlock(--sin), .Last.error == "incorrect argument type") &
+  tryCatch(lock(--sin), .Last.error == "incorrect argument type")
+}
+RUnit_lock_unlock_list <- function() {
+  !is.locked(list(1)) &
+  tryCatch(unlock(list(1)), .Last.error == "incorrect argument type") &
+  tryCatch(lock(list()), .Last.error == "incorrect argument type")
 }

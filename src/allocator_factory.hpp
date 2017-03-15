@@ -36,6 +36,7 @@ namespace arr {
     virtual std::unique_ptr<baseallocator> get(size_t nb) const = 0;
     virtual ~AllocFactory() { }
     virtual std::string to_string() const = 0;
+    inline virtual bool isPersistent() const { return false; }
     inline virtual fsys::path getDirname() const {
       throw std::range_error("no file mapping");
     }
@@ -98,6 +99,8 @@ namespace arr {
     }
 
     inline virtual fsys::path getDirname() const { return dirname; }
+
+    inline virtual bool isPersistent() const { return true; }
 
   private:
     const fsys::path dirname;

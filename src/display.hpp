@@ -36,7 +36,7 @@ namespace val {
   string to_string(const std::shared_ptr<VClos>& v, const cfg::CfgMap& cfg, bool fast=false);
   string to_string(const VClos& v, const cfg::CfgMap& cfg=cfg::cfgmap, bool fast=false);
   string to_string(const VNull& v, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(const VBuiltinG& v, const cfg::CfgMap& cfg, bool fast=false);
+  string to_string(const std::shared_ptr<VBuiltinG>& v, const cfg::CfgMap& cfg, bool fast=false);
   string to_string(const SpFuture& v, const cfg::CfgMap& cfg, bool fast=false);
   string to_string(const VNamed& v, const cfg::CfgMap& cfg, bool fast=false);
   string to_string(const VConn& conn, const cfg::CfgMap& cfg, bool fast=false);
@@ -639,6 +639,7 @@ namespace val {
       ss << std::endl << prefix << " - dimnames =" << str(val::Value(dimnames), cfg, prefix + " ..");
     }
     ss << std::endl << prefix << " - " << v.getAllocFactory().to_string();
+    
     return ss.str();
   }
 

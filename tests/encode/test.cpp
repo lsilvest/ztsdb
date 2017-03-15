@@ -270,11 +270,11 @@ TEST(Encode_Vstring_ZeroLen) {
   ASSERT_TRUE(vin == *vout);
 }
 TEST(Encode_VList) {
-  const vector<pair<string, val::Value>> v = 
-    { make_pair("one", val::make_array(1111111.0)), 
-      make_pair("two", val::make_array(2222222.0)), 
-      make_pair("three", val::make_array(3333333.0))};
-  val::Value vin = make_cow<val::VList>(false, v);
+  auto l = make_cow<val::VList>(false);
+  l->a.concat(val::Value(val::make_array(1111111.0)), "one");
+  l->a.concat(val::Value(val::make_array(2222222.0)), "two");
+  l->a.concat(val::Value(val::make_array(3333333.0)), "three");
+  val::Value vin = l;
   cout << "vin:" << endl;
   cout << val::display(get<val::SpVList>(vin)) << endl;
   encode(vin, vout);
@@ -283,7 +283,7 @@ TEST(Encode_VList) {
   ASSERT_TRUE(get<val::SpVList>(vin) == get<val::SpVList>(*vout));
 }
 TEST(Encode_VList_empty) {
-  val::Value vin = make_cow<val::VList>(false, vector<pair<string, val::Value>>());
+  val::Value vin = make_cow<val::VList>(false);
   encode(vin, vout);
   ASSERT_TRUE(get<val::SpVList>(vin) == get<val::SpVList>(*vout));
 }

@@ -149,10 +149,11 @@ namespace arr {
   inline double convert(const bool& u) {
     return u;
   }
-  template<>
-  inline double convert(const Global::dtime& u) {
-    return u.time_since_epoch().count();
-  }
+  // for now don't propose this conversion:
+  // template<>
+  // inline double convert(const Global::dtime& u) {
+  //   return u.time_since_epoch().count();
+  // }
   template<>
   inline double convert(const Global::duration& u) {
     return u.count();
