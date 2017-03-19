@@ -762,6 +762,14 @@ namespace arr {
       return a;
     }
 
+    inline bool hasNames() const {
+      for (arr::idx_type d=0; d<dim.size(); ++d) {
+        if (hasNames(d)) {
+          return true;
+        }
+      }
+      return false;
+    }
 
     inline bool hasNames(idx_type d) const {
       if (d >= names.size()) {

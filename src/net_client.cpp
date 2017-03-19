@@ -66,7 +66,7 @@ int client::Client::run() {
       
       }
       // I think we might receive DOWN, but not UP I believe LLL
-      std::cout << "signalling event received!!!" << std::endl; // LLL should never happen?
+      //
       // data: ----------------------------------------------
     }
     else if (fds[DATA].revents & POLLIN) {

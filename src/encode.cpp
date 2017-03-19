@@ -692,7 +692,6 @@ static inline size_t getEltFromBuffer(T& t, const char* buf) {
   return sizeof(T);
 }
 
-
 template <>
 inline size_t getEltFromBuffer(arr::zstring& t, const char* buf) {
   uint64_t len = ntoh64(*(reinterpret_cast<const uint64_t*>(buf)));
@@ -700,6 +699,13 @@ inline size_t getEltFromBuffer(arr::zstring& t, const char* buf) {
   const string s(buf, buf + len);
   t = s;
   return sizeof(uint64_t) + getAlignedLength(s.size(), STRALIGN);
+}
+
+// bool is special case: we encode it over 8 bytes so sizeof(T) if
+template <>
+inline size_t getEltFromBuffer(bool& t, const char* buf) {
+  t = ntoh<BOOL_T>(*(reinterpret_cast<const BOOL_T*>(buf)));
+  return sizeof(BOOL_T);
 }
 
 
@@ -726,26 +732,15 @@ void readEltsFromBufferSlow(const char* buf, const size_t len, const size_t exp,
 // processors, then we can take advantage of memcopy.
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 
-template<typename T>
-constexpr static size_t encode_sizeof() {
-  return sizeof(T);
-}
-
-template<>
-constexpr size_t encode_sizeof<bool>() {
-  return sizeof(BOOL_T);
-}
-
-
 template <typename T>
 void readEltsFromBuffer(const char* buf, const size_t len, const size_t exp, 
                         size_t& off, Array<T>& a, size_t& n) {
   idx_type col    = n / a.getdim(0);
   idx_type coloff = n % a.getdim(0);
   while (n < exp && off < len) {
-    const size_t ncopy = std::min(std::min(exp - n, (len - off) / encode_sizeof<T>()), 
+    const size_t ncopy = std::min(std::min(exp - n, (len - off) / sizeof(T)), 
                                   a.getdim(0) - coloff);
-    const size_t ncopy_bytes = encode_sizeof<T>() * ncopy;
+    const size_t ncopy_bytes = sizeof(T) * ncopy;
     memcpy(a.getcol(col).c_ptr() + coloff, buf + off, ncopy_bytes);
     off += ncopy_bytes;
     n   += ncopy;
@@ -762,6 +757,11 @@ void readEltsFromBuffer(const char* buf, const size_t len, const size_t exp,
   readEltsFromBufferSlow(buf, len, exp, off, a, n);
 }
 
+template <>
+void readEltsFromBuffer(const char* buf, const size_t len, const size_t exp, 
+                        size_t& off, Array<bool>& a, size_t& n) {
+  readEltsFromBufferSlow(buf, len, exp, off, a, n);
+}
 
 // in the case where we have to translate to/from little endian to big
 // endian, we have the following less efficient routines:
