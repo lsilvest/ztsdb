@@ -2,10 +2,9 @@
 ## make sure to source the ztsdb server part of this example in
 ## order to populate the data
 
+## create a connection 'c1' towards a ztsdb instance
+c1 <- connection("127.0.0.1", 123123)
 
-ip=""
-port=15001
-c1 <- connection(ip, port)
 
 ids <- list(AAPL="AAPL", MSFT="MSFT", XOM="XOM")
 adjusted_list <- lapply(ids, function(x) c1 ? get_adjusted_price(++x))

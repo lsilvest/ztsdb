@@ -37,7 +37,7 @@
 
 ## CAVEAT: modify 'path' below to the correct location of the data:
 ## path <- "/path/to/ztsdb/examples/price-adjustment-data/"
-path <- "/home/lsilvest/repos/ztsdb/examples/price-adjustment/price-adjustment-data/"
+path <- "data/"
 if (system(paste("test -d", path))) {
   stop("can't find data directory for demo: please modify 'path' in the script")
 }
