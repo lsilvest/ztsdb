@@ -27,37 +27,40 @@
 ## This example shows how to continuously calculate a minute-mean
 ## time-series from a time-series of smaller time granularity.
 ##
-## 'z' is created and we assume it is continuously updated (use for
+## 'z$a' is created and we assume it is continuously updated (use for
 ## example the 'append' itest that is part of the ztsdb project). The
 ## timer 't1' is run every 10 milliseconds and on completion of a
-## minute in time-series 'z' it calculates the mean of that minute and
+## minute in time-series 'z$a' it calculates the mean of that minute and
 ## appends it to time-series 'mmean'.
-
+##
+## The append utility in '../itest/append' can be started like this:
+## 
+## append 127.0.0.1 123123 100000 z,a 3
 
 ## create a couple of zts of size 0 x 3
 
 data  <-  matrix(0, 0, 3)
 idx   <-  as.time(NULL)
-## we create 'z' here and suppose sub-minute granularity updates
-z     <<- zts(idx, data, dimnames=list(NULL, c("a","b","c")))
+## we create 'z$a' here and suppose sub-minute granularity updates
+z     <<- list(a=zts(idx, data, dimnames=list(NULL, c("a","b","c"))))
 
 ## the calculated minute-means 'mmean':
 mmean <<- zts(idx, data, dimnames=list(NULL, c("a","b","c")))
 
 
 ten_ms <- as.duration(1e7)
-t1 <- timer(ten_ms,
+t1 <- timer(ten_ms, 
             loop = {
                 ## if a minute is complete, calculate its mean and add it to 'mmean':
-                current_minute <- floor(tail(zts.idx(z), 1), "minute")
+                current_minute <- floor(tail(zts.idx(z$a), 1), "minute")
                 if (current_minute >= last_minute + one_minute) {
                     last_minute <- current_minute
-                    m <- align(z, last_minute, -one_minute, method="mean")
+                    m <- align(z$a, last_minute, -one_minute, method="mean")
                     rbind(--mmean, m)
                 }
-                ## keep the size of z reasonable:
-                if (nrow(z) > 2e6) {
-                    zts.resize(--z, start=nrow(z)-1e6)
+                ## keep the size of z$a reasonable:
+                if (nrow(z$a) > 2e6) {
+                    zts.resize(--z$a, start=nrow(z$a)-1e6)
                 }
             },
             once = {
