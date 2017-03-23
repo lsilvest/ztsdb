@@ -182,21 +182,53 @@ size_t zcore::InterpCtx::readRspData(Global::reqid_t reqid,
 }
 
 
+
+static ssize_t readHeader(const char* buf,
+                          size_t len,
+                          size_t& off,
+                          val::Value& val,
+                          std::shared_ptr<interp::BaseFrame>& r) {
+  // we need to check throughout here that we are not going futher than slen!!! LLL
+  // find the string name:
+  auto slen = ntoh64(*(reinterpret_cast<const uint64_t*>(buf)));
+  auto ns = slen >> 32;
+  slen &= 0xffffffff;
+  off += sizeof(uint64_t);
+
+  // the first name must be a variable name retrievable from the global environment:
+  auto sz = (buf + off++)[0];
+  const string s(buf + off, buf + off + sz);
+  val = r->global->find(s);
+  off += sz + 1;    
+
+  // subsequent names must be list elements:
+  for (size_t i=1; i<ns; ++i) {
+    if (val.which() != val::vt_list) {
+      lg.log(zlog::SV_DEBUG, "invalid append: incorrect type");
+      return -1;
+    }
+    auto& l = get<val::SpVList>(val);
+    auto sz = (buf + off++)[0];
+    const string s(buf + off, buf + off + sz);
+    val = (*l)[s];
+    off += sz + 1; 
+  }
+  off = slen;
+  return 0;
+}
+
+
 ssize_t zcore::InterpCtx::readAppendData(const char* buf, size_t len) {
 #ifdef DEBUG
   cout << "InterpCtx::readAppendData():" << endl;
   //  cout << printBuf(buf, len) << endl;
 #endif
-  // find the string name:
-  size_t off = 0;
-  auto slen = ntoh64(*(reinterpret_cast<const uint64_t*>(buf)));
-  off += sizeof(uint64_t);
-  const string s(buf + off, buf + off + slen);
-  static const unsigned STRALIGN = 8; // find this constant somewhere globally !!! LLL
-  off += getAlignedLength(s.size(), STRALIGN);
-
   try {
-    auto val = r->global->find(s);
+    size_t off = 0;
+    val::Value val;
+    auto res = readHeader(buf, len, off, val, r);
+    if (res < 0) return res;
+    
     switch(val.which()) {
     case val::vt_zts:
       get<val::SpZts>(val).get()->append(buf + off, len - off, off);   // get() to avoid the copy
@@ -219,6 +251,7 @@ ssize_t zcore::InterpCtx::readAppendData(const char* buf, size_t len) {
       // can't do strings efficiently... 
       // we should specialize encoding functions to prevent strings being encoded
     default:
+      // don't want to log, but instead increase a stat!!! LLL
       lg.log(zlog::SV_DEBUG, "invalid append: incorrect type");
       return -1;
     }
@@ -239,16 +272,13 @@ ssize_t zcore::InterpCtx::readAppendVectorData(const char* buf, size_t len) {
   cout << "InterpCtx::readAppendVectorData():" << endl;
   //  cout << printBuf(buf, len) << endl;
 #endif
-  // find the string name:
-  size_t off = 0;
-  auto slen = ntoh64(*(reinterpret_cast<const uint64_t*>(buf)));
-  off += sizeof(uint64_t);
-  const string s(buf + off, buf + off + slen);
-  static const unsigned STRALIGN = 8;
-  off += getAlignedLength(s.size(), STRALIGN);
 
   try {
-    auto val = r->global->find(s);
+    size_t off = 0;
+    val::Value val;
+    auto res = readHeader(buf, len, off, val, r);
+    if (res < 0) return res;
+
     switch(val.which()) {
     case val::vt_zts:
       get<val::SpZts>(val).get()->appendVector(buf + off, len - off); // get() to avoid the copy

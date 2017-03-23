@@ -25,6 +25,7 @@
 #include <sys/epoll.h>
 #include <string>
 #include <iostream>
+#include <sstream>
 #include <limits>
 #include <ztsdb/zcpp.hpp>
 #include <ztsdb/cow_ptr.hpp>
@@ -33,7 +34,7 @@
 static void loop_append(const std::string ip, 
                         int port,
                         size_t rate, 
-                        const std::string varname, 
+                        const std::vector<std::string>& names, 
                         size_t ncols, 
                         size_t max_msg)
 {
@@ -60,11 +61,19 @@ static void loop_append(const std::string ip,
     throw std::system_error(std::error_code(errno, std::system_category()), "timerfd_create");
   }
   itimerspec tmr;
-  bzero(&tmr, sizeof(tmr));
-  tmr.it_value.tv_sec = 0;
-  tmr.it_value.tv_nsec = 1;
-  tmr.it_interval.tv_sec = 0;
-  tmr.it_interval.tv_nsec = 1e9/rate;
+  bzero(&tmr, sizeof(tmr));  
+  if (rate == 1) {
+    tmr.it_value.tv_sec = 1;
+    tmr.it_value.tv_nsec = 0;
+    tmr.it_interval.tv_sec = 1;
+    tmr.it_interval.tv_nsec = 0;  
+  }
+  else {
+    tmr.it_value.tv_sec = 0;
+    tmr.it_value.tv_nsec = 1e9/rate;
+    tmr.it_interval.tv_sec = 0;
+    tmr.it_interval.tv_nsec = 1e9/rate;
+  }
   if (timerfd_settime(msg_timerfd, 0, &tmr, NULL) == -1) {
     throw std::system_error(std::error_code(errno, std::system_category()), "timerfd_settime");
   }
@@ -127,7 +136,7 @@ static void loop_append(const std::string ip,
         }
 
         // create and send the append message:
-        auto msg = arr::make_append_msg(varname, 
+        auto msg = arr::make_append_msg(names, 
                                         arr::Vector<Global::dtime>{now}, 
                                         data);
         nmsgs++;
@@ -168,12 +177,12 @@ static void loop_append(const std::string ip,
 // 5. number of columns to append
 // 6. maximum number of messages to send
 int main(int argc, char* argv[]) {
-  enum { IP=1, PORT, RATE, VARNAME, NCOLS, MAX_MSG };
+  enum { IP=1, PORT, RATE, VARNAMES, NCOLS, MAX_MSG };
 
   // grab a message rate (# per second)
   if (argc < 6 || argc > 7) {
     std::cerr << "usage: " << argv[0] 
-              << " <ip> <port> <rate> <varname> <ncols> [max-msgs]" << std::endl;
+              << " <ip> <port> <rate> <varname[,name1,name2,...]> <ncols> [max-msgs]" << std::endl;
     return -1;
   }
   
@@ -183,7 +192,13 @@ int main(int argc, char* argv[]) {
   size_t max_msg = argc == 6 ? std::numeric_limits<size_t>::max() :
     std::stoll(argv[MAX_MSG]); // -1 means run forever
 
-  loop_append(argv[IP], port, rate, argv[VARNAME], ncols, max_msg);
+  std::istringstream varnames_ss(argv[VARNAMES]);
+  std::string token;
+  std::vector<std::string> names;
+  while (std::getline(varnames_ss, token, ',')) {
+    names.push_back(token);
+  }
+  loop_append(argv[IP], port, rate, names, ncols, max_msg);
 
   return 0;
 }

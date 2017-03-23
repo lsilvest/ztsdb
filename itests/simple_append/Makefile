@@ -1,7 +1,7 @@
 include ../../src/Makefile.header
 
 
-COREDIR =../../src
+COREDIR =../..
 CPPFLAGS += -I$(COREDIR)
 
 %.o : $(COREDIR)/%.cpp

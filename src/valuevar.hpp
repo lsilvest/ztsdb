@@ -379,6 +379,7 @@ namespace val {
     inline Value operator[](arr::idx_type i) const { 
       return a[i];
     }
+    Value operator[](const std::string& s);
 
     Array<Value> a;
   };

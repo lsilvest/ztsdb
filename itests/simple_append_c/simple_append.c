@@ -31,7 +31,7 @@
 #include "ztsdb/zc.h"
 
 
-static void simple_append(const char* ip, int port, const char* varname, size_t ncols)
+static void simple_append(const char* ip, int port, const char** names, size_t nameslen, size_t ncols)
 {
   // open TCP connection:
   struct sockaddr_in addr;
@@ -81,7 +81,11 @@ static void simple_append(const char* ip, int port, const char* varname, size_t 
   // create the append message:
   char* buf;
   size_t buflen;
-  int res = make_append_msg(varname, &timestamp, 1, data, ncols, &buf, &buflen);
+  int res = make_append_msg(names, nameslen, &timestamp, 1, data, ncols, &buf, &buflen);
+  if (res < 0) {
+    fprintf(stderr, "res error: %d\n", res);
+    exit(res);
+  }
   free(data);
   
   // send it:
@@ -103,7 +107,7 @@ static void simple_append(const char* ip, int port, const char* varname, size_t 
 // 3. name of variable to append to (assumed to be a zts)
 // 4. number of columns to append
 int main(int argc, char* argv[]) {
-  enum { IP=1, PORT, VARNAME, NCOLS };
+  enum { IP=1, PORT, VARNAMES, NCOLS };
 
   // grab a message rate (# per second)
   if (argc != 5) {
@@ -115,7 +119,22 @@ int main(int argc, char* argv[]) {
   char* endptr;
   size_t ncols = strtoull(argv[NCOLS], &endptr, 10);
 
-  simple_append(argv[IP], port, argv[VARNAME], ncols);
+  const unsigned MAX_DEPTH = 100;
+  const unsigned MAX_LEN   = 255;
+  const char* names[MAX_LEN+1];
+  unsigned n = 0;
+  char *p;
+  for (p = strtok(argv[VARNAMES], ","); p != NULL; p = strtok(NULL, ",")) {
+    names[n] = strndup(p, MAX_LEN);
+    ++n;
+  }
+  
+  simple_append(argv[IP], port, names, n, ncols);
 
+  unsigned i;
+  for (i=0; i<n; ++i) {
+    free((void*)names[i]);
+  }
+  
   return 0;
 }

@@ -62,7 +62,9 @@ static void simple_append(const std::string ip,
   }
         
   // create the append message:
-  auto msg = arr::make_append_msg(varname, std::vector<Global::dtime>{now}, data);
+  auto msg = arr::make_append_msg(std::vector<std::string>{varname},
+                                  std::vector<Global::dtime>{now},
+                                  data);
 
   // send it:
   ssize_t wres = write(fd, msg.first.get(), msg.second);

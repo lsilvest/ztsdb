@@ -1,8 +1,7 @@
 include ../../src/Makefile.header
 
-LDFLAGS += -L/home/lsilvest/repos/ztsdb/shlib_client -lztsdb_client
-
-COREDIR =../../src
+LDFLAGS += -L../../shlib_client -lztsdb_client
+COREDIR =../..
 CPPFLAGS += -I$(COREDIR)
 
 

@@ -185,9 +185,7 @@ namespace arr {
     
     
     /// Construct an array from file. Note that the data must have
-    /// been tested to determine typename 'T'. 'mapped' indicates if
-    /// the array is to remain mmapped to the file or if it should
-    /// simply be read in memory (not implemented yet LLL).
+    /// been tested to determine typename 'T'.
     Array(std::unique_ptr<AllocFactory>&& allocf_p)
       : allocf(std::move(allocf_p))
     {

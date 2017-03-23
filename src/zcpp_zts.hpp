@@ -35,7 +35,7 @@
 
 
 namespace arr {
-  Global::buflen_pair make_append_msg(const string& name, const arr::zts& z);
+  Global::buflen_pair make_append_msg(const std::vector<std::string>& name, const arr::zts& z);
 }
 
 

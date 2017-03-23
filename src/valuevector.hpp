@@ -217,7 +217,7 @@ namespace arr {
   };
 
 
-  // redefine these so as not to take into account ordering:
+  // we redefine these so as not to take into account ordering:
   template <>
   inline void setv(Vector<val::Value>& v, size_t i, const val::Value& t) {
     if (i >= v.size()) throw std::range_error("subscript out of bounds");        

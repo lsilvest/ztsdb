@@ -24,7 +24,7 @@
 extern "C" {
 #endif
   
-  int make_append_msg(const char* name,
+  int make_append_msg(const char* name[], size_t nameslen,
                       const int64_t* time, size_t tlen,
                       const double* data, size_t len,
                       char** buf, size_t* buflen);

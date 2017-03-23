@@ -186,19 +186,19 @@ static int open_send_close(const Global::buflen_pair& msg) {
 }
 
 
-// this will allow to test that the append routines error gracefully a
-// 0-sized message:
-static Global::buflen_pair make_zero_length_append_msg_zts(const std::string& name, size_t& offset)
+// test that the append routines errors out on a 0-sized message:
+static Global::buflen_pair make_zero_length_append_msg_zts(const std::vector<std::string>& names,
+                                                           size_t& offset)
 {
   const std::vector<Global::dtime> idx{};
   const std::vector<double> v{};
-  const auto headersz  = getHeaderLength(name);
+  const auto headersz  = getHeaderLength(names);
   const auto datasz    = v.size()*sizeof(double);
   const auto rawvecsz  = sizeof(RawVector<double>);
   const auto idxdatasz = idx.size()*sizeof(Global::dtime);
   const auto totalsz   = headersz + rawvecsz + idxdatasz + rawvecsz + datasz;
   auto buf = std::make_pair(std::make_unique<char[]>(totalsz), totalsz);
-  writeHeader(buf, Global::MsgType::APPEND_VECTOR, name);
+  writeHeader(buf, Global::MsgType::APPEND_VECTOR, names);
 
   const RawVector<Global::dtime> idx_rv{TypeNumber<Global::dtime>::n, idx.size(), 1};
   memcpy(buf.first.get() + headersz, &idx_rv, rawvecsz);
@@ -222,7 +222,7 @@ TEST(comm_append_array_double) {
   auto a = make_cow<val::VArrayD>(false, Vector<arr::idx_type>{3,3}, data);
 
   // create and send the append message (we just append 'a' to 'a'):
-  auto msg = arr::make_append_msg("a", *a);
+  auto msg = arr::make_append_msg({"a"s}, *a);
   int fd = open_send_close(msg);
   
   // get the result in and cleanup:
@@ -237,6 +237,64 @@ TEST(comm_append_array_double) {
 
   ASSERT_TRUE(res == a);
 }
+TEST(comm_append_array_double_nested_1) {
+  auto tpl = queryAndRun("a <<- list(a1=0, a2=matrix(1:9, 3, 3))\n");
+
+  const unsigned len = 9;
+  auto a1 = make_cow<val::VArrayD>(false, Vector<arr::idx_type>{1}, arr::Vector<double>{0.0});
+  auto data = arr::Vector<double>(len);
+  std::iota(data.begin(), data.end(), 1);
+  auto a2 = make_cow<val::VArrayD>(false, Vector<arr::idx_type>{3,3}, data);
+  // append to 'a2' a copy of the the original 'a2' (can't append to oneself):
+  auto b = *a2;
+  a2->rbind(b);
+  auto l = make_cow<val::VList>(false);
+  l->a.concat(val::Value(a1), "a1"s);
+  l->a.concat(val::Value(a2), "a2"s);
+  
+  // create and send the append message (we just append 'a' to 'a'):
+  auto msg = arr::make_append_msg({"a"s, "a2"s}, b);
+  int fd = open_send_close(msg);
+  
+  // get the result in and cleanup:
+  auto res = cancelAndReturnResult(tpl, "a", fd);
+
+  cout << val::display(res) << std::endl;
+  cout << val::display(l) << std::endl;
+
+  ASSERT_TRUE(res == l);
+}
+TEST(comm_append_array_double_nested_2) {
+  auto tpl = queryAndRun("a <<- list(a1=0, l2=list(x=1, y=matrix(1:9, 3, 3)))\n");
+
+  const unsigned len = 9;
+  auto a1 = make_cow<val::VArrayD>(false, Vector<arr::idx_type>{1}, arr::Vector<double>{0.0});
+  auto data = arr::Vector<double>(len);
+  std::iota(data.begin(), data.end(), 1);
+  auto l2 = make_cow<val::VList>(false);
+  auto x = make_cow<val::VArrayD>(false, Vector<arr::idx_type>{1}, arr::Vector<double>{1.0});
+  auto y = make_cow<val::VArrayD>(false, Vector<arr::idx_type>{3,3}, data);
+  auto b = *y;
+  y->rbind(b);
+  l2->a.concat(val::Value(x), "x"s);
+  l2->a.concat(val::Value(y), "y"s);
+  // append to 'a2' a copy of the the original 'a2' (can't append to oneself):
+  auto l = make_cow<val::VList>(false);
+  l->a.concat(val::Value(a1), "a1"s);
+  l->a.concat(val::Value(l2), "l2"s);
+  
+  // create and send the append message (we just append 'a' to 'a'):
+  auto msg = arr::make_append_msg({"a"s, "l2"s, "y"s}, b);
+  int fd = open_send_close(msg);
+  
+  // get the result in and cleanup:
+  auto res = cancelAndReturnResult(tpl, "a", fd);
+
+  cout << val::display(res) << std::endl;
+  cout << val::display(l) << std::endl;
+
+  ASSERT_TRUE(res == l);
+}
 TEST(comm_append_array_1D_double) {
   auto tpl = queryAndRun("a <<- 1:9\n");
 
@@ -245,7 +303,7 @@ TEST(comm_append_array_1D_double) {
   std::iota(data.begin(), data.end(), 1);
   auto a = make_cow<val::VArrayD>(false, Vector<arr::idx_type>{9}, data);
 
-  auto msg = arr::make_append_msg("a", *a);
+  auto msg = arr::make_append_msg({"a"s}, *a);
   auto fd = open_send_close(msg);
   
   auto res = cancelAndReturnResult(tpl, "a", fd);
@@ -265,10 +323,10 @@ TEST(comm_append_array_bool) {
                                   Vector<bool>{true,true,true,false,false,false});
 
   // create and send the append message (we just append 'a' to 'a'):
-  auto msg = arr::make_append_msg("a", *a);
+  auto msg = arr::make_append_msg({"a"s}, *a);
   auto fd = open_send_close(msg);
   
-  // get the result in  and cleanup:
+  // get the result in and cleanup:
   auto res = cancelAndReturnResult(tpl, "a", fd);
 
   // append to 'a' a copy of the the original 'a' (can't append to oneself):
@@ -293,10 +351,10 @@ TEST(comm_append_array_duration) {
                                     });
 
   // create and send the append message (we just append 'a' to 'a'):
-  auto msg = arr::make_append_msg("a", *a);
+  auto msg = arr::make_append_msg({"a"s}, *a);
   auto fd = open_send_close(msg);
   
-  // get the result in  and cleanup:
+  // get the result in and cleanup:
   auto res = cancelAndReturnResult(tpl, "a", fd);
 
   // append to 'a' a copy of the the original 'a' (can't append to oneself):
@@ -322,10 +380,10 @@ TEST(comm_append_array_time) {
          tz::dtime_from_string("2015-03-09 06:38:03 America/New_York", tzones)});
 
   // create and send the append message (we just append 'a' to 'a'):
-  auto msg = arr::make_append_msg("a", *a);
+  auto msg = arr::make_append_msg({"a"s}, *a);
   auto fd = open_send_close(msg);
   
-  // get the result in  and cleanup:
+  // get the result in and cleanup:
   auto res = cancelAndReturnResult(tpl, "a", fd);
 
   // append to 'a' a copy of the the original 'a' (can't append to oneself):
@@ -353,10 +411,10 @@ TEST(comm_append_array_interval) {
                                     Vector<tz::interval>{i1, i2});
   
   // create and send the append message (we just append 'a' to 'a'):
-  auto msg = arr::make_append_msg("a", *a);
+  auto msg = arr::make_append_msg({"a"s}, *a);
   auto fd = open_send_close(msg);
   
-  // get the result in  and cleanup:
+  // get the result in and cleanup:
   auto res = cancelAndReturnResult(tpl, "a", fd);
 
   // append to 'a' a copy of the the original 'a' (can't append to oneself):
@@ -399,7 +457,7 @@ TEST(comm_append_zts) {
                                            Vector<Global::dtime>{dt1,dt2,dt3,dt4,dt5,dt6}, 
                                            std::move(ee));
 
-  auto msg = arr::make_append_msg("z", az);
+  auto msg = arr::make_append_msg({"z"s}, az);
   auto fd = open_send_close(msg);
   
   auto res = cancelAndReturnResult(tpl, "z", fd);
@@ -421,7 +479,7 @@ TEST(comm_append_zts_not_ascending, log_to_file) {
   auto aa = arr::Array<double>({3,3}, {1,2,3,4,5,6,7,8,9});
   const arr::zts az(arr::Array<Global::dtime>({dt1,dt2,dt3}), std::move(aa));
 
-  auto msg = arr::make_append_msg("z", az);
+  auto msg = arr::make_append_msg({"z"s}, az);
   auto fd = open_send_close(msg);
   
   auto res = cancelAndReturnResult(tpl, "z", fd);
@@ -437,10 +495,10 @@ TEST(comm_append_array_incorrect_dimension, log_to_file) {
   auto a = make_cow<val::VArrayD>(false, Vector<arr::idx_type>{3,3}, data);
   auto aa = val::VArrayD({9}, data);
 
-  auto msg = arr::make_append_msg("a", aa); // append incorrect size
+  auto msg = arr::make_append_msg({"a"s}, aa); // append incorrect size
   auto fd = open_send_close(msg);
   
-  // get the result in  and cleanup:
+  // get the result in and cleanup:
   auto res = cancelAndReturnResult(tpl, "a", fd);
   
   ASSERT_TRUE(matchLog("incorrect dimensions for append"));
@@ -453,7 +511,7 @@ TEST(comm_append_array_missing_data, log_to_file) {
   std::iota(data.begin(), data.end(), 1);
   auto a = make_cow<val::VArrayD>(false, Vector<arr::idx_type>{3,3}, data);
 
-  auto msg = arr::make_append_msg("a", *a);
+  auto msg = arr::make_append_msg({"a"s}, *a);
 
   // shorten the message in order to create the error  
   msg.second -= 8;
@@ -462,7 +520,7 @@ TEST(comm_append_array_missing_data, log_to_file) {
          
   auto fd = open_send_close(msg);
   
-  // get the result in  and cleanup:
+  // get the result in and cleanup:
   auto res = cancelAndReturnResult(tpl, "a", fd);
   
   ASSERT_TRUE(matchLog("missing data"));
@@ -473,11 +531,11 @@ TEST(comm_append_array_incorrect_type, log_to_file) {
   arr::Vector<bool> data{true,true,true,false,false,false,true,true,true};
   auto a = make_cow<val::VArrayB>(false, Vector<arr::idx_type>{3,3}, data);
 
-  auto msg = arr::make_append_msg("a", *a);
+  auto msg = arr::make_append_msg({"a"s}, *a);
 
   auto fd = open_send_close(msg);
   
-  // get the result in  and cleanup:
+  // get the result in and cleanup:
   auto res = cancelAndReturnResult(tpl, "a", fd);
   
   ASSERT_TRUE(matchLog("incorrect type"));
@@ -491,10 +549,10 @@ TEST(comm_append_vector_double) {
   auto a = make_cow<val::VArrayD>(false, Vector<arr::idx_type>{3,3}, data);
 
   // create and send the append message (we just append 'a' to 'a'):
-  auto msg = arr::make_append_msg("a", Vector<double>{1,2,3,4,5,6,7,8,9});
+  auto msg = arr::make_append_msg({"a"s}, Vector<double>{1,2,3,4,5,6,7,8,9});
   auto fd = open_send_close(msg);
   
-  // get the result in  and cleanup:
+  // get the result in and cleanup:
   auto res = cancelAndReturnResult(tpl, "a", fd);
 
   // append to 'a' a copy of the the original 'a' (can't append to oneself):
@@ -534,7 +592,7 @@ TEST(comm_append_vector_zts) {
                                            Vector<Global::dtime>{dt1,dt2,dt3,dt4,dt5,dt6}, 
                                            std::move(ee));
 
-  auto msg = arr::make_append_msg("z",
+  auto msg = arr::make_append_msg({"z"s},
                                   Vector<Global::dtime>{dt4,dt5,dt6},
                                   Vector<double>{1,2,3,4,5,6,7,8,9});
 
@@ -550,7 +608,7 @@ TEST(comm_append_vector_zts) {
 TEST(comm_append_vector_zts_idx_data_mismatch_make_msg) {
   auto dt4 = tz::dtime_from_string("2015-03-09 06:38:04 America/New_York", tzones);
   auto dt5 = tz::dtime_from_string("2015-03-09 06:38:05 America/New_York", tzones);
-  ASSERT_THROW(arr::make_append_msg("z",
+  ASSERT_THROW(arr::make_append_msg({"z"s},
                                     Vector<Global::dtime>{dt4,dt5},
                                     Vector<double>{1,2,3,4,5,6,7,8,9}),
                std::out_of_range,
@@ -562,7 +620,7 @@ TEST(comm_append_vector_zts_idx_data_mismatch_receive_msg, log_to_file) {
 TEST(comm_append_vector_zts_idx_unsorted_make_msg) {
   auto dt4 = tz::dtime_from_string("2015-03-09 06:38:04 America/New_York", tzones);
   auto dt5 = tz::dtime_from_string("2015-03-09 06:38:05 America/New_York", tzones);
-  ASSERT_THROW(arr::make_append_msg("z",
+  ASSERT_THROW(arr::make_append_msg({"z"s},
                                     Vector<Global::dtime>{dt5,dt4},
                                     Vector<double>{1,2,3,4,5,6}),
                std::out_of_range,
@@ -580,7 +638,7 @@ TEST(comm_append_vector_zts_idx_unsorted_receive_msg, log_to_file) {
   auto dt5 = tz::dtime_from_string("2015-03-09 06:38:05 America/New_York", tzones);
   auto dt6 = tz::dtime_from_string("2015-03-09 06:38:06 America/New_York", tzones);
 
-  auto msg = arr::make_append_msg("z",
+  auto msg = arr::make_append_msg({"z"s},
                                   Vector<Global::dtime>{dt4,dt5,dt6},
                                   Vector<double>{1,2,3,4,5,6,7,8,9});
   // tweek this message by copying dt5 on dt4: 
@@ -603,7 +661,7 @@ TEST(comm_append_vector_zts_idx_not_increasing_receive_msg, log_to_file) {
   auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones);
   auto dt3 = tz::dtime_from_string("2015-03-09 06:38:03 America/New_York", tzones);
 
-  auto msg = arr::make_append_msg("z",
+  auto msg = arr::make_append_msg({"z"s},
                                   Vector<Global::dtime>{dt1,dt2,dt3},
                                   Vector<double>{1,2,3,4,5,6,7,8,9});
 
@@ -613,33 +671,33 @@ TEST(comm_append_vector_zts_idx_not_increasing_receive_msg, log_to_file) {
   ASSERT_TRUE(matchLog("append index not ascending"));
 }
 TEST(comm_make_append_msg_zts_empty_Vector) {
-  ASSERT_THROW(arr::make_append_msg("z",
+  ASSERT_THROW(arr::make_append_msg({"z"s},
                                     Vector<Global::dtime>{},
                                     Vector<double>{}),
                std::out_of_range,
                "make_append_msg: idx has size 0");
 }
 TEST(comm_make_append_msg_zts_empty_vector) {
-  ASSERT_THROW(arr::make_append_msg("z",
+  ASSERT_THROW(arr::make_append_msg({"z"s},
                                     std::vector<Global::dtime>{},
                                     std::vector<double>{}),
                std::out_of_range,
                "make_append_msg: idx has size 0");
 }
 TEST(comm_make_append_msg_array_empty_Vector) {
-  ASSERT_THROW(arr::make_append_msg("a", arr::Vector<double>{}),
+  ASSERT_THROW(arr::make_append_msg({"a"s}, arr::Vector<double>{}),
                std::out_of_range,
                "make_append_msg: no data");
 }
 TEST(comm_make_append_msg_array_empty_Array) {
   auto a = val::VArrayD(Vector<arr::idx_type>{}, Vector<double>{});
-  ASSERT_THROW(arr::make_append_msg("a", arr::Vector<double>{}),
+  ASSERT_THROW(arr::make_append_msg({"a"s}, arr::Vector<double>{}),
                std::out_of_range,
                "make_append_msg: no data");
 }
 TEST(comm_zts_appendVector_empty_message) {
   size_t offset;
-  auto msg = make_zero_length_append_msg_zts("z", offset);
+  auto msg = make_zero_length_append_msg_zts({"z"s}, offset);
   // original z:
   auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
   auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones);

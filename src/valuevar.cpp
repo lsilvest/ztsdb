@@ -112,6 +112,10 @@ std::string val::VFuture::to_string() const {
 val::VList::VList() : a(arr::rsv, {0}) { }
 val::VList::VList(const Array<Value>& a_p) : a(a_p) { }
 val::VList::VList(const VList& l) : a(l.a) { }
+val::Value val::VList::operator[](const std::string& s) {
+  auto idx = a.getNames(0)[s];
+  return (*a.v[0].get())[idx];
+}
 
 
 // to reduce boilerplate switch code:

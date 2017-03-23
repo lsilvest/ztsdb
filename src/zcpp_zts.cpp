@@ -19,7 +19,7 @@
 #include "zcpp_zts.hpp"
 
 
-Global::buflen_pair arr::make_append_msg(const string& name, const arr::zts& z) {
+Global::buflen_pair arr::make_append_msg(const std::vector<std::string>& name, const arr::zts& z) {
   auto buf = z.to_buffer(getHeaderLength(name));
   writeHeader(buf, Global::MsgType::APPEND, name);
   return buf;
