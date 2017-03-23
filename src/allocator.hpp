@@ -104,7 +104,12 @@ namespace arr {
         // we can't grow in front without moving the whole area...
         throw std::out_of_range("can't reallocate with an address before start of mapping");
       }
-      else if (t_p == t) {
+      else if (t_p == (char*)t + offset) { // the outside world is oblivious of the offset...
+        size_t pages = (n_p + offset) / pagesz;
+        if ((n_p + offset) % pagesz) {
+          ++pages;
+        }
+        n_p = pages * pagesz;
         if (n != n_p) {
           t = mremap(t, n, n_p, MREMAP_MAYMOVE);
           if (t == (void *)-1) {
@@ -118,7 +123,7 @@ namespace arr {
         if (t_p > (char*)t + n) {
           throw std::out_of_range("can't reallocate with an address beyond end of mapping");
         }
-
+        
         size_t sz = (char*)t_p - ((char*)t + offset);
         size_t pages = sz / pagesz;
         offset       = sz % pagesz;
@@ -127,12 +132,12 @@ namespace arr {
           if (munmap(t, pages * pagesz) == -1) {
             throw std::system_error(std::error_code(errno, std::system_category()), "munmap");
           }
-          
+
           t = (char*)t + pages * pagesz;
           n -= pages * pagesz;
         }
 
-        return reallocate(t, n_p + offset); 
+        return reallocate((char*)t + offset, n_p + offset); 
       }
     
     };
