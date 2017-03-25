@@ -456,7 +456,7 @@ namespace arr {
     }
 
     // address the Array as if it were a column vector
-    inline typename vector<T>::reference operator[](idx_type i) { 
+    inline T& operator[](idx_type i) { 
       if (dim[0] == 0) {
         throw range_error("subscript out of bounds");
       }
@@ -469,7 +469,7 @@ namespace arr {
     }
 
     // address the Array as if it were a column vector
-    inline typename vector<T>::const_reference operator[](idx_type i) const { 
+    inline const T& operator[](idx_type i) const { 
       if (size() == 0) {
         throw range_error("subscript out of bounds");
       }
