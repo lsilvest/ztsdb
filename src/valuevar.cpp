@@ -20,7 +20,6 @@
 #include "valuevar.hpp"
 #include "env.hpp"
 
-
 // #define DEBUG
 
 
@@ -115,6 +114,15 @@ val::VList::VList(const VList& l) : a(l.a) { }
 val::Value val::VList::operator[](const std::string& s) {
   auto idx = a.getNames(0)[s];
   return (*a.v[0].get())[idx];
+}
+
+val::VList& val::VList::remove(arr::idx_type i) {
+  for (arr::idx_type j=i; j<a.size()-1; ++j) {
+    a[j] = a[j+1];              // will check bounds
+    (*a.names[0]).assign(j, (*a.names[0])[j+1]);
+  }
+  a.resize(0, a.size()-1);
+  return *this;
 }
 
 

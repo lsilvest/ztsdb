@@ -280,9 +280,15 @@ namespace arr {
       return offset + copysz; 
     }
 
+    T& operator[](size_t i) {
+      if (!c || i > size() - 1) {
+        throw std::out_of_range("subscript out of bounds");
+      }
+      return c->v[i];
+    }
+
     const T& operator[](size_t i) const {
       if (!c || i > size() - 1) {
-        std::cout << "i: " << i << ", size(): " << size() << std::endl;
         throw std::out_of_range("subscript out of bounds");
       }
       return c->v[i];

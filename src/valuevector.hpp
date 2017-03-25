@@ -145,7 +145,7 @@ namespace arr {
     }
 
     vector_iterator<val::Value,O> erase(const vector_iterator<val::Value,O>& first, 
-                                      const vector_iterator<val::Value,O>& last) {
+                                        const vector_iterator<val::Value,O>& last) {
       c.erase(c.begin() + size_t(first), c.begin() + size_t(last));
       return first;
     }
@@ -176,7 +176,10 @@ namespace arr {
       return *this;
     }
 
-    Vector<val::Value>& resize(size_t n) { 
+    Vector<val::Value>& resize(size_t n, size_t from=0) {
+      if (from > 0) {
+        throw std::out_of_range("valuevector can't resize with 'from' > 0");
+      }
       c.resize(n);
       return *this; 
     }

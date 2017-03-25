@@ -184,7 +184,113 @@ RUnit_nested_named_append_inplace <- function() {
   all.equal(l, list(a=list(a=list(a=1, b=2), b=2, c=3), b=4, c=list(a=5)))
 }
 
-## list delete LLL
+## list delete with subassign
+RUnit_list_delete_subassign_first_elt <- function() {
+  l <- list(1,2,3,4)
+  l[1] <- NULL
+  all.equal(l, list(2,3,4))
+}
+RUnit_list_delete_subassign_first_elt_named <- function() {
+  l <- list(a=1,b=2,c=3,d=4)
+  l[1] <- NULL
+  all.equal(l, list(b=2,c=3,d=4))
+}
+RUnit_list_delete_subassign_middle_elt <- function() {
+  l <- list(1,2,3,4)
+  l[3] <- NULL
+  all.equal(l, list(1,2,4))
+}
+RUnit_list_delete_subassign_middle_elt_named <- function() {
+  l <- list(a=1,b=2,c=3,4)
+  l[3] <- NULL
+  all.equal(l, list(a=1,b=2,4))
+}
+RUnit_list_delete_subassign_end_elt <- function() {
+  l <- list(1,2,3,4)
+  l[4] <- NULL
+  all.equal(l, list(1,2,3))
+}
+RUnit_list_delete_subassign_end_elt_named <- function() {
+  l <- list(a=1,b=2,c=3,4)
+  l[4] <- NULL
+  all.equal(l, list(a=1,b=2,c=3))
+}
+RUnit_list_delete_subassign_multiple_elts <- function() {
+  l <- list(1,2,3,4,5)
+  l[c(2:3, 5)] <- NULL
+  all.equal(l, list(1,4))
+}
+RUnit_list_delete_subassign_first_multiple_elts_named <- function() {
+  l <- list(a=1,b=2,c=3,d=4,e=5)
+  l[c(2:3, 5)] <- NULL
+  all.equal(l, list(a=1, d=4))
+}
+RUnit_list_delete_subassign_all_elts <- function() {
+  l <- list(1,2,3,4,5)
+  l[] <- NULL
+  all.equal(l, list())
+}
+RUnit_list_delete_subassign_first_all_elts_named <- function() {
+  l <- list(a=1,b=2,c=3,d=4,e=5)
+  l[] <- NULL
+  all.equal(l, list())
+}
+RUnit_list_delete_subassign_no_copy_locked <- function() {
+  l <- list(a=1,b=2,c=3,d=4,e=5)
+  lock(--l$a)
+  lock(--l$b)
+  lock(--l$c)
+  lock(--l$d)
+  l[2] <- NULL
+  all.equal(l, list(a=1,c=3,d=4,e=5))
+}
+RUnit_list_NULL_assign <- function() {
+  ## check a true NULL assign is still working:
+  l <- list(1,2,3)
+  l[2] <- list(NULL)
+  all.equal(l, list(1, NULL, 3))
+}
+
+## list delete with dblassign
+RUnit_list_delete_dblassign_first_elt <- function() {
+  l <- list(1,2,3,4)
+  l[[1]] <- NULL
+  all.equal(l, list(2,3,4))
+}
+RUnit_list_delete_dblassign_first_elt_named <- function() {
+  l <- list(a=1,b=2,c=3,d=4)
+  l[[1]] <- NULL
+  all.equal(l, list(b=2,c=3,d=4))
+}
+RUnit_list_delete_dblassign_middle_elt <- function() {
+  l <- list(1,2,3,4)
+  l[[3]] <- NULL
+  all.equal(l, list(1,2,4))
+}
+RUnit_list_delete_dblassign_middle_elt_named <- function() {
+  l <- list(a=1,b=2,c=3,4)
+  l[[3]] <- NULL
+  all.equal(l, list(a=1,b=2,4))
+}
+RUnit_list_delete_dblassign_end_elt <- function() {
+  l <- list(1,2,3,4)
+  l[[4]] <- NULL
+  all.equal(l, list(1,2,3))
+}
+RUnit_list_delete_dblassign_end_elt_named <- function() {
+  l <- list(a=1,b=2,c=3,4)
+  l[[4]] <- NULL
+  all.equal(l, list(a=1,b=2,c=3))
+}
+RUnit_list_delete_dblassign_no_copy_locked <- function() {
+  l <- list(a=1,b=2,c=3,d=4,e=5)
+  lock(--l$a)
+  lock(--l$b)
+  lock(--l$c)
+  lock(--l$d)
+  l[[2]] <- NULL
+  all.equal(l, list(a=1,c=3,d=4,e=5))
+}
 
 ## subset and subassign beyond range
 RUnit_list_subset_out_of_range <- function() {
@@ -223,7 +329,6 @@ RUnit_list_logical_dblassign_out_of_range <- function() {
   l <- list(a=1,b=2,c=3)
   tryCatch(l[[c(T,T,F,F)]] <- 5, .Last.error == "boolean index not equal to array extent")
 }
-
 
 
 ## test no copying with locked objects LLL

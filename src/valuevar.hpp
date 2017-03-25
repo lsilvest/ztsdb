@@ -373,7 +373,8 @@ namespace val {
     inline const idx_type getdim(idx_type d) const { return a.getdim(d); }
     inline Vector<zstring> getNamesVector(idx_type d) const { return a.getNamesVector(d); } 
 
-
+    VList& remove(arr::idx_type i);
+    
     void at(arr::idx_type i, const val::Value& v);
     void at(arr::idx_type i, val::Value&& v);
     inline Value operator[](arr::idx_type i) const { 

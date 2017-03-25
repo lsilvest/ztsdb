@@ -365,7 +365,7 @@ ssize_t zcore::InterpCtx::readReqData(Global::conn_id_t peerid,
     auto bndvars = std::move(req.valstack[0].val);
     auto bndvarsList = get<val::SpVList>(bndvars);
     for (arr::idx_type i=0; i<bndvarsList->size(); ++i) {
-      sr->add(bndvarsList->a.getnames(0)[i], bndvarsList->a[i]);
+      sr->add(bndvarsList->a.getnames(0)[i], val::Value(bndvarsList->a[i]));
     }
 
     auto halt = make_shared<interp::Kont>(interp::Kont{nullptr, nullptr, sr, 

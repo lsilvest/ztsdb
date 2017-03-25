@@ -455,21 +455,21 @@ namespace arr {
       }
     }
 
-    /// address the Array as if it were a column vector
-    // inline typename vector<T>::reference operator[](idx_type i) { 
-    //   if (dim[0] == 0) {
-    //     throw range_error("subscript out of bounds");
-    //   }
-    //   idx_type col = i / dim[0];
-    //   idx_type off = i % dim[0];
-    //   if (col >= v.size() || off >= dim[0]) {
-    //     throw range_error("subscript out of bounds");
-    //   }
-    //   return (*v[col])[off];
-    // }
+    // address the Array as if it were a column vector
+    inline typename vector<T>::reference operator[](idx_type i) { 
+      if (dim[0] == 0) {
+        throw range_error("subscript out of bounds");
+      }
+      idx_type col = i / dim[0];
+      idx_type off = i % dim[0];
+      if (col >= v.size() || off >= dim[0]) {
+        throw range_error("subscript out of bounds");
+      }
+      return (*v[col].get())[off];
+    }
 
-    /// address the Array as if it were a column vector
-    inline T operator[](idx_type i) const { 
+    // address the Array as if it were a column vector
+    inline typename vector<T>::const_reference operator[](idx_type i) const { 
       if (size() == 0) {
         throw range_error("subscript out of bounds");
       }

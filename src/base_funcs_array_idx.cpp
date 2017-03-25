@@ -448,6 +448,12 @@ static void doSubassign(A& a,
     l->size() > 1 ?  a(i, l->a) : a(i, l->a[0]);
     break;
   }
+  case val::vt_null: {
+    std::cout << "going through NULL" << std::endl;
+    const auto& n = get<val::VNull>(b);
+    a(i, n);
+    break;
+  }
   default:
     throw std::domain_error("invalid type for subassign");
   }
@@ -484,7 +490,27 @@ static val::Value subassignHelper(val::Value& a,
   case val::vt_list: {
     auto& l = get<val::SpVList>(a);
     auto i = convertToIndex(begin, end, l->a);
-    doSubassign(l->a, b, i);
+    std::set<size_t> delidx;
+    if (b.which() == val::vt_null) {
+      // assigning NULL actually means deleting list elements:
+      idx_type iv=0, ii=0;
+      if (!i.size() || !i[0].getfirst(iv, ii)) {
+        throw std::out_of_range("invalid index");
+      }
+      delidx.insert(iv);
+      for (size_t u=1; u<i[0].size(); ++u) {
+        if (!i[0].getnext(iv, ii))
+          break;
+        delidx.insert(iv);
+      }
+      size_t n = 0;
+      for (auto j=delidx.begin(); j != delidx.end(); ++j) {
+        l->remove(*j - n++);
+      }      
+    }
+    else {
+      doSubassign(l->a, b, i);
+    }
     break;
   }
   case val::vt_bool: {
@@ -570,7 +596,12 @@ static void dblsubassignHelper(val::Value& val,
         }
         else throw std::out_of_range("recursive indexing failed at level "s + std::to_string(u+1));
       }
-      *a = b;
+      if (b.which() == val::vt_null) {
+        l->remove(iv);
+      }
+      else {
+        *a = b;
+      }
     }
     catch (...) {
       // in the case of an index character that doesn't exist, we
