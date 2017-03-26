@@ -822,8 +822,8 @@ val::Value funcs::info_net(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& i
      );
   // organize as list of "connections", "buffering"
   auto l = arr::make_cow<val::VList>(arr::NOFLAGS);
-  l->a.concat(connections, "connections"s);
-  l->a.concat(buffering,   "buffering"s);
+  l->a.concat(val::Value(connections), "connections"s);
+  l->a.concat(val::Value(buffering),   "buffering"s);
   return l;
 }
 
@@ -854,8 +854,8 @@ val::Value funcs::info_msg(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& i
      );
 
   auto l = arr::make_cow<val::VList>(arr::NOFLAGS);
-  l->a.concat(areqs, "req contexts"s);
-  l->a.concat(arsps, "rsp contexts"s);
+  l->a.concat(val::Value(areqs), "req contexts"s);
+  l->a.concat(val::Value(arsps), "rsp contexts"s);
   return l;
 }
 
