@@ -215,7 +215,8 @@ void core::loadBuiltinFunctions(interp::BaseFrame* r) {
   val::VBuiltinG(r, "rbind", "function(...) NULL\n", funcs::rbind);
   val::VBuiltinG(r, "cbind", "function(...) NULL\n", funcs::cbind);
   val::VBuiltinG(r, "abind", "function(..., along) NULL\n", funcs::abind);
-  val::VBuiltinG(r, "connection", "function(ip, port) NULL\n", funcs::make_connection, true,
+  val::VBuiltinG(r, "connection", "function(ip=\"127.0.0.1\", port) NULL\n",
+                 funcs::make_connection, true,
                  {{"ip",   {{val::vt_string}, true}},
                   {"port", {{val::vt_double}, true}}});
   val::VBuiltinG(r, "connection.port", "function(connection) NULL\n", funcs::connection_port, true,
