@@ -10,7 +10,6 @@ build:
     - apt-get update
     - apt -y install crpcut
   script:
-    - cd ..
     - mkdir build
     - cd build
     - cmake ..
