@@ -24,4 +24,5 @@ build:
     - rev=`git rev-parse HEAD`
     - cd ../.. && git clone https://github.com/lsilvest/ztsdb_dockerfile.git && cd ztsdb_dockerfile
     - sed -i "1s|.*|# https://gitlab.com/lsilvest/ztsdb/commit/$rev|" Dockerfile
+    - git commit -am "automated docker build - https://gitlab.com/lsilvest/ztsdb/commit/$rev"
     - git push https://lsilvest:$GITHUB_PWD@github.com/lsilvest/ztsdb_dockerfile.git --all
