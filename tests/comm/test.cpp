@@ -19,6 +19,7 @@
 
 
 #include <fcntl.h>
+#include <time.h>
 #include <unistd.h>
 #include <crpcut.hpp>
 #include <thread>
@@ -125,6 +126,11 @@ static val::Value getValue(const string& query) {
     "options(max.print=1);"
     "con <- connection(\"127.0.0.1\", " +  std::to_string(port2) + "); con ? (" + query + ")\n";
   std::cout << remoteQuery << std::endl;
+
+  // pause before sending anything to make sure the previous threads are
+  // up and ready:
+  const timespec pausetime{0, 100000000L};
+  nanosleep(&pausetime, NULL);
 
   if (write(pipe_here_ir1[1], remoteQuery.c_str(), remoteQuery.size()) == -1) {
     throw std::system_error(std::error_code(errno, std::system_category()), 
