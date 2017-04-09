@@ -53,7 +53,7 @@ RUnit_array_locked <- function() {
 RUnit_zts_bind_locked <- function() {
     dir <- system("mktemp -d", intern=T)
     system(paste("rmdir", dir))         # remove it as it will be recreated by 'matrix'
-    z <- zts(idx1, 1:27, file=dir)
+    z <- zts(idx1, matrix(1:27, 9, 3), file=dir)
     tryCatch(cbind(--z, z), TRUE) ## if not copying we get: Error:
                                   ## cannot bind to self. need to look
                                   ## at the error LLL

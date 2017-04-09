@@ -25,7 +25,6 @@ static void checkDims(const arr::Array<double>& a,
   }
   // note that we accept the special case of the null array:
   if (idx.size() != (a.getdim().size() ? a.getdim(0) : idx.size())) {
-    std::cout << "idx.size(): " << idx.size() << ", a.getdim(0): " << a.getdim(0) << std::endl;
     throw range_error("mismatched dimensions for index and data");
   }
 }
