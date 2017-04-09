@@ -1,4 +1,4 @@
-## Copyright (C) 2015 Leonardo Silvestri
+## Copyright (C) 2015-2017 Leonardo Silvestri
 ##
 ## This file is part of ztsdb.
 ##
@@ -2393,7 +2393,7 @@ getts <- function(a) {
     idx <- c(|.2015-03-09 06:38:01 America/New_York.|,
              |.2015-03-09 06:38:02 America/New_York.|,
              |.2015-03-09 06:38:03 America/New_York.|)
-    zts(idx, a, dim=dim(a), dimnames=list(NULL, c("one", "two")))
+    zts(idx, matrix(a, nrow(a), ncol(a), dimnames=list(NULL, c("one", "two"))))
 }
 RUnit_zts_add <- function() {
     all(getts(matrix(1, 3, 2)) +  2 == getts(matrix(3, 3, 2)) &

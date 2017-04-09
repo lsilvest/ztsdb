@@ -42,62 +42,76 @@ static vector<Index> convertToIndex(const vector<val::VBuiltinG::arg_t>::const_i
                                     const zts& z) {
   vector<Index> vi;
   unsigned j = 0;
-  for (auto e = begin; e != end; ++e) {
-    switch (val::getVal(*e).which()) {
-    case val::vt_null:
-      vi.push_back(NullIndex{z.getdim(j)});
-      break;      
-    case val::vt_double: {
-      // - 1, like in R: indices start at 1:
-      const auto& idx = get<val::SpVAD>(val::getVal(*e));
-      if (idx->size() == 0) {
-        vi.push_back(IntIndex(Vector<size_t>()));
-      }
-      else if (!signbit((*idx)[0])) {
-        const auto idx0 = applyf<double,double>(*idx, minus1).getcol(0);
-        vi.push_back(IntIndex(Vector<size_t>(idx0.begin(), idx0.end())));
-      }
-      else {
-        const auto idx0 = applyf<double,double>(*idx, negminus1).getcol(0);
-        vi.push_back(IntIndexNeg(Vector<size_t>(idx0.begin(), idx0.end()), z.getdim(j)));
-      }
-      break; }
-    case val::vt_bool: {
-      const auto& idx = get<val::SpVAB>(val::getVal(*e));
-      if (!idx->isVector()) {
-        throw interp::EvalException("boolean index is not a vector", val::getLoc(*e));
-      }
-      if (z.getdim(j) != idx->getdim(0)) {
-        throw interp::EvalException("boolean index not equal to array extent", val::getLoc(*e));
-      }
-      vi.push_back(BoolIndex{idx->getcol(0)});
-      break; }
-    case val::vt_string: {
-      const auto& idx = get<val::SpVAS>(val::getVal(*e));
-      vi.push_back(NameIndex{arr::stdvector<string, arr::zstring>(*idx), z.getArray().getnames(j)});
-      break;
+
+  // if there is only one null index, then the intent is to select
+  // the whole of the array, even in an n>1 case; so we push back
+  // dim.size() Nulls, and we are done:
+  if (end - begin == 1 && val::getVal(*begin).which() == val::vt_null) {
+    for (unsigned i=0; i<z.getArray().getdim().size(); ++i) {
+      vi.push_back(NullIndex{z.getArray().getdim(i)});
     }
-    case val::vt_time: {
-      if (e != begin) {
-        throw interp::EvalException("zts: can't use a time index into dimension > 1", val::getLoc(*e));
+  }
+  else if (end-begin > 1 && static_cast<size_t>(end-begin) != z.getArray().getdim().size()) {
+    throw std::range_error("incorrect number of dimensions");
+  }
+  else {
+    for (auto e = begin; e != end; ++e) {
+      switch (val::getVal(*e).which()) {
+      case val::vt_null:
+        vi.push_back(NullIndex{z.getdim(j)});
+        break;      
+      case val::vt_double: {
+        // - 1, like in R: indices start at 1:
+        const auto& idx = get<val::SpVAD>(val::getVal(*e));
+        if (idx->size() == 0) {
+          vi.push_back(IntIndex(Vector<size_t>()));
+        }
+        else if (!signbit((*idx)[0])) {
+          const auto idx0 = applyf<double,double>(*idx, minus1).getcol(0);
+          vi.push_back(IntIndex(Vector<size_t>(idx0.begin(), idx0.end())));
+        }
+        else {
+          const auto idx0 = applyf<double,double>(*idx, negminus1).getcol(0);
+          vi.push_back(IntIndexNeg(Vector<size_t>(idx0.begin(), idx0.end()), z.getdim(j)));
+        }
+        break; }
+      case val::vt_bool: {
+        const auto& idx = get<val::SpVAB>(val::getVal(*e));
+        if (!idx->isVector()) {
+          throw interp::EvalException("boolean index is not a vector", val::getLoc(*e));
+        }
+        if (z.getdim(j) != idx->getdim(0)) {
+          throw interp::EvalException("boolean index not equal to array extent", val::getLoc(*e));
+        }
+        vi.push_back(BoolIndex{idx->getcol(0)});
+        break; }
+      case val::vt_string: {
+        const auto& idx = get<val::SpVAS>(val::getVal(*e));
+        vi.push_back(NameIndex{arr::stdvector<string, arr::zstring>(*idx), z.getArray().getnames(j)});
+        break;
       }
-      const auto& idx = get<val::SpVADT>(val::getVal(*e));
-      vi.push_back(DtimeIndex{idx->getcol(0), z.getIndex().getcol(0)});
-      break;
-    }
-    case val::vt_interval: {
-      if (e != begin) {
-        throw interp::EvalException("zts: can't use an interval index into dimension > 1", 
-                                    val::getLoc(*e));
+      case val::vt_time: {
+        if (e != begin) {
+          throw interp::EvalException("zts: can't use a time index into dimension > 1", val::getLoc(*e));
+        }
+        const auto& idx = get<val::SpVADT>(val::getVal(*e));
+        vi.push_back(DtimeIndex{idx->getcol(0), z.getIndex().getcol(0)});
+        break;
       }
-      const auto& idx = get<val::SpVAIVL>(val::getVal(*e));
-      vi.push_back(IntervalIndex{idx->getcol(0), z.getIndex().getcol(0)});
-      break;
+      case val::vt_interval: {
+        if (e != begin) {
+          throw interp::EvalException("zts: can't use an interval index into dimension > 1", 
+                                      val::getLoc(*e));
+        }
+        const auto& idx = get<val::SpVAIVL>(val::getVal(*e));
+        vi.push_back(IntervalIndex{idx->getcol(0), z.getIndex().getcol(0)});
+        break;
+      }
+      default:
+        throw interp::EvalException("convertToIndex incorrect type", val::getLoc(*e));
+      }
+      ++j;
     }
-    default:
-      throw interp::EvalException("convertToIndex incorrect type", val::getLoc(*e));
-    }
-    ++j;
   }
   return vi;
 }
@@ -438,6 +452,11 @@ static void doSubassign(A& a,
     bi->size() > 1 ? a(i, *bi) : a(i, (*bi)[0]);
     break;
   }
+  case val::vt_period: {
+    const auto& bi = get<val::SpVAPRD>(b);
+    bi->size() > 1 ? a(i, *bi) : a(i, (*bi)[0]);
+    break;
+  }
   case val::vt_string: {
     const auto& bi = get<val::SpVAS>(b);
     bi->size() > 1 ? a(i, *bi) : a(i, (*bi)[0]);
@@ -533,6 +552,12 @@ static val::Value subassignHelper(val::Value& a,
   }
   case val::vt_interval: {
     auto& ai = *get<val::SpVAIVL>(a);
+    auto i = convertToIndex(begin, end, ai);
+    doSubassign(ai, b, i);
+    break;
+  }
+  case val::vt_period: {
+    auto& ai = *get<val::SpVAPRD>(a);
     auto i = convertToIndex(begin, end, ai);
     doSubassign(ai, b, i);
     break;

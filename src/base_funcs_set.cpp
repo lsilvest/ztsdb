@@ -167,7 +167,7 @@ struct set_wrapper_idx {
     auto val1 = val::Value(arr::make_cow<val::VArrayD>(false, std::move(res.first)));
     auto val2 = val::Value(arr::make_cow<val::VArrayD>(false, std::move(res.second)));
     
-    return arr::make_cow<val::VList>(false, Vector<val::Value>{val1, val2});
+    return arr::make_cow<val::VList>(false, Array<val::Value>(Vector<val::Value>{val1, val2}));
   }
 };
 

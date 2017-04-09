@@ -282,7 +282,7 @@ val::Value make_array_helper(const val::Value& v,
                              const arr::zstring& filename) 
 {
   /// use 'try' and create specific array exceptions so we can have better error reporting LLL
-  unsigned flags = filename.size() ? arr::LOCKED | arr::TMP: 0;
+  unsigned flags = filename.size() ? arr::LOCKED : arr::NOFLAGS;
   std::unique_ptr<arr::AllocFactory> alloc = getAllocFactory(filename);
   switch (v.which()) {
   case val::vt_double:
@@ -313,7 +313,10 @@ val::Value funcs::make_matrix(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx
 
   auto idx = Vector<idx_type>{static_cast<idx_type>(val::get_scalar<double>(val::getVal(v[NROW]))), 
                               static_cast<idx_type>(val::get_scalar<double>(val::getVal(v[NCOL])))};
-  // auto byrow = val::get_scalar<bool>(val::getVal(v[BYROW])); LLL
+  auto byrow = val::get_scalar<bool>(val::getVal(v[BYROW]));
+  if (byrow) {
+    throw interp::EvalException("'byrow' not implemented yet", val::getLoc(v[BYROW]));
+  }
   const auto& dimnames = convertToDnames(val::getVal(v[DIMNAMES]));
   const auto& filename = val::get_scalar<arr::zstring>(val::getVal(v[FILE]));
  
@@ -336,7 +339,8 @@ val::Value funcs::make_array(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx&
 
 template<typename T>
 static val::Value make_vector_default(size_t length, const arr::zstring& dirname) {
-  return make_cow<Array<T>>(false, 
+  unsigned flags = dirname.size() ? arr::LOCKED : arr::NOFLAGS;
+  return make_cow<Array<T>>(flags, 
                             arr::Vector<idx_type>{length}, 
                             arr::Vector<T>(length), 
                             std::vector<Vector<zstring>>(),
@@ -377,8 +381,7 @@ val::Value funcs::make_vector(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx
   vector<Vector<zstring>> dimnames;
   const Vector<idx_type> idx{static_cast<idx_type>(length)};
 
-  auto data = make_vector_helper(mode, modeLoc, length, filename);
-  return make_array_helper(data, idx, dimnames, filename);
+  return make_vector_helper(mode, modeLoc, length, filename);
 }
 
 
@@ -511,8 +514,8 @@ static zts* bindVector(zts& r,
     case val::vt_double: {
       const auto& a = get<val::SpVAD>(val::getVal(*e));
       r.abind(a->isVector() && dim==0 ? transpose(*a) : *a, 
-              dim,              // in which dimension
-              val::getName(*e));     // the prefix to add to the bind
+              dim,                 // in which dimension
+              val::getName(*e));   // the prefix to add to the bind
       break; }
     case val::vt_zts: {
       const auto& z = get<val::SpZts>(val::getVal(*e));
@@ -571,7 +574,7 @@ checkZtsBindInDimGt0(vector<val::VBuiltinG::arg_t>::const_iterator begin,
   }
   if (a == nullptr) {
     // this should never happen because if we get here it means there
-    // was a zts in the argument list:
+    // was no zts in the argument list:
     std::logic_error("no zts in list");
   }
 
@@ -611,7 +614,7 @@ static val::Value bindHelper(vector<val::VBuiltinG::arg_t>::iterator begin,
     auto& a = get<val::SpVAD>(val::getVal(*begin));
     if (a.isRef()) {
       a.get()->addprefix(val::getName(*begin), a.get()->isVector() ? 0 : dim);
-      bindVector(*a.get(), begin+1, end, dim);
+      bindVector(*a, begin+1, end, dim);
       return a;
     } else {
       break;
@@ -620,7 +623,7 @@ static val::Value bindHelper(vector<val::VBuiltinG::arg_t>::iterator begin,
   case val::vt_bool: {
     auto& a = get<val::SpVAB>(val::getVal(*begin));
     if (a.isRef()) {
-      a->addprefix(val::getName(*begin), a->isVector() ? 0 : dim);
+      a.get()->addprefix(val::getName(*begin), a->isVector() ? 0 : dim);
       bindVector(*a, begin+1, end, dim);
       return a;
     } else {
@@ -630,7 +633,7 @@ static val::Value bindHelper(vector<val::VBuiltinG::arg_t>::iterator begin,
   case val::vt_time: {
     auto& a = get<val::SpVADT>(val::getVal(*begin));
     if (a.isRef()) {
-      a->addprefix(val::getName(*begin), a->isVector() ? 0 : dim);
+      a.get()->addprefix(val::getName(*begin), a->isVector() ? 0 : dim);
       bindVector(*a, begin+1, end, dim);
       return a;
     } else {
@@ -640,7 +643,7 @@ static val::Value bindHelper(vector<val::VBuiltinG::arg_t>::iterator begin,
   case val::vt_duration: {
     auto& a = get<val::SpVADUR>(val::getVal(*begin));
     if (a.isRef()) {
-      a->addprefix(val::getName(*begin), a->isVector() ? 0 : dim);
+      a.get()->addprefix(val::getName(*begin), a->isVector() ? 0 : dim);
       bindVector(*a, begin+1, end, dim);
       return a;
     } else {
@@ -650,7 +653,7 @@ static val::Value bindHelper(vector<val::VBuiltinG::arg_t>::iterator begin,
   case val::vt_interval: {
     auto& a = get<val::SpVAIVL>(val::getVal(*begin));
     if (a.isRef()) {
-      a->addprefix(val::getName(*begin), a->isVector() ? 0 : dim);
+      a.get()->addprefix(val::getName(*begin), a->isVector() ? 0 : dim);
       bindVector(*a, begin+1, end, dim);
       return a;
     } else {
@@ -660,7 +663,7 @@ static val::Value bindHelper(vector<val::VBuiltinG::arg_t>::iterator begin,
   case val::vt_string: {
     auto& a = get<val::SpVAS>(val::getVal(*begin));
     if (a.isRef()) {
-      a->addprefix(val::getName(*begin), a->isVector() ? 0 : dim);
+      a.get()->addprefix(val::getName(*begin), a->isVector() ? 0 : dim);
       bindVector(*a, begin+1, end, dim);
       return a;
     } else {
@@ -675,7 +678,7 @@ static val::Value bindHelper(vector<val::VBuiltinG::arg_t>::iterator begin,
       }
       else {
         checkZtsBindInDimGt0(begin, end, dim);
-        z->addprefix(val::getName(*begin), dim);
+        z.get()->addprefix(val::getName(*begin), dim);
       }
       bindVector(*z, begin+1, end, dim);
       return z;
@@ -769,7 +772,7 @@ val::Value funcs::cbind(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) 
 
 static std::unique_ptr<arr::AllocFactory> getAllocFactoryZts(const fsys::path& filename) {
   if (filename.string().size()) {
-   return std::make_unique<arr::MmapAllocFactory>(filename, false);
+    return std::make_unique<arr::MmapAllocFactory>(filename, false);
   }
   else {
     return std::make_unique<arr::FlexAllocFactory>();
@@ -778,24 +781,19 @@ static std::unique_ptr<arr::AllocFactory> getAllocFactoryZts(const fsys::path& f
 
 
 val::Value funcs::make_zts(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
-  enum { IDX, DATA, DIM, DIMNAMES, FILE };
+  enum { IDX, DATA, FILE };
 
   const auto& tidx = get<val::SpVADT>(val::getVal(v[IDX]));
   const auto& data = get<val::SpVAD>(val::getVal(v[DATA]));
-  const auto& dimOrig = get<val::SpVAD>(val::getVal(v[DIM]));
-  Vector<arr::idx_type> dim(dimOrig->v[0]->begin(), dimOrig->v[0]->end());
-  const auto& dimnames = convertToDnames(val::getVal(v[DIMNAMES]));
   const auto& filename = fsys::path(std::string(val::get_scalar<arr::zstring>(val::getVal(v[FILE]))));
   const auto& filename_idx = filename.string().size() ? filename / "idx" : filename;
   try {
-    unsigned flags = filename.string().size() ? arr::LOCKED | arr::TMP: 0; // with TMP instead of 0, avoid a copy? LLL
+    unsigned flags = filename.string().size() ? arr::LOCKED: arr::NOFLAGS; // with TMP instead of 0, avoid a copy? LLL
     auto allocf = getAllocFactoryZts(filename);
     auto allocf_idx = getAllocFactoryZts(filename_idx);
     return arr::make_cow<arr::zts>(flags, 
-                                   dim, 
                                    *tidx, 
                                    *data, 
-                                   dimnames, 
                                    std::move(allocf),
                                    std::move(allocf_idx));
   }
@@ -831,8 +829,10 @@ val::Value funcs::load(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   const string dirname = val::get_scalar<arr::zstring>(val::getVal(v[0]));
   struct stat st = {0};
   if (stat((fsys::path(dirname) / "idx").c_str(), &st) == 0) {
-    // this is a zts
-    return val::VNull();        // LLL
+    auto indexdir = fsys::path(dirname) / "idx";    
+    auto allocfidx = std::make_unique<MmapAllocFactory>(indexdir, true);
+    auto allocfdata = std::make_unique<MmapAllocFactory>(dirname, true);
+    return arr::make_cow<arr::zts>(false, std::move(allocfdata), std::move(allocfidx));
   }
   // else it's an array:
   else {
@@ -870,6 +870,8 @@ val::Value funcs::load(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
       return arr::make_cow<val::VArrayIVL>(false, std::move(allocf));
     case TypeNumber<arr::zstring>::n:
       return arr::make_cow<val::VArrayS>(false, std::move(allocf));
+    case TypeNumber<tz::period>::n:
+      return arr::make_cow<val::VArrayPRD>(false, std::move(allocf));
     default:
       throw std::domain_error("unknown type number: " + std::to_string(v.typenumber));
     }

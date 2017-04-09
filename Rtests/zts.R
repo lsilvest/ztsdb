@@ -19,7 +19,7 @@
 d1 <- |.2016-08-06 06:38:01 America/New_York.|
 
 idx1 <- seq(d1, by=as.duration(3600*1e9), length.out=9)
-z1 <- zts(idx1, 1:27, dim=c(9, 3), dimnames=list(NULL, c("one", "two", "three")))
+z1 <- zts(idx1, matrix(1:27, 9, 3, dimnames=list(NULL, c("one", "two", "three"))))
 
 idx2 <- seq(tail(idx1,1)+as.duration(3600*1e9), by=as.duration(3600*1e9), length.out=9)
-z2 <- zts(idx2, 1:27, dim=c(9, 3), dimnames=list(NULL, c("one", "two", "three")))
+z2 <- zts(idx2, matrix(1:27, 9, 3, dimnames=list(NULL, c("one", "two", "three"))))

@@ -1,4 +1,4 @@
-## Copyright (C) 2015 Leonardo Silvestri
+## Copyright (C) 2015-2017 Leonardo Silvestri
 ##
 ## This file is part of ztsdb.
 ##
@@ -33,7 +33,7 @@ RUnit_align_closest <- function() {
                |.2015-01-01 15:00:00 America/New_York.|,
                by=one_second)
     data <- 0:10800
-    z <- zts(idx, data, dim=c(length(data), 1))
+    z <- zts(idx, matrix(data, length(data), 1))
     b <- seq(|.2015-01-01 13:00:00 America/New_York.|,
              |.2015-01-01 14:00:00 America/New_York.|,
              by=one_minute)
@@ -45,7 +45,7 @@ RUnit_align_count <- function() {
                |.2015-02-01 12:00:00 America/New_York.|,
                by=one_second)
     data <- 1:length(idx)
-    z <- zts(idx, data)
+    z <- zts(idx, matrix(data, length(data), 1))
     ## create a gap in z, so we know what happens to the alignment
     ## when there are no observations around the time point:
     i <- c(|+2015-01-01 15:00:00 America/New_York -> 2015-01-02 15:00:00 America/New_York-|)
@@ -58,7 +58,7 @@ RUnit_align_count <- function() {
                 |.2015-02-01 12:00:00 America/New_York.|,
                 by=one_hour))
     a <- align(z, to, -one_hour, method="count")
-    exp_data <- c(0, array(3600, length(to)-1))
+    exp_data <- matrix(c(0, array(3600, length(to)-1)), length(to))
     exp <- zts(idx[to], exp_data)
     exp[1,] <- 0
     exp[|-2015-01-01 15:00:00 America/New_York -> 2015-01-02 15:00:00 America/New_York+|,] <- 0

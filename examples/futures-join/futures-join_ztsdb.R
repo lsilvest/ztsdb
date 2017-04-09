@@ -33,7 +33,7 @@ if (system(paste("test -d", path))) {
 
 id <- "CD"
 
-## build a vector of roll dates
+## build a vector of roll dates, always 3 days before the expiration date:
 tz <- "America/New_York"
 s <- read.csv(paste0(path, "expiration.csv"), type="character")
 expiration <- matrix(as.time(s[, "Expiration"]), nrow(s), 1, dimnames=list(s[,"Contract"], "Date"))
@@ -44,7 +44,7 @@ roll[[id]] <- `-`(expiration, as.period("3d"), tz)
 ## build simulated spot price
 idx <- seq(`-`(roll[[id]][1], as.period("6m"), tz), tail(roll[[id]], 1), by=as.duration("00:01:00"))
 spot <- cumsum(runif(1:length(idx), -0.05, 0.05))
-spot <- zts(idx, spot + min(spot) + 100, dimnames=list(NULL, "price"))
+spot <- zts(idx, matrix(spot + min(spot) + 100, nrow(spot), dimnames=list(NULL, "price")))
 
 
 ## build a simulated time-series that starts 4 months before expiry

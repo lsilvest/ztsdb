@@ -42,7 +42,8 @@ TEST(mmap_array_double) {
                       "a <- 2;"
                       "load(file=\"./array_double1\") \n");
     auto a = arr::Array<double>({3,6}, {1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9});
-    ASSERT_TRUE(eval(eout) == val::Value(make_cow<val::VArrayD>(false, a)));
+    const auto& res = eval(eout);
+    ASSERT_TRUE(res == val::Value(make_cow<val::VArrayD>(false, a)));
   }
   cleandir("./array_double1");
   cleandir("./array_double2");

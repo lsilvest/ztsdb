@@ -430,8 +430,8 @@ TEST(comm_append_zts) {
   auto tpl = queryAndRun("idx <- c(|.2015-03-09 06:38:01 America/New_York.|, "
                          "         |.2015-03-09 06:38:02 America/New_York.|, "
                          "         |.2015-03-09 06:38:03 America/New_York.|); "
-                         "z <<- zts(idx, 1.0:9, dim=c(3, 3), "
-                                    "dimnames=list(NULL, c(\"one\", \"two\", \"three\")))\n");
+                         "z <<- zts(idx, matrix(1.0:9, 3, 3, "
+                                    "dimnames=list(NULL, c(\"one\", \"two\", \"three\"))))\n");
 
   // original z:
   auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
@@ -469,8 +469,8 @@ TEST(comm_append_zts_not_ascending, log_to_file) {
   auto tpl = queryAndRun("idx <- c(|.2015-03-09 06:38:01 America/New_York.|, "
                          "         |.2015-03-09 06:38:02 America/New_York.|, "
                          "         |.2015-03-09 06:38:03 America/New_York.|); "
-                         "z <<- zts(idx, 1.0:9, dim=c(3, 3), "
-                                    "dimnames=list(NULL, c(\"one\", \"two\", \"three\")))\n");
+                         "z <<- zts(idx, matrix(1.0:9, 3, 3, "
+                                    "dimnames=list(NULL, c(\"one\", \"two\", \"three\"))))\n");
 
   // original z:
   auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
@@ -565,8 +565,8 @@ TEST(comm_append_vector_zts) {
   auto tpl = queryAndRun("idx <- c(|.2015-03-09 06:38:01 America/New_York.|, "
                          "         |.2015-03-09 06:38:02 America/New_York.|, "
                          "         |.2015-03-09 06:38:03 America/New_York.|); "
-                         "z <<- zts(idx, 1.0:9, dim=c(3, 3), "
-                                    "dimnames=list(NULL, c(\"one\", \"two\", \"three\")))\n");
+                         "z <<- zts(idx, matrix(1.0:9, 3, 3, "
+                                    "dimnames=list(NULL, c(\"one\", \"two\", \"three\"))))\n");
 
   // original z:
   auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
@@ -630,8 +630,8 @@ TEST(comm_append_vector_zts_idx_unsorted_receive_msg, log_to_file) {
   auto tpl = queryAndRun("idx <- c(|.2015-03-09 06:38:01 America/New_York.|, "
                          "         |.2015-03-09 06:38:02 America/New_York.|, "
                          "         |.2015-03-09 06:38:03 America/New_York.|); "
-                         "z <<- zts(idx, 1.0:9, dim=c(3, 3), "
-                                    "dimnames=list(NULL, c(\"one\", \"two\", \"three\")))\n");
+                         "z <<- zts(idx, matrix(1.0:9, 3, 3, "
+                                    "dimnames=list(NULL, c(\"one\", \"two\", \"three\"))))\n");
 
   // zts to be appended to z:
   auto dt4 = tz::dtime_from_string("2015-03-09 06:38:04 America/New_York", tzones);
@@ -653,8 +653,8 @@ TEST(comm_append_vector_zts_idx_not_increasing_receive_msg, log_to_file) {
   auto tpl = queryAndRun("idx <- c(|.2015-03-09 06:38:01 America/New_York.|, "
                          "         |.2015-03-09 06:38:02 America/New_York.|, "
                          "         |.2015-03-09 06:38:03 America/New_York.|); "
-                         "z <<- zts(idx, 1.0:9, dim=c(3, 3), "
-                                    "dimnames=list(NULL, c(\"one\", \"two\", \"three\")))\n");
+                         "z <<- zts(idx, matrix(1.0:9, 3, 3, "
+                                    "dimnames=list(NULL, c(\"one\", \"two\", \"three\"))))\n");
 
   // zts to be appended to z:
   auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);

@@ -640,9 +640,9 @@ inline static shared_ptr<Kont> applyKont(shared_ptr<Kont> k,
             if (isConst(val)) {
               throw std::range_error("cannot assign const reference object");
             }
-            if (!isTmp(val) && isLocked(val)) {
-              throw std::range_error("cannot assign locked non-temporary object");   
-            }
+            // if (!isTmp(val) && isLocked(val)) {
+            //   throw std::range_error("cannot assign locked non-temporary object");   
+            // }
             resetTmp(val);
           }
           auto& valref = ar->add(sym, std::move(val));
@@ -662,11 +662,15 @@ inline static shared_ptr<Kont> applyKont(shared_ptr<Kont> k,
         // here as '?tmp' will be overwritten; as the future pointer
         // is not set, the response will discarded, which is the
         // behaviour we want:
-        k->next->atype & Kont::ARG ?
-          // check the isRef == false LLL
-          ar->addArg("?tmp", std::move(val), k->control ? k->control->loc : yy::missing_loc(), false) : 
-          ar->add("?tmp", std::move(val));
-        // if (k->next->atype & Kont::REF) setRef(valref); else resetRef(valref);// needed LLL ?
+        // auto& valtmp = k->next->atype & Kont::ARG ?
+        //   ar->addArg("?tmp", std::move(val), k->control ? k->control->loc : yy::missing_loc(), false) : 
+        //   ar->add("?tmp", std::move(val));
+        // setTmp(valtmp);
+
+        // NB: the code above never worked properly; for some reason,
+        // setting ?tmp still creates an additional (and unwanted of
+        // course!) reference; we'll get back here when we need to
+        // implement a debugger.        
       } else {
         // this is the last evaluation and, although it's without
         // assigment, the value might come as the result of a previous

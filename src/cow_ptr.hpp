@@ -117,7 +117,7 @@ namespace arr {
     bool isTmp()       const { return flags & TMP; }
     bool isLast()      const { return flags & LAST; }
 
-    void setTmp()   { flags |=  TMP; }
+    void setTmp()   { flags |=  TMP; --*count; }
     void setRef()   { flags |=  REF; }
     void setLock()  { flags |=  LOCKED; }
     void setConst() { flags |=  CONSTREF; }
@@ -134,7 +134,7 @@ namespace arr {
     long use_count() const { return *count; }
 
     ~cow_ptr() {
-      if (!isLast()) {
+      if (!isLast() && !isTmp()) {
         --*count;
       }
     }

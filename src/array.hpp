@@ -14,7 +14,6 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with ztsdb.  If not, see <http://www.gnu.org/licenses/>.
-// (C) 2015 Leonardo Silvestri
 
 
 #ifndef ARRAY_H
@@ -258,7 +257,6 @@ namespace arr {
           std::unique_ptr<AllocFactory>&& allocf_p=std::make_unique<MemAllocFactory>()) 
       : allocf(std::move(allocf_p))
     {  
-      //      cout << "begin array constructor" << endl;
       // if (dim_p.size() == 0) {
       //   throw range_error("'dims' cannot be of length 0");
       // }
@@ -304,7 +302,7 @@ namespace arr {
           const vector<unique_ptr<Dname>>& names_p,
           std::unique_ptr<AllocFactory>&& allocf_p=std::make_unique<MemAllocFactory>())
       : dim(dim_p), allocf(std::move(allocf_p))
-    { 
+    {
 #ifdef DEBUG_COPY
       if (dim_p.size() == 1) {
         cout << "nearly copying array " << dim_p[0] << endl;
@@ -324,7 +322,7 @@ namespace arr {
     // copy constructors:
     Array(const Array& u, 
           std::unique_ptr<AllocFactory>&& allocf_p=std::make_unique<MemAllocFactory>())
-      : dim(u.dim), allocf(std::move(allocf_p)) {
+      : allocf(std::move(allocf_p)) {
 #ifdef DEBUG_COPY
       if (u.dim.size() == 1) {
         cout << "copying array " << u.dim[0] << endl;
@@ -333,6 +331,7 @@ namespace arr {
         cout << "copying array " << u.dim[0] << "x" << u.dim[1] << endl;
       }
 #endif
+      dim = Vector<idx_type>(u.dim, allocf->get("dim"));
       // for each vector, make a unique_ptr point to a copy:
       v.reserve(u.v.size());
       for (idx_type i=0; i<u.v.size(); ++i) {
@@ -859,7 +858,7 @@ namespace arr {
     inline const Vector<idx_type>& getdim() const { return dim; }
     inline const idx_type getdim(idx_type d) const { 
       if (d >= dim.size()) {
-        throw std::out_of_range("getnames: dimension out of range");
+        throw std::out_of_range("getdim: dimension out of range");
       }
       return dim[d]; 
     }
@@ -961,9 +960,6 @@ namespace arr {
         throw range_error("cannot bind to self.");
       }
 
-      // if (std::all_of(dim.begin(), dim.end(), [](idx_type i){ return i==0; })) { 
-        
-      // }
       // For the purpose of rbind, column vectors are always considered
       // to be row vectors. It seems weird, especially when one
       // considers that t(1:3) gives a row vector... But we follow R's
@@ -1361,6 +1357,19 @@ namespace arr {
 
   // array ops -----------------------------------------------
 
+  template<typename T, typename O=std::less<T>>
+  Array<T,O>& drop(Array<T,O>& a) {
+    auto di = a.dim.end()-1;
+    auto ni = a.names.end()-1;
+    for (; di > a.dim.begin(); --di, --ni) {
+      if (*di == 1) {
+        a.dim.erase(di);
+        a.names.erase(ni);
+      }
+    }
+    return a;
+  }
+  
   template<typename T, typename R, typename OT=std::less<T>, typename OR=std::less<R>>
   Array<R,OR> applyf(const Array<T,OT>& t, function<R(T)> f) {
     auto ret = Array<R,OR>(rsv, t.dim);
@@ -1549,7 +1558,7 @@ namespace arr {
   } 
 
   template<typename T, typename O=std::less<T>>
-    Array<T,O> maxcol(const Array<T,O>& t) {
+  Array<T,O> maxcol(const Array<T,O>& t) {
     // take care of usual too small matrices etc. LLL
     Vector<idx_type> dim{1};
     dim.insert(dim.end(), t.dim.begin()+1, t.dim.end());
@@ -1565,7 +1574,7 @@ namespace arr {
   }
 
   template<typename T, typename R, template <class> class F, typename O=std::less<T>>
-    R cumul(const Array<T,O>& t, const R& init) {
+  R cumul(const Array<T,O>& t, const R& init) {
     auto res = init; 
     for (idx_type n=0; n<t.v.size(); ++n) {
       for (idx_type i=0; i<t.v[n]->size(); ++i) {
@@ -1578,7 +1587,7 @@ namespace arr {
   /// among other things, this allows to implement an 'all' and 'any' function.
   // template<typename T, typename R>
   template<typename T, typename R, template <class> class F, typename O=std::less<T>>
-    R cumul_until(const Array<T,O>& t, const R& init, const R& until) {
+  R cumul_until(const Array<T,O>& t, const R& init, const R& until) {
     auto res = init; 
     for (idx_type n=0; n<t.v.size(); ++n) {
       for (idx_type i=0; i<t.v[n]->size(); ++i) {

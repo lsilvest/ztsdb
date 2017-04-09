@@ -1,4 +1,4 @@
-## Copyright (C) 2015 Leonardo Silvestri
+## Copyright (C) 2015-2017 Leonardo Silvestri
 ##
 ## This file is part of ztsdb.
 ##
@@ -15,7 +15,7 @@
 ## You should have received a copy of the GNU General Public License
 ## along with ztsdb.  If not, see <http://www.gnu.org/licenses/>.
 
-source("utils.R")
+## source("utils.R")
 
 
 ## cbinds
@@ -120,27 +120,27 @@ RUnit_abind_array_a3_multiple_dim0 <- function() {
 }
 
 
-## ## zts
+## zts
 source("zts.R")
 ## zts rbind
 RUnit_zts_rbind_matrix <- function() {
-    data <- matrix(1:27, 9, 3)
-    all.equal(rbind(z1, z2), zts(c(idx1,idx2), rbind(data,data), dim=c(18,3), dimnames=dimnames(z1)))
+    data <- matrix(1:27, 9, 3, dimnames=dimnames(z1))
+    all.equal(rbind(z1, z2), zts(c(idx1,idx2), rbind(data,data)))
 }
 RUnit_zts_rbind_matrix_0dim <- function() {
     z <- zts(vector("time", 0), (matrix(0,0,3)))
     all.equal(rbind(z, z1), z1)
 }
 RUnit_zts_rbind_matrix_ref <- function() {
-    data <- matrix(1:27, 9, 3)
+    data <- matrix(1:27, 9, 3, dimnames=dimnames(z1))
     zp <- z1
     rbind(--zp, z2)
-    all.equal(zp, zts(c(idx1,idx2), rbind(data,data), dim=c(18,3), dimnames=dimnames(z1)))
+    all.equal(zp, zts(c(idx1,idx2), rbind(data,data)))
 }
 ## zts cbind
 RUnit_zts_cbind <- function() {
     data <- cbind(zts.data(z1), zts.data(z1))
-    all.equal(cbind(z1, z1), zts(idx1, data, dimnames=dimnames(data)))
+    all.equal(cbind(z1, z1), zts(idx1, data))
 }
 RUnit_zts_cbind_0dim <- function() {
     z <- zts(zts.idx(z1), matrix(0,dim(z1)[1],0))
@@ -150,11 +150,11 @@ RUnit_zts_cbind_ref <- function() {
     data <- cbind(zts.data(z1), zts.data(z1))
     zp <- z1
     cbind(--zp, z1)
-    all.equal(zp, zts(idx1, data, dimnames=dimnames(data)))
+    all.equal(zp, zts(idx1, data))
 }
 RUnit_zts_cbind_matrix <- function() {
     data <- cbind(zts.data(z1), zts.data(z1))
-    all.equal(cbind(z1, zts.data(z1)), zts(idx1, data, dimnames=dimnames(data)))
+    all.equal(cbind(z1, zts.data(z1)), zts(idx1, data))
 }
 RUnit_zts_cbind_matrix_0dim <- function() {
     z <- zts(zts.idx(z1), matrix(0,dim(z1)[1],0))
@@ -164,26 +164,71 @@ RUnit_zts_cbind_matrix_ref <- function() {
     data <- cbind(zts.data(z1), zts.data(z1))
     zp <- z1
     cbind(--zp, zts.data(z1))
-    all.equal(zp, zts(idx1, data, dimnames=dimnames(data)))
+    all.equal(zp, zts(idx1, data))
 }
 ## zts abind
 RUnit_zts_abind  <- function() {
     data <- abind(zts.data(z1), zts.data(z1), along=3)
-    all.equal(abind(z1, z1, along=3), zts(idx1, data, dimnames=dimnames(data)))
+    all.equal(abind(z1, z1, along=3), zts(idx1, data))
 }
 RUnit_zts_abind_0dim  <- function() {
     z <- zts(zts.idx(z1), array(0, c(dim(z1)[1],3,0)))
     dnames <- list(NULL, dimnames(z1)[[2]], NULL)
-    res <- zts(zts.idx(z1), array(zts.data(z1), c(dim(z1)[1],3,1)), dimnames=dnames)
+    res <- zts(zts.idx(z1), array(zts.data(z1), c(dim(z1)[1],3,1), dimnames=dnames))
     all.equal(abind(z, z1, along=3), res)
 }
 RUnit_zts_abind_multiple<- function() {
     data <- abind(zts.data(z1), zts.data(z1), zts.data(z1), along=3)
-    all.equal(abind(z1, z1, z1, along=3), zts(idx1, data, dimnames=dimnames(data)))
+    all.equal(abind(z1, z1, z1, along=3), zts(idx1, data))
 }
 RUnit_zts_abind_ref <- function() {
     data <- abind(zts.data(z1), zts.data(z1), along=3)
     zp <- z1
     abind(--zp, z1, along=3)
-    all.equal(zp, zts(idx1, data, dimnames=dimnames(data)))
+    all.equal(zp, zts(idx1, data))
+}
+
+## binds with persistent objects; these tests check that in all
+## situations, additional mmapped columns are correctly created and
+## with the correct allocator:
+RUnit_array_bind_from_0x0_mmapped <- function() {
+  dir <- system("mktemp -d", intern=T)
+  system(paste("rmdir", dir))         # remove it as it will be recreated by 'matrix'
+  m <- matrix(1, 0, 0, file=dir)
+  cbind(--m, matrix(1, 0, 2, dimnames=list(NULL, c("a", "b"))))
+  rbind(--m, matrix(1:4,2,2))
+  m <- load(dir)
+  all.equal(m, matrix(1:4, 2, 2, dimnames=list(NULL, c("a", "b"))))
+}
+RUnit_array_bind_from_0x2_mmapped <- function() {
+  dir <- system("mktemp -d", intern=T)
+  system(paste("rmdir", dir))         # remove it as it will be recreated by 'matrix'
+  m <- matrix(1, 0, 0, file=dir)
+  cbind(--m, matrix(1, 0, 2, dimnames=list(NULL, c("a", "b"))))
+  abind(--m, matrix(1, 0, 2), along=3)
+  rbind(--m, array(1:4, c(1, 2, 2)))  
+  m <- load(dir)
+  all.equal(m, array(1:4, c(1,2,2), dimnames=list(NULL, c("a", "b"), NULL)))
+}
+RUnit_vector_bind_from_0_mmapped <- function() {
+  dir <- system("mktemp -d", intern=T)
+  system(paste("rmdir", dir))         # remove it as it will be recreated by 'matrix'
+  v <- vector(mode="double", file=dir)
+  cbind(--v, vector(mode="double", 0))
+  rbind(--v, 1:2)
+  rm(v)
+  v <- load(dir)
+  all.equal(v, matrix(1:2, 1, 2))
+}
+tm <- |.2017-04-04 00:01:01 UTC.| + as.duration(1:10)
+RUnit_zts_bind_from_0x2_mmapped <- function() {
+  dir <- system("mktemp -d", intern=T)
+  system(paste("rmdir", dir))         # remove it as it will be recreated by 'matrix'
+  z <- zts(as.time(NULL), matrix(0, 0, 2, dimnames=list(NULL, c("a","b"))), file=dir)
+  z2 <- zts(tm[1:2], matrix(1:4, 2, 2))
+  rbind(--z, z2)
+  exp <- z[]
+  rm(z)
+  z <- load(dir)
+  all.equal(z, exp)
 }

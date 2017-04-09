@@ -1,4 +1,4 @@
-// (C) 2016 Leonardo Silvestri
+// (C) 2016-2017 Leonardo Silvestri
 //
 // This file is part of ztsdb.
 //
@@ -18,32 +18,26 @@
 
 #include "zts.hpp"
 
+static void checkDims(const arr::Array<double>& a,
+                      const arr::Array<Global::dtime>& idx) {
+  if (idx.getdim().size() != 1) {
+    throw range_error("zts index must be a vector");
+  }
+  // note that we accept the special case of the null array:
+  if (idx.size() != (a.getdim().size() ? a.getdim(0) : idx.size())) {
+    std::cout << "idx.size(): " << idx.size() << ", a.getdim(0): " << a.getdim(0) << std::endl;
+    throw range_error("mismatched dimensions for index and data");
+  }
+}
 
 arr::zts::zts(arr::rsv_t,
               const arr::Vector<arr::idx_type>& dim_p,
               const std::vector<Vector<zstring>> cnames) :
   a(std::make_shared<arr::Array<double>>(rsv, dim_p, cnames)), 
   idx(std::make_shared<arr::Array<Global::dtime>>(rsv, arr::Vector<arr::idx_type>({dim_p[0]})))
-{ }
-
-arr::zts::zts(const arr::Vector<arr::idx_type>& dim_p, 
-              const arr::Array<Global::dtime>& idx_p,
-              const arr::Array<double>& v_p, 
-              const std::vector<Vector<zstring>> cnames,
-              std::unique_ptr<AllocFactory>&& allocf_a,
-              std::unique_ptr<AllocFactory>&& allocf_idx) : 
-  a(std::make_shared<arr::Array<double>>(dim_p, v_p, cnames, std::move(allocf_a))),
-  idx(std::make_shared<arr::Array<Global::dtime>>(idx_p, std::move(allocf_idx)))
 {
-  if (cnames.size() == 0 && a->getdim().size() == v_p.getdim().size()) {
-    for (idx_type j=1; j<a->getdim().size(); ++j) {
-      // this doesn't work then a is a vector
-      *a->names[j] = v_p.getNames(j);        
-    }
-  }
-  if (!idx->isOrdered()) {
-    throw range_error("index is not in ascending order");
-  }
+  drop(*idx);
+  checkDims(*a, *idx);
 }
 
 
@@ -60,21 +54,23 @@ arr::zts::zts(const arr::Vector<arr::idx_type>& dim_p,
        vector<Vector<zstring>>(), 
        std::move(allocf_idx)))
 {
-  // check dims LLL
+  drop(*idx);
+  checkDims(*a, *idx);
   if (!idx->isOrdered()) {
     throw range_error("index is not in ascending order");
   }
 }
 
 
-arr::zts::zts(Array<Global::dtime> idx_p, 
+arr::zts::zts(arr::Array<Global::dtime> idx_p, 
               arr::Array<double> a_p,
               std::unique_ptr<AllocFactory>&& allocf_a,
               std::unique_ptr<AllocFactory>&& allocf_idx) :
   a(std::make_shared<arr::Array<double>>(a_p, std::move(allocf_a))), 
   idx(std::make_shared<arr::Array<Global::dtime>>(idx_p, std::move(allocf_idx)))
 {
-  // check dims LLL
+  drop(*idx);
+  checkDims(*a, *idx);
   if (!idx->isOrdered()) {
     throw range_error("index is not in ascending order");
   }
@@ -89,6 +85,8 @@ arr::zts::zts(std::unique_ptr<AllocFactory>&& allocf_a,
   a(std::make_shared<arr::Array<double>>(std::move(allocf_a))), 
   idx(std::make_shared<arr::Array<Global::dtime>>(std::move(allocf_idx)))
 {
+  drop(*idx);
+  checkDims(*a, *idx);
   if (!idx->isOrdered()) {
     throw range_error("index is not in ascending order");
   }  
@@ -102,6 +100,8 @@ arr::zts::zts(const zts& z,
     idx(std::make_shared<arr::Array<Global::dtime>>(*z.idx, std::move(allocf_idx)))
 {
   // std::cout << "making a zts copy!" << std::endl;
+  drop(*idx);
+  checkDims(*a, *idx);
 }
 
 
@@ -113,8 +113,6 @@ arr::zts::zts(zts&& z) {
 
 arr::zts& arr::zts::append(const char* buf, size_t buflen, size_t& offset) {
   if (a->getdim().size() == 0) {
-    // figure out if we want to support that...
-    /// LLL, yes, we do!!!
     throw std::out_of_range("append on null zts not implemented");        
   }
   idx->append(buf, buflen, offset);  // time array
@@ -214,7 +212,7 @@ arr::zts& arr::zts::abind(const zts& z, idx_type d, const string& prefix) {
 
 arr::zts& arr::zts::abind(const Array<double>& u, idx_type d, const string& prefix) {
   if (d == 0) {
-    throw range_error("can't bind a array to a zts in first dimension");
+    throw range_error("can't bind an array to a zts in first dimension");
   }
   a->abind(u, d, prefix);
   return *this;

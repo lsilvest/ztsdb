@@ -171,7 +171,7 @@ void core::loadBuiltinFunctions(interp::BaseFrame* r) {
   val::VBuiltinG(r, "length", "function(x) NULL\n", funcs::length);
   val::VBuiltinG(r,
                  "matrix",
-                 "function(data = NA, nrow = 1, ncol = 1, byrow = FALSE, "
+                 "function(data = NaN, nrow = 1, ncol = 1, byrow = FALSE, "
                  "dimnames = NULL, file=\"\") NULL\n",
                  funcs::make_matrix, true,
                  {{"nrow",     {{val::vt_double}, true}},
@@ -181,7 +181,7 @@ void core::loadBuiltinFunctions(interp::BaseFrame* r) {
                   {"file",     {{val::vt_string}, true}}});
   val::VBuiltinG(r,
                  "array",
-                 "function(data = NA, dim = length(data), "
+                 "function(data = NaN, dim = length(data), "
                  "dimnames = NULL, file=\"\") NULL\n",
                  funcs::make_array, true,
                  {{"dim",      {{val::vt_double}, true}},
@@ -232,15 +232,10 @@ void core::loadBuiltinFunctions(interp::BaseFrame* r) {
                   {"loop_max", {{val::vt_double},   true}}});
   val::VBuiltinG(r,
                  "zts",
-                 "function(idx, data = NA, "
-                 "dim = if (length(dim(data)) > 1) dim(data) "
-                 "      else c(length(idx), length(data) / length(idx)), "
-                 "dimnames = NULL, file=\"\") NULL\n",
+                 "function(idx, data = NaN, file=\"\") NULL\n",
                  funcs::make_zts, true,
                  {{"idx",      {{val::vt_time              }, true}},
                   {"data",     {{val::vt_double            }, true}},
-                  {"dim",      {{val::vt_double            }, true}},
-                  {"dimnames", {{val::vt_null, val::vt_list}, true}},
                   {"file",     {{val::vt_string            }, true}}});
   val::VBuiltinG(r,
                  "zts.idx",

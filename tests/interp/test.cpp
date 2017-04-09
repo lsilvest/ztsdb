@@ -444,7 +444,7 @@ TEST(interp_zts_3_2) {
   auto eout = parse("idx <- c(|.2015-03-09 06:38:01 America/New_York.|, "
         "|.2015-03-09 06:38:02 America/New_York.|, "
         "|.2015-03-09 06:38:03 America/New_York.|);"
-        "zts(idx, 1.0:6, dim=c(3, 2), dimnames=list(NULL, c(\"one\", \"two\"))) \n");
+        "zts(idx, matrix(1.0:6, 3, 2, dimnames=list(NULL, c(\"one\", \"two\")))) \n");
   auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
   auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones);
   auto dt3 = tz::dtime_from_string("2015-03-09 06:38:03 America/New_York", tzones);
@@ -457,7 +457,7 @@ TEST(interp_zts_3_2_automatic_dim) {
   auto eout = parse("idx <- c(|.2015-03-09 06:38:01 America/New_York.|, "
         "|.2015-03-09 06:38:02 America/New_York.|, "
         "|.2015-03-09 06:38:03 America/New_York.|);"
-        "zts(idx=idx, data=1.0:6, dimnames=list(NULL, c(\"one\", \"two\"))) \n");
+        "zts(idx=idx, data=matrix(1.0:6, 3, 2, dimnames=list(NULL, c(\"one\", \"two\")))) \n");
   auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
   auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones);
   auto dt3 = tz::dtime_from_string("2015-03-09 06:38:03 America/New_York", tzones);
@@ -467,8 +467,8 @@ TEST(interp_zts_3_2_automatic_dim) {
 TEST(interp_zts_2_2_2) {
   auto eout = parse("idx <- c(|.2015-03-09 06:38:01 America/New_York.|, "
         "|.2015-03-09 06:38:02 America/New_York.|);"
-        "zts(idx, 1.0:8, dim=c(2,2,2), "
-        "dimnames=list(NULL, c(\"one\", \"two\"), c(\"1\",\"2\"))) \n");
+        "zts(idx, array(1.0:8, dim=c(2,2,2), "
+        "dimnames=list(NULL, c(\"one\", \"two\"), c(\"1\",\"2\")))) \n");
   auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
   auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones);
   auto z = arr::zts({2,2,2}, {dt1, dt2}, {1,2,3,4,5,6,7,8}, {{}, {"one", "two"}, {"1","2"}});

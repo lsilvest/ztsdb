@@ -1570,6 +1570,72 @@ TEST(array_append_to_0x3x3_array) {
   ASSERT_TRUE(expected == res);
 }
 
+// ----- drop:
+TEST(array_drop_0_array) {
+  auto a = arr::Array<double>({0}, arr::Vector<double>{});  
+  ASSERT_TRUE(a == drop(a));
+}
+TEST(array_drop_1_array) {
+  auto a = arr::Array<double>({1}, arr::Vector<double>{1});  
+  ASSERT_TRUE(a == drop(a));
+}
+TEST(array_drop_2_array) {
+  auto a = arr::Array<double>({2}, arr::Vector<double>{1,2});  
+  ASSERT_TRUE(a == drop(a));
+}
+TEST(array_drop_2x3_array) {
+  auto a = arr::Array<double>({2,3}, arr::Vector<double>{1,2,3,4,5,6});  
+  ASSERT_TRUE(a == drop(a));
+}
+TEST(array_drop_2x3x1_array) {
+  auto a = arr::Array<double>({2,3,1}, arr::Vector<double>{1,2,3,4,5,6});  
+  auto exp = arr::Array<double>({2,3}, arr::Vector<double>{1,2,3,4,5,6});  
+  ASSERT_TRUE(drop(a) == exp);
+}
+TEST(array_drop_2x3x1x1_array) {
+  auto a = arr::Array<double>({2,3,1,1}, arr::Vector<double>{1,2,3,4,5,6});  
+  auto exp = arr::Array<double>({2,3}, arr::Vector<double>{1,2,3,4,5,6});  
+  ASSERT_TRUE(drop(a) == exp);
+}
+TEST(array_drop_2x1x1x3_array) {
+  auto a = arr::Array<double>({2,1,1,3}, arr::Vector<double>{1,2,3,4,5,6});  
+  auto exp = arr::Array<double>({2,3}, arr::Vector<double>{1,2,3,4,5,6});  
+  ASSERT_TRUE(drop(a) == exp);
+}
+TEST(array_drop_2x3_array_named) {
+  auto a = arr::Array<double>({2,3},
+                              arr::Vector<double>{1,2,3,4,5,6},
+                              {{"1","2"}, {"i","ii","iii"}});  
+  ASSERT_TRUE(a == drop(a));
+}
+TEST(array_drop_2x3x1_array_named) {
+  auto a = arr::Array<double>({2,3,1},
+                              arr::Vector<double>{1,2,3,4,5,6},
+                              {{"1","2"}, {"i","ii","iii"},{"a"}});  
+  auto exp = arr::Array<double>({2,3},
+                                arr::Vector<double>{1,2,3,4,5,6},
+                                {{"1","2"}, {"i","ii","iii"}});  
+  ASSERT_TRUE(drop(a) == exp);
+}
+TEST(array_drop_2x3x1x1_array_named) {
+  auto a = arr::Array<double>({2,3,1,1},
+                              arr::Vector<double>{1,2,3,4,5,6},
+                              {{"1","2"}, {"i","ii","iii"},{"a"},{"I"}});  
+  auto exp = arr::Array<double>({2,3},
+                                arr::Vector<double>{1,2,3,4,5,6},
+                                {{"1","2"}, {"i","ii","iii"}});
+  ASSERT_TRUE(drop(a) == exp);
+}
+TEST(array_drop_2x1x1x3_array_named) {
+  auto a = arr::Array<double>({2,1,1,3},
+                              arr::Vector<double>{1,2,3,4,5,6},
+                              {{"1","2"},{"a"},{"I"},{"i","ii","iii"}});  
+  auto exp = arr::Array<double>({2,3},
+                                arr::Vector<double>{1,2,3,4,5,6},
+                                {{"1","2"}, {"i","ii","iii"}});
+  ASSERT_TRUE(drop(a) == exp);
+}
+
 
 // ----- mmaped arrays:
 

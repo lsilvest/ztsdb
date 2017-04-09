@@ -97,7 +97,7 @@ TEST(itime_subset_zts_dtime) {
   auto eout = parse
     ("idx <- c(|.2015-03-09 06:38:01 America/New_York.|,|.2015-03-09 06:38:02 America/New_York.|,"
      "         |.2015-03-09 06:38:03 America/New_York.|);"
-     "z   <- zts(idx, 1.0:6, dim=c(3, 2));"
+     "z   <- zts(idx, matrix(1.0:6, 3, 2));"
      "z[idx[c(1,2)],]\n");
   auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
   auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones);
@@ -114,7 +114,7 @@ TEST(itime_subset_zts_dtime_names) {
     ("idx <- c(|.2015-03-09 06:38:01 America/New_York.|,"
      "         |.2015-03-09 06:38:02 America/New_York.|,"
      "         |.2015-03-09 06:38:03 America/New_York.|);"
-     "z   <- zts(idx, 1.0:6, dim=c(3, 2), dimnames=list(NULL, c(\"one\", \"two\")));"
+     "z   <- zts(idx, matrix(1.0:6, 3, 2, dimnames=list(NULL, c(\"one\", \"two\"))));"
      "z[idx[c(1,2)],]\n");
   auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
   auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones);
@@ -131,7 +131,7 @@ TEST(itime_subset_zts_dtime_1row) {
     ("idx <- c(|.2015-03-09 06:38:01 America/New_York.|,"
      "         |.2015-03-09 06:38:02 America/New_York.|,"
      "         |.2015-03-09 06:38:03 America/New_York.|);"
-     "z   <- zts(idx, 1.0:6, dim=c(3, 2));"
+     "z   <- zts(idx, matrix(1.0:6, 3, 2));"
      "z[idx[2],]\n");
   auto dt1 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones);
   auto z = arr::zts({1,2}, {dt1}, {2,5}, {{}, {}});
@@ -147,7 +147,7 @@ TEST(itime_subset_zts_dtime_names_1row) {
     ("idx <- c(|.2015-03-09 06:38:01 America/New_York.|,"
      "         |.2015-03-09 06:38:02 America/New_York.|,"
      "         |.2015-03-09 06:38:03 America/New_York.|);"
-     "z   <- zts(idx, 1.0:6, dim=c(3, 2), dimnames=list(NULL, c(\"one\", \"two\")));"
+     "z   <- zts(idx, matrix(1.0:6, 3, 2, dimnames=list(NULL, c(\"one\", \"two\"))));"
      "z[idx[1],]\n");
   auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
   auto z = arr::zts({1,2}, {dt1}, {1,4}, {{}, {"one", "two"}});
@@ -225,7 +225,7 @@ TEST(itime_subset_zts_interval) {
   auto eout = parse
     ("idx <- c(|.2015-03-09 06:38:01 America/New_York.|,|.2015-03-09 06:38:02 America/New_York.|,"
      "         |.2015-03-09 06:38:03 America/New_York.|);"
-     "z   <- zts(idx, 1.0:6, dim=c(3, 2));"
+     "z   <- zts(idx, matrix(1.0:6, 3, 2));"
      "ivl <- |+2015-03-09 06:38:01 America/New_York -> 2015-03-09 06:38:02 America/New_York+|;"
      "z[ivl,]\n");
   auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
@@ -242,7 +242,7 @@ TEST(itime_subset_zts_interval_names) {
   auto eout = parse
     ("idx <- c(|.2015-03-09 06:38:01 America/New_York.|,|.2015-03-09 06:38:02 America/New_York.|,"
      "         |.2015-03-09 06:38:03 America/New_York.|);"
-     "z   <- zts(idx, 1.0:6, dim=c(3, 2), dimnames=list(NULL, c(\"one\", \"two\")));"
+     "z   <- zts(idx, matrix(1.0:6, 3, 2, dimnames=list(NULL, c(\"one\", \"two\"))));"
      "ivl <- |+2015-03-09 06:38:01 America/New_York -> 2015-03-09 06:38:02 America/New_York+|;"
      "z[ivl,]\n");
   auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
@@ -255,7 +255,7 @@ TEST(itime_subset_zts_interval_1row) {
   auto eout = parse
     ("idx <- c(|.2015-03-09 06:38:01 America/New_York.|,|.2015-03-09 06:38:02 America/New_York.|,"
      "         |.2015-03-09 06:38:03 America/New_York.|);"
-     "z   <- zts(idx, 1.0:6, dim=c(3, 2));"
+     "z   <- zts(idx, matrix(1.0:6, 3, 2));"
      "ivl <- |-2015-03-09 06:38:01 America/New_York -> 2015-03-09 06:38:02 America/New_York+|;"
      "z[ivl,]\n");
   auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones);
@@ -267,7 +267,7 @@ TEST(itime_subset_zts_interval_names_1row) {
   auto eout = parse
     ("idx <- c(|.2015-03-09 06:38:01 America/New_York.|,|.2015-03-09 06:38:02 America/New_York.|,"
      "         |.2015-03-09 06:38:03 America/New_York.|);"
-     "z   <- zts(idx, 1.0:6, dim=c(3, 2), dimnames=list(NULL, c(\"one\", \"two\")));"
+     "z   <- zts(idx, matrix(1.0:6, 3, 2, dimnames=list(NULL, c(\"one\", \"two\"))));"
      "ivl <- |+2015-03-09 06:38:01 America/New_York -> 2015-03-09 06:38:02 America/New_York-|;"
      "z[ivl,]\n");
   auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
@@ -282,7 +282,7 @@ TEST(itime_subsassign_zts_dtime) {
   auto eout = parse
     ("idx <- c(|.2015-03-09 06:38:01 America/New_York.|,|.2015-03-09 06:38:02 America/New_York.|,"
      "         |.2015-03-09 06:38:03 America/New_York.|);"
-     "z   <- zts(idx, 1.0:6, dim=c(3, 2), dimnames=list(NULL, c(\"one\", \"two\")));"
+     "z   <- zts(idx, matrix(1.0:6, 3, 2, dimnames=list(NULL, c(\"one\", \"two\"))));"
      "z[idx[c(1,2)],] <- c(11,12,14,15)\n");
   auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
   auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones);
@@ -295,7 +295,7 @@ TEST(itime_scalar_subsassign_zts_dtime) {
   auto eout = parse
     ("idx <- c(|.2015-03-09 06:38:01 America/New_York.|,|.2015-03-09 06:38:02 America/New_York.|,"
      "         |.2015-03-09 06:38:03 America/New_York.|);"
-     "z   <- zts(idx, 1.0:6, dim=c(3, 2), dimnames=list(NULL, c(\"one\", \"two\")));"
+     "z   <- zts(idx, matrix(1.0:6, 3, 2, dimnames=list(NULL, c(\"one\", \"two\"))));"
      "z[idx[c(1,2)],] <- 0\n");
   auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
   auto dt2 = tz::dtime_from_string("2015-03-09 06:38:02 America/New_York", tzones);
@@ -311,7 +311,7 @@ TEST(itime_subassign_zts_interval) {
     ("idx <- c(|.2015-03-09 06:38:01 America/New_York.|,"
      "         |.2015-03-09 06:38:02 America/New_York.|,"
      "         |.2015-03-09 06:38:03 America/New_York.|);"
-     "z   <- zts(idx, 1.0:6, dim=c(3, 2), dimnames=list(NULL, c(\"one\", \"two\")));"
+     "z   <- zts(idx, matrix(1.0:6, 3, 2, dimnames=list(NULL, c(\"one\", \"two\"))));"
      "ivl <- |+2015-03-09 06:38:01 America/New_York -> 2015-03-09 06:38:02 America/New_York+|;"
      "z[ivl,] <- c(11,12,14,15)\n");
   auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);
@@ -328,7 +328,7 @@ TEST(itime_scalar_subassign_zts_interval) {
   auto eout = parse
     ("idx <- c(|.2015-03-09 06:38:01 America/New_York.|,|.2015-03-09 06:38:02 America/New_York.|,"
      "         |.2015-03-09 06:38:03 America/New_York.|);"
-     "z   <- zts(idx, 1.0:6, dim=c(3, 2), dimnames=list(NULL, c(\"one\", \"two\")));"
+     "z   <- zts(idx, matrix(1.0:6, 3, 2, dimnames=list(NULL, c(\"one\", \"two\"))));"
      "ivl <- |+2015-03-09 06:38:01 America/New_York -> 2015-03-09 06:38:02 America/New_York+|;"
      "z[ivl,] <- 0\n");
   auto dt1 = tz::dtime_from_string("2015-03-09 06:38:01 America/New_York", tzones);

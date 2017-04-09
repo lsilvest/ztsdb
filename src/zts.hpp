@@ -39,13 +39,6 @@ namespace arr {
         const std::vector<Vector<zstring>> cnames=std::vector<Vector<zstring>>());
 
     zts(const Vector<idx_type>& dim_p, 
-        const Array<Global::dtime>& tidx_p,
-        const Array<double>& v_p, 
-        const std::vector<Vector<zstring>> cnames=std::vector<Vector<zstring>>(),
-        std::unique_ptr<AllocFactory>&& allocf_a=std::make_unique<FlexAllocFactory>(),
-        std::unique_ptr<AllocFactory>&& allocf_idx=std::make_unique<FlexAllocFactory>());
-    
-    zts(const Vector<idx_type>& dim_p, 
         const Vector<Global::dtime>& tidx_p,
         const Vector<double>& v_p, 
         const std::vector<Vector<zstring>> cnames=std::vector<Vector<zstring>>(),
