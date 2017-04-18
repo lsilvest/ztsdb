@@ -28,4 +28,4 @@ build:
     - git config user.name "lsilvest"
     - git config user.email "lsilvestri@ztsdb.org"
     - git commit -am "automated docker build - https://gitlab.com/lsilvest/ztsdb/commit/$rev"
-    - git push https://lsilvest:$GITHUB_PWD@github.com/lsilvest/ztsdb_dockerfile.git --all
+    - git push https://lsilvest:$GITHUB_PWD@github.com/lsilvest/ztsdb_dockerfile.git --all --quiet
