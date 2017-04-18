@@ -171,7 +171,7 @@ int MsgHandler::run() {
 	if (isatty(fd_input)) {
 	  cout << "> " << flush;
 	}
-	std::cout << "calling reset()" << std::endl;
+	// std::cout << "calling reset()" << std::endl;
 	localContext->reset();
 	waitingOnResp = 0;
 	enableKeyboardPoll();
