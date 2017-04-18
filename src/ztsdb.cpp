@@ -122,6 +122,11 @@ std::string getlogfile(std::string progname) {
 }
 
 
+void defineConstants(interp::BaseFrame* r) {
+  r->add("version"s, val::make_array(arr::zstring(CMDLINE_PARSER_VERSION)));
+}
+
+
 /// À la mémoire de Pieter Hintjens.
 int main(int argc, char *argv[]) {
   gengetopt_args_info args_info;
@@ -198,7 +203,8 @@ int main(int argc, char *argv[]) {
 
       // load predefined functions in global env:
       core::loadBuiltinFunctions(base.get());
-
+      defineConstants(base.get());
+      
       // set the signal mask before running the comm thread:
       sigset_t set;
       int s;
