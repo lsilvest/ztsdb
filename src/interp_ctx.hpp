@@ -170,7 +170,7 @@ namespace zcore {
                  val::SpFuture& future);
     void setStop();
 
-    virtual int interpret(InterpState& state) = 0;
+    virtual int interpret(InterpState& state, const val::Value* retval=nullptr) = 0;
 
     /// When deleting a state, sends or displays an error message.
     virtual void sendGcStateMessage(const string& ip, 
@@ -212,7 +212,7 @@ namespace zcore {
     InterpCtxLocal(MsgHandlerBase& ir_p, interp::shpfrm& global) : 
       InterpCtx(ir_p, global) { }
 
-    virtual int interpret(InterpState& state);
+    virtual int interpret(InterpState& state, const val::Value* retval=nullptr);
     virtual void sendGcStateMessage(const string& ip, 
                                     int port, 
                                     Global::conn_id_t peerid, 
@@ -227,7 +227,7 @@ namespace zcore {
     InterpCtxRemote(MsgHandlerBase& ir_p, interp::shpfrm& global) : 
       InterpCtx(ir_p, global) { }
 
-    virtual int interpret(InterpState& state);
+    virtual int interpret(InterpState& state, const val::Value* retval=nullptr);
     virtual void sendGcStateMessage(const string& ip, 
                                     int port, 
                                     Global::conn_id_t peerid, 
@@ -239,7 +239,7 @@ namespace zcore {
       InterpCtx(ir_p, global), timer_wptr(timer_p) { timer_p->start(); }
 
     virtual void removeTimer(val::SpTimer& tmr);
-    virtual int interpret(InterpState& state);
+    virtual int interpret(InterpState& state, const val::Value* retval=nullptr);
     virtual void sendGcStateMessage(const string& ip, 
                                     int port, 
                                     Global::conn_id_t peerid, 

@@ -46,7 +46,7 @@ extern zlog::Logger lg;
 
 static void sigint_handler(int signum)
 {
-  std::cout << "signum: " << signum << std::endl;
+  // std::cout << "signum: " << signum << std::endl;
   zcore::InterpCtx::sigint = 1;
   zcore::MsgHandler::waitingOnResp = 0;
 }

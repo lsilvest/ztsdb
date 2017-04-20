@@ -170,12 +170,14 @@ size_t zcore::InterpCtx::readRspData(Global::reqid_t reqid,
 #ifdef DEBUG
     cout << "| rsp->second.name: " << rsp->second.name << endl;
 #endif
+    ++stats.nbInRSP;
     if (rsp->second.future.use_count() > 1 && rsp->second.future->getvalptr()) {
       *rsp->second.future->getvalptr() = std::move(rsp->second.valstack[0].val);
+      return interpret(state, rsp->second.future->getvalptr());
     }
-    ++stats.nbInRSP;
-
-    return interpret(state);
+    else {
+      return interpret(state, nullptr);
+    }
   }
 
   return 1;                     // indicates we are not finished
@@ -544,12 +546,21 @@ int zcore::InterpCtxLocal::processReqData(Global::conn_id_t peerid,
 }
 
 
-int zcore::InterpCtxLocal::interpret(InterpState& state)
+int zcore::InterpCtxLocal::interpret(InterpState& state, const val::Value* retval)
 {
   s = &state;
   sigint = 0;
   while (s->k->next && !sigint) {
     try {
+      if (retval && retval->which() == val::vt_error) {
+        const auto& ve = get<val::VError>(*retval);
+        retval = nullptr;
+        throw interp::RemoteErrorException(ve.what);
+      }
+      else {
+        retval = nullptr;
+      }
+
       s->k = interp::step(s->k, s->fstack, *this);
     }
     catch (const interp::FutureException& e) {
@@ -588,7 +599,7 @@ int zcore::InterpCtxLocal::interpret(InterpState& state)
           // interpreter (for example it might have happened on the
           // lower layers during a req/rsp, etc.); in this case we
           // don't have a precise location, so we use the location of
-          // the control of the step which is better than nothing:
+          // the control of the step (which is better than nothing):
           if (s->k->control->loc.begin.line) {
             std::stringstream ss;
             std::cerr << s->k->control->loc << ": ";
@@ -609,6 +620,7 @@ int zcore::InterpCtxLocal::interpret(InterpState& state)
         for (auto &elt : s->fstack) { elt->clear(); }
         states.erase(state.reqid);
         s = nullptr;
+        ir.enableKeyboardPoll();
         return 0;
       }
     }
@@ -618,6 +630,12 @@ int zcore::InterpCtxLocal::interpret(InterpState& state)
     const auto& lv = r->find(".Last.value");
     if (lv.which() == val::vt_future) {
       return 1;
+    }
+    if (lv.which() == val::vt_error) {
+      auto ve = get<val::VError>(lv);
+      std::cerr << "Error: " << std::flush;
+      std::cout << val::display(lv) << std::endl;
+      r->add(".Last.error", ve);
     }
     else {
       std::cout << val::display(lv) << std::endl;
@@ -650,7 +668,7 @@ void zcore::InterpCtxLocal::sendGcStateMessage(const string& ip,
 
 
 /// pass the iterator to InterpState for easier deletion! LLL
-int zcore::InterpCtxRemote::interpret(InterpState& state)
+int zcore::InterpCtxRemote::interpret(InterpState& state, const val::Value* retval)
 {
   s = &state;
   sigint = 0;
@@ -708,7 +726,7 @@ int zcore::InterpCtxRemote::interpret(InterpState& state)
         auto n = ir.sendRsp(state.peerid, 
                             state.reqid, 
                             state.sourceid, 
-                            val::VError{"Remote error: "s + locInfo + e.what()});
+                            val::VError{"remote: "s + locInfo + e.what()});
         ++stats.nbOutRSP;
         stats.bytesOutRSP += n;
         states.erase(state.reqid);
@@ -738,7 +756,7 @@ int zcore::InterpCtxRemote::interpret(InterpState& state)
     }
     if (val::any_of(rsp, [](const val::Value& v) { return !zcore::isTransmissible(v); })) {
       auto n = ir.sendRsp(state.peerid, state.reqid, state.sourceid, 
-                          val::VError{"Remote error: untransmissible type ("s 
+                          val::VError{"remote: untransmissible type ("s 
                               + std::to_string(rsp.which()) + ")"});
       ++stats.nbOutRSP;
       stats.bytesOutRSP += n;
@@ -766,7 +784,7 @@ void zcore::InterpCtxRemote::sendGcStateMessage(const string& ip,
   auto n = ir.sendRsp(state.peerid, 
                       state.reqid, 
                       state.sourceid, 
-                      val::VError{"Remote error: response time out from "s + ip + ":" 
+                      val::VError{"remote: response time out from "s + ip + ":" 
                           + std::to_string(port) + " [" + std::to_string(peerid) + ']'});
   ++stats.nbOutRSP;
   stats.bytesOutRSP += n;
@@ -787,7 +805,7 @@ void zcore::InterpCtxTimer::removeTimer(val::SpTimer& tmr) {
 
 
 /// pass the iterator to InterpState for easier deletion! LLL
-int zcore::InterpCtxTimer::interpret(InterpState& state)
+int zcore::InterpCtxTimer::interpret(InterpState& state, const val::Value* retval)
 {
   s = &state;
   sigint = 0;

@@ -7,13 +7,14 @@ include Makefile.rules
 SRCS = main_parser/lexer.cpp main_parser/parser.cpp			\
 	config_parser/cfglexer.cpp config_parser/cfgparser.cpp		\
 	parser_ctx.cpp anf.cpp array.cpp interp.cpp ast.cpp		\
-	load_builtin.cpp valuevar.cpp valuevar_ic.cpp dname.cpp		\
-	net_handler.cpp msg_handler.cpp interp_ctx.cpp ztsdb.cpp	\
-	encode.cpp misc.cpp zts.cpp display.cpp base_funcs.cpp		\
-	base_funcs_math.cpp base_funcs_array.cpp			\
-	base_funcs_array_idx.cpp base_funcs_set.cpp base_funcs_ic.cpp	\
-	base_funcs_roll.cpp conversion_funcs.cpp csv.cpp string.cpp	\
-	base_types.cpp timezone/ztime.cpp timezone/zone.cpp		\
+	load_builtin.cpp load_function.cpp valuevar.cpp			\
+	valuevar_ic.cpp dname.cpp net_handler.cpp msg_handler.cpp	\
+	interp_ctx.cpp ztsdb.cpp encode.cpp misc.cpp zts.cpp		\
+	display.cpp base_funcs.cpp base_funcs_math.cpp			\
+	base_funcs_array.cpp base_funcs_array_idx.cpp			\
+	base_funcs_set.cpp base_funcs_ic.cpp base_funcs_roll.cpp	\
+	conversion_funcs.cpp csv.cpp string.cpp base_types.cpp		\
+	timezone/ztime.cpp timezone/zone.cpp				\
 	timezone/ztime_vector.cpp timezone/localtime.cpp		\
 	unop_binop_funcs.cpp config_ctx.cpp config.cpp			\
 	interp_error.cpp zcpp.cpp period.cpp

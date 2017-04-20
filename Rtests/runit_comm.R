@@ -84,3 +84,16 @@ RUnit_comm_etexprsublist <- function() {
 RUnit_comm_zts <- function() {
     all.equal(z1, con1 ? ++z1)
 }
+
+## communication errors:
+RUnit_comm_remote_error_synchronous <- function() {
+  ## note the assignment to 'a'; if not, like in the next test, the
+  ## call in asynchronous and no exception is raised:
+  tryCatch(a <- (con1 ? "a" < 1), 
+           .Last.error == "remote: invalid type for binary operator (string < double)")
+}
+RUnit_comm_remote_error_asynchronous <- function() {
+  ## note the assignment to 'a'; if not, like in the next test, the
+  ## call in asynchronous and no exception is raised:
+  tryCatch({ con1 ? "a" < 1; 2017 }, "hello") == 2017
+}

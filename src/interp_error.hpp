@@ -30,6 +30,10 @@ namespace interp {
     FutureException(const std::string& what_p) : std::out_of_range(what_p) { }
   };
 
+  struct RemoteErrorException : public std::out_of_range {
+    RemoteErrorException(const std::string& what_p) : std::out_of_range(what_p) { }
+  };
+
   struct EvalException : public std::out_of_range {
     EvalException(const std::string& what_p, const yy::location& loc_p) : 
       std::out_of_range(what_p), loc(loc_p) { }

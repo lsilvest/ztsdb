@@ -77,6 +77,8 @@ SET(SOURCE_FILES
   interp.hpp
   load_builtin.cpp
   load_builtin.hpp
+  load_function.cpp
+  load_function.hpp
   logging.hpp
   misc.cpp
   misc.hpp

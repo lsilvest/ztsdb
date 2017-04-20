@@ -24,7 +24,7 @@
 ## For more information, please refer to <http://unlicense.org/>
 
 ## create a connection 'c1' towards a ztsdb instance
-c1 <- connection("127.0.0.1", 123123)
+c1 <- connection("127.0.0.1", 12300)
 
 ## querying the futures data can then be made like this:
 id <- "CD"

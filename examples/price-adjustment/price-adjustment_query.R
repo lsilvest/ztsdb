@@ -3,15 +3,15 @@
 ## order to populate the data
 
 ## create a connection 'c1' towards a ztsdb instance
-c1 <- connection("127.0.0.1", 123123)
+c1 <- connection("127.0.0.1", 12300)
 
 
 ids <- list(AAPL="AAPL", MSFT="MSFT", XOM="XOM")
 adjusted_list <- lapply(ids, function(x) c1 ? get_adjusted_price(++x))
 
 
-## The result will be a list of three 'xts' containing adjusted
-## data:
+## If run from R, the result will be a list of three 'xts' containing
+## adjusted data:
 ##
 ## str(adjusted_list)
 ## List of 3
@@ -42,3 +42,5 @@ adjusted_list <- lapply(ids, function(x) c1 ? get_adjusted_price(++x))
 ##   xts Attributes:  
 ## List of 1
 ##   ..$ descr: chr ""
+
+## If run from ztsdb, the result will be a list of three 'zts'.

@@ -109,6 +109,7 @@ static Array<T> makeVector(arr::Array<T>& r,
     case val::vt_clos:
     case val::vt_connection:
     case val::vt_timer:
+    case val::vt_zts:
       r.concat(val::getVal(e), val::getName(e));    
       break;
     case val::vt_null:          // like in R, NULLs are just ignored in 'c'
@@ -167,6 +168,9 @@ val::Value funcs::c(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   std::cout << "c..." << std::endl;
 #endif
   auto vt = getCType(v.cbegin(), v.cend()); // examines all elts to determine type of vector
+  if (vt == val::vt_zts) {
+    vt = val::vt_list;
+  }
   
   switch (vt) {
   case val::vt_double:

@@ -338,7 +338,7 @@ namespace val {
     /// difficult to know the exact Value location of a future in
     /// advance, a future is created in two steps. The memory position
     /// is created here and then the Value location will be updated
-    /// with 'updateValuePtr'.
+    /// with 'setvalptr'.
     VFuture() : val(nullptr) { } 
 
     void setvalptr(val::Value& val_p, const std::shared_ptr<interp::BaseFrame>& frame_p);
@@ -421,7 +421,8 @@ namespace val {
     string operator()(const std::shared_ptr<VClos>&)  const { return "function"; }
     string operator()(const VConn&)                   const { return "connection"; }
     string operator()(const VTimer&)                  const { return "timer"; }
-    string operator()(const VBuiltinG&)               const { return "builtin"; }
+    string operator()(const SpBuiltin&)               const { return "builtin"; }
+    string operator()(const SpFuture&)                const { return "future"; }
     string operator()(const SpVAD&)                   const { return "double"; }
     string operator()(const SpVAS&)                   const { return "character"; }
     string operator()(const SpVAB&)                   const { return "logical"; }
