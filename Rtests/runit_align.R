@@ -15,9 +15,7 @@
 ## You should have received a copy of the GNU General Public License
 ## along with ztsdb.  If not, see <http://www.gnu.org/licenses/>.
 
-one_second <- as.duration(1e9)
-one_minute <- 60*one_second
-one_hour   <- 60*one_minute
+one_second <- as.duration(1e9); one_minute <- 60*one_second; one_hour   <- 60*one_minute
 
 RUnit_align_idx <- function() {
     a <- seq(|.2015-01-01 12:00:00 America/New_York.|,
@@ -63,4 +61,34 @@ RUnit_align_count <- function() {
     exp[1,] <- 0
     exp[|-2015-01-01 15:00:00 America/New_York -> 2015-01-02 15:00:00 America/New_York+|,] <- 0
     all(a == exp)
+}
+RUnit_align_closest_enclosing <- function() {
+  idx <- seq(|.2015-01-01 12:00:00 America/New_York.|,
+             |.2015-01-01 15:00:00 America/New_York.|,
+             by=one_second)
+  data <- 0:10800;
+  z <- zts(idx, matrix(data, length(data), 1))
+  b <- seq(|.2015-01-01 11:00:00 America/New_York.|,
+           |.2015-01-01 16:00:00 America/New_York.|,
+           by=one_minute)
+  a <- align(z, b, method="closest")
+  exp <- rbind(zts(head(b,60), matrix(NaN, 60, 1)),
+               z[seq(1, 10801, 60), ],
+               zts(tail(b,60), matrix(NaN, 60, 1)))
+  all.equal(a, exp)
+}
+RUnit_align_count_enclosing <- function() {
+  idx <- seq(|.2015-01-01 12:00:00 America/New_York.|,
+             |.2015-01-01 14:59:59 America/New_York.|,
+             by=one_second)
+  data <- 0:10799
+  z <- zts(idx, matrix(data, length(data), 1))
+  b <- seq(|.2015-01-01 11:00:00 America/New_York.|,
+           |.2015-01-01 16:00:00 America/New_York.|,
+           by=one_minute)
+  a <- align(z, b, -one_minute, method="count")
+  exp <- rbind(zts(head(b,61), matrix(0, 61, 1)),
+               zts(head(tail(b,-61), -60), matrix(60, 180, 1)),
+               zts(tail(b,60), matrix(0, 60, 1)))
+  all.equal(a, exp)
 }

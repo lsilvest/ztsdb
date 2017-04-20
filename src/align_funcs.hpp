@@ -71,7 +71,6 @@ namespace ztsdb {
         > right;
           
       for (auto i=b; i!=e; ++i) {
-        std::cout << "*i: " << *i << std::endl;
         if (left.size() == right.size()) {
           if (!left.size() || *i < left.top()) {
             left.push(*i);

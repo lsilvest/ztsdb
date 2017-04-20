@@ -72,7 +72,7 @@ TEST(align_closest_double) {
     (x, y, xdata, ydata, start, end);
   std::cout << ydata.size() << std::endl;
   for (size_t i=0; i<ydata.size(); ++i) {
-    std::cout << ydata[i] << std::endl;
+    std::cout << ydata[i] << ", " << exp[i] << std::endl;
   }
   ASSERT_TRUE(ydata == exp);
 }

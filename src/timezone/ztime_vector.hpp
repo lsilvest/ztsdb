@@ -82,7 +82,7 @@ namespace arr {                 // should be in tz? LLL
       
       // advance until we have a point in x that is in the interval
       // defined around yi:
-      while (ix < x.size() && x[ix] < ystart) ++ix;
+      while (ix <= x.size() && x[ix] < ystart) ++ix;
       if (ix >= x.size() || x[ix] > yend) {
         res.push_back(NANF::f());
         continue;
@@ -121,7 +121,7 @@ namespace arr {                 // should be in tz? LLL
       // advance until we have a point in x that is in the interval
       // defined around yi:
       while (ix < x.size() && x[ix] < ystart) ++ix;
-      if (ix > x.size() || x[ix] > yend) {
+      if (ix >= x.size() || x[ix] > yend) {
         ydata.push_back(NANF::f());
         continue;
       }
@@ -158,7 +158,7 @@ namespace arr {                 // should be in tz? LLL
       auto iter = std::lower_bound(x.begin() + ix, x.end(), ystart);
       ix = iter - x.begin();
       
-      if (ix > x.size() || x[ix] >= yend) {
+      if (ix >= x.size() || x[ix] >= yend) {
         ydata.push_back(F::f(xdata.end(), xdata.end())); // empty interval
         continue;
       }

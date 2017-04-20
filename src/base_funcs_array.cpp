@@ -551,8 +551,9 @@ static void checkZtsBindInDim0(vector<val::VBuiltinG::arg_t>::const_iterator beg
       }
       idx_type prev_rows = zp_prev->getdim(0);
       idx_type cur_rows  = zp_cur->getdim(0);
+
       if (prev_rows && cur_rows && 
-          zp_prev->getIndex()[prev_rows-1] >= zp_cur->getIndex()[cur_rows-1]) {
+          zp_prev->getIndex()[zp_prev->getIndex().size()-1] >= zp_cur->getIndex()[0]) {
         throw interp::EvalException("non-ascending index for rbind", val::getLoc(*iter));
       }
     }
