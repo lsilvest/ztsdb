@@ -199,6 +199,7 @@ void core::loadBuiltinFunctions(interp::BaseFrame* r) {
   val::VBuiltinG(r, "nrow", "function(x) NULL\n", funcs::nrow);
 
   val::VBuiltinG(r, "dimnames", "function(x, ...) NULL\n", funcs::dimnames);
+  val::VBuiltinG(r, "names", "   function(x, ...) NULL\n", funcs::rownames);
   val::VBuiltinG(r, "colnames", "function(x, ...) NULL\n", funcs::colnames);
   val::VBuiltinG(r, "rownames", "function(x, ...) NULL\n", funcs::rownames);
 

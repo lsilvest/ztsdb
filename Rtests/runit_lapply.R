@@ -19,21 +19,31 @@
 RUnit_lapply_array <- function() {
   all.equal(lapply(1:5, function(x) x*2), list(2,4,6,8,10))
 }
-
+RUnit_lapply_array_named <- function() {
+  all.equal(lapply(c(a=1,b=2,c=3), function(x) x*2), list(a=2,b=4,c=6))
+}
+RUnit_lapply_array_partially_named <- function() {
+  all.equal(lapply(c(a=1,2,c=3), function(x) x*2), list(a=2,4,c=6))
+}
 RUnit_lapply_array_builtin <- function() {
   all.equal(lapply(1:5, sin), list(sin(1),sin(2),sin(3),sin(4),sin(5)))
 }
-
 RUnit_lapply_list <- function() {
   l <- list(1,2,3,4,5)
   all.equal(lapply(l, function(x) x*2), list(2,4,6,8,10))
 }
-
+RUnit_lapply_list_named <- function() {
+  l <- list(a=1,b=2,c=3)
+  all.equal(lapply(l, function(x) x*2), list(a=2,b=4,c=6))
+}
+RUnit_lapply_list_partially_named <- function() {
+  l <- list(a=1,2,c=3)
+  all.equal(lapply(l, function(x) x*2), list(a=2,4,c=6))
+}
 RUnit_lapply_list_builtin <- function() {
   l <- list(1,2,3,4,5)
   all.equal(lapply(l, sin), list(sin(1),sin(2),sin(3),sin(4),sin(5)))
 }
-
 RUnit_lapply_incorrect_type <- function() {
   tryCatch(lapply(function(x) x, sin), .Last.error=="function cannot be double subsetted")
 }

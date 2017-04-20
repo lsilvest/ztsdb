@@ -21,7 +21,8 @@ with the following command:
     source("file_to_source.R")
 
 When running from an R session, make sure the 'rztsdb' package is
-loaded:
+loaded as well as 'xts':
 
     library(rztsdb)
+    library(xts)
 

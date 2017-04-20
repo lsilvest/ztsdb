@@ -31,8 +31,11 @@ tz <- "America/New_York"
 start <- |.2015-01-01 00:00:00 America/New_York.|
 end   <- |.2016-01-01 00:00:00 America/New_York.|
 idx   <- seq(start, end, by=as.duration("00:00:01"))
+
+## unfortunately, 'rnorm' is terribly slow and that is due to the C++
+## STL implementation...
 data  <- 1000 + cumsum(array(rnorm(nrow(idx)*3, 0, 0.05), c(nrow(idx)*3)))
-z     <- zts(idx, data)
+z     <- zts(idx, matrix(data, length(idx), 3))
 
 ## create a daily interval between 9am and 4pm for all the above days
 _930am <- as.duration("09:30:00")

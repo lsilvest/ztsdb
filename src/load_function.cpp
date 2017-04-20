@@ -23,15 +23,21 @@
 
 // #define DEBUG
 
+// would be better to get ztsdb to just source a file on startup! LLL
 void core::loadFunctions(interp::BaseFrame* r) {
 
   ParserCtx pctx;
+  int res;
 
-  auto res = pctx.parse(std::make_shared<std::string>
-                        ("function(X, FUN) {"
-                         "  l <- list() \n"
-                         "  for (i in X) { l <- c(l, FUN(i)) } \n"
-                         "  l }"));
+  res = pctx.parse(std::make_shared<std::string>
+                   ("function(X, FUN) {"
+                    "  l <- list() \n"
+                    "  if (!is.null(names(X))) { "
+                    "    nm <- names(X) \n"
+                    "    for (i in 1:length(nm)) { l[[nm[i]]] <- FUN(X[[i]]) }} \n"
+                    "  else { "
+                    "    for (i in X) { l <- c(l, FUN(i)) }} \n"
+                    "  l }"));
   if (res == 0) {
     anf::convertToANF(pctx.prog.get());
     const auto f = static_cast<const Function*>(pctx.prog.get()->begin->e);
