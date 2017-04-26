@@ -62,10 +62,10 @@ static void simple_append(const char* ip, int port, const char** names, size_t n
   // unfortunately, it's not required to be a time since Epoch (in
   // Linux, it's a value since boot time); here we build a monotonic
   // timestamp from the realtime. The clock is a bit off, but it
-  // servers its purpose and this is a valid method for multiple
+  // serves its purpose and this is a valid method for multiple
   // appends to a time-series from a single thread; if some kind of
-  // synchronization must be achived betwee multiple
-  // threads/processes, one could get the machine uptime to have a
+  // synchronization must be achived between multiple
+  // threads/processes, one can get the machine uptime in order to
   // build a monotonic timestamp on a given machine:
   struct timespec monotonic;
   clock_gettime(CLOCK_MONOTONIC_RAW, &monotonic);
