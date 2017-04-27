@@ -40,13 +40,17 @@ c1 ? { d <- as.time("2015-01-01 00:00:00 America/New_York")
 
 
 ## get a few densities:
-minutes <- (c1 ? density(z, as.duration("00:01:00"), start))
-hours   <- (c1 ? density(z, as.duration("01:00:00"), start))
-days    <- (c1 ? density(z, as.period("1d"), start, tz=++tz))
+minutes <- (c1 ? density(z, as.duration("00:01:00")))
+hours   <- (c1 ? density(z, as.duration("01:00:00")))
+days    <- (c1 ? density(z, as.period("1d"), tz=++tz))
 ## the following shows how to force the start of the day on a boundary
 ## (here z is already aligned, so it has no effect):
 days2   <- (c1 ? { start  <- floor(head(zts.idx(z),1), "day", tz=++tz)
                    density(z, as.period("1d"), start, tz=++tz) })
+
+## to get a sample of densities:
+hourly_minute_sample <- (c1 ? density(z, as.duration("01:00:00"), ival=as.duration("00:01:00")))
+
 
 ## if running in an R session, this will generate a plot of the above:
 ##
@@ -56,6 +60,11 @@ days2   <- (c1 ? { start  <- floor(head(zts.idx(z),1), "day", tz=++tz)
 ## plot.xts(hours, main="hourly density");
 ## plot.xts(days, main="dayly density")
 ## dev.off()
+##
+## png("density_sample.png")
+## plot.xts(hourly_minute_sample, main="minute density");
+## dev.off()
+
 
 
 ## get dayly mean, min, max aggregations:

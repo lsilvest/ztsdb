@@ -24,7 +24,14 @@
 ## For more information, please refer to <http://unlicense.org/>
 
 
-grid_align <<- function(z, by, start=head(zts.idx(z),1), end=tail(zts.idx(z),1), method, tz=NULL) {
+grid_align <<- function(z,                         # time-series
+                        by,                        # the grid size
+                        method,                    # "count", "min", "max", "median", "mean", "closest"
+                        ival=by,                   # the interval size
+                        start=head(zts.idx(z),1),  # start of the grid
+                        end=tail(zts.idx(z),1),    # end of the grid
+                        tz=NULL)                   # time zone when using 'period'
+{
   if (typeof(by) == "duration") {
     grid <- seq(start+by, end, by=by)
     if (tail(grid,1) < end) {
@@ -40,9 +47,9 @@ grid_align <<- function(z, by, start=head(zts.idx(z),1), end=tail(zts.idx(z),1),
   }
   else stop("invalid type for 'by', must be 'duration' or 'period'")
    
-  align(z, grid, -by, as.duration(0), method=method, tz=tz)
+  align(z, grid, -ival, as.duration(0), method=method, tz=tz)
 }
 
 
-density <<- function(z, by, start=head(zts.idx(z),1), end=tail(zts.idx(z),1), tz=NULL)
-  grid_align(z, by, start, end, "count", tz)
+density <<- function(z, by, ival=by, start=head(zts.idx(z),1), end=tail(zts.idx(z),1), tz=NULL)
+  grid_align(z, by, "count", ival, start, end, tz)
