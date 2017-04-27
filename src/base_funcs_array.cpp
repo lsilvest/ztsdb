@@ -816,15 +816,15 @@ val::Value funcs::make_zts(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& i
 
 val::Value funcs::zts_idx(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { ZTS };
-  auto& zts = *get<val::SpZts>(val::getVal(v[ZTS]));
-  return arr::cow_ptr<val::VArrayDT>(arr::LOCKED | arr::CONSTREF, zts.getIndexPtr());
+  auto& zts = get<val::SpZts>(val::getVal(v[ZTS]));
+  return arr::cow_ptr<val::VArrayDT>(arr::LOCKED | arr::CONSTREF, zts.get()->getIndexPtr());
 }
 
 
 val::Value funcs::zts_data(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) {
   enum { ZTS };
-  auto& zts = *get<val::SpZts>(val::getVal(v[ZTS]));
-  return arr::cow_ptr<val::VArrayD>(arr::LOCKED | arr::CONSTREF, zts.getArrayPtr());
+  auto& zts = get<val::SpZts>(val::getVal(v[ZTS]));
+  return arr::cow_ptr<val::VArrayD>(arr::LOCKED | arr::CONSTREF, zts.get()->getArrayPtr());
 }
 
 
