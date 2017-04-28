@@ -31,8 +31,7 @@ c1 <- connection("127.0.0.1", 12300)
 
 ## create on the remote ztsdb instance some data so that we can
 ## test the query:
-c1 ? { d <- as.time("2015-01-01 00:00:00 America/New_York")
-       start <- as.time("2015-01-01 00:00:00 America/New_York")
+c1 ? { start <- as.time("2015-01-01 00:00:00 America/New_York")
        idx <- c(start,
                 start + cumsum(runif(1e6-1))*as.duration("00:00:01"),
                 start + 10*as.duration("24:00:00") + cumsum(runif(1e6,0,0.5))*as.duration("00:00:01"))
