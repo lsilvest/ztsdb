@@ -23,6 +23,9 @@
 ##
 ## For more information, please refer to <http://unlicense.org/>
 
+## if running from R, don't forget to load the libraries:
+## library(rztsdb)
+## library(xts)
 
 tz <- "America/New_York"
 
@@ -45,7 +48,7 @@ days    <- (c1 ? density(z, as.period("1d"), tz=++tz))
 ## the following shows how to force the start of the day on a boundary
 ## (here z is already aligned, so it has no effect):
 days2   <- (c1 ? { start  <- floor(head(zts.idx(z),1), "day", tz=++tz)
-                   density(z, as.period("1d"), start, tz=++tz) })
+                   density(z, as.period("1d"), start=start, tz=++tz) })
 
 ## to get a sample of densities:
 hourly_minute_sample <- (c1 ? density(z, as.duration("01:00:00"), ival=as.duration("00:01:00")))
@@ -57,7 +60,7 @@ hourly_minute_sample <- (c1 ? density(z, as.duration("01:00:00"), ival=as.durati
 ## par(mfrow=c(1,3))
 ## plot.xts(minutes, main="minute density");
 ## plot.xts(hours, main="hourly density");
-## plot.xts(days, main="dayly density")
+## plot.xts(days, main="daily density")
 ## dev.off()
 ##
 ## png("density_sample.png")
@@ -67,9 +70,9 @@ hourly_minute_sample <- (c1 ? density(z, as.duration("01:00:00"), ival=as.durati
 
 
 ## get dayly mean, min, max aggregations:
-days_mean <- (c1 ? grid_align(z, as.duration("24:00:00"), start, method="mean"))
-days_min < - (c1 ? grid_align(z, as.duration("24:00:00"), start, method="min"))
-days_max  <- (c1 ? grid_align(z, as.duration("24:00:00"), start, method="max"))
+days_mean <- (c1 ? grid_align(z, as.duration("24:00:00"), method="mean"))
+days_min  <- (c1 ? grid_align(z, as.duration("24:00:00"), method="min"))
+days_max  <- (c1 ? grid_align(z, as.duration("24:00:00"), method="max"))
 
 
 ## if running in an R session, this will generate a plot of the above:
