@@ -320,13 +320,13 @@ Vector<zstring> val::vectorToString(const Vector<tz::period>& v, const cfg::CfgM
 }
 
 
-static string display_static(const val::Value& v, const cfg::CfgMap& cfg) {
+static string display_static(const val::Value& v, const cfg::CfgMap& cfg, size_t& left) {
   stringstream ss;
 
   switch (v.which()) {
   case val::vt_list: {
     const auto& l = get<const val::SpVList>(v);
-    ss << val::display(l, cfg, "");
+    ss << val::display(l, cfg, "", left);
     break;
   }
   case val::vt_std_string:
@@ -341,60 +341,64 @@ static string display_static(const val::Value& v, const cfg::CfgMap& cfg) {
   case val::vt_error:
   case val::vt_std_int:
     ss << to_string(v, cfg);
+    --left;
     break;
   case val::vt_string: {
     const auto& a = *get<const val::SpVAS>(v);
-    ss << val::display(a, a.getnames(0).names, cfg);
+    ss << val::display(a, a.getnames(0).names, cfg, left);
     break;
   }
   case val::vt_double:  {
     const auto& a = *get<const val::SpVAD>(v);
-    ss << val::display(a, a.getnames(0).names, cfg);
+    ss << val::display(a, a.getnames(0).names, cfg, left);
     break;
   }
   case val::vt_bool:  {
     const auto& a = *get<const val::SpVAB>(v);
-    ss << val::display(a, a.getnames(0).names, cfg);
+    ss << val::display(a, a.getnames(0).names, cfg, left);
     break;
   }
   case val::vt_time:  {
     const auto& a = *get<const val::SpVADT>(v);
-    ss << val::display(a, a.getnames(0).names, cfg);
+    ss << val::display(a, a.getnames(0).names, cfg, left);
     break;
   }
   case val::vt_duration:  {
     const auto& a = *get<const val::SpVADUR>(v);
-    ss << val::display(a, a.getnames(0).names, cfg);
+    ss << val::display(a, a.getnames(0).names, cfg, left);
     break;
   }
   case val::vt_interval:  {
     const auto& a = *get<const val::SpVAIVL>(v);
-    ss << val::display(a, a.getnames(0).names, cfg);
+    ss << val::display(a, a.getnames(0).names, cfg, left);
     break;
   }
   case val::vt_period:  {
     const auto& a = *get<const val::SpVAPRD>(v);
-    ss << val::display(a, a.getnames(0).names, cfg);
+    ss << val::display(a, a.getnames(0).names, cfg, left);
     break;
   }
   case val::vt_zts:  {
     const auto& a = *get<const val::SpZts>(v);
-    ss << val::display(a.getArray(), a.getIndex().getcol(0), cfg);
+    ss << val::display(a.getArray(), a.getIndex().getcol(0), cfg, left);
     break;
   }
   case val::vt_named: {
     const auto& a = get<const val::VNamed>(v);
     ss << "[" << val::display(a.name) << "; " << val::display(a.val) << "]";
+    --left;
     break;
   }
   case val::vt_ptr: {
     const auto& a = get<const val::VPtr>(v);
     ss << (val::isRef(v) ? "ref: " : "not_ref: ") << a.p ? val::display(*a.p) : "vptr(null)";
+    --left;
     break;
   }
   case val::vt_future: {
     const auto& f = get<const val::SpFuture>(v);
     ss << "Future(" << f->to_string() << ")";
+    --left;
     break;
   }
   default:
@@ -405,65 +409,77 @@ static string display_static(const val::Value& v, const cfg::CfgMap& cfg) {
 
 
 string val::display(const val::Value& v) {
-  return display_static(v, cfg::cfgmap);
+  size_t left = static_cast<arr::idx_type>(get<int64_t>(cfg::cfgmap.get("max.print")));
+  return display_static(v, cfg::cfgmap, left);
 }
 
 
-string val::display(const SpVList& l, const cfg::CfgMap& cfg, string prefix) {
+string val::display(const val::SpVList& l,
+                    const cfg::CfgMap& cfg,
+                    string prefix,
+                    size_t& left)
+{
   stringstream ss;
   if (!l->size()) {
     return "list()";            // empty list
   }
-  for (size_t j=0; j<l->size(); ++j) {
+  size_t j=0;
+  for (; j<l->size(); ++j) {
     auto curPrefix = prefix +
       ((*l->a.names[0])[j] == "" ? "[[" + std::to_string(j+1) + "]]" : "$" + (*l->a.names[0])[j]);
     ss << curPrefix << endl;
+    if (!left) break;           // break just after the header if necessary
     if (l->a[j].which() == val::vt_list) {
       auto& subl = get<SpVList>(l->a[j]);
-      ss << display(subl, cfg, curPrefix) << endl;
+      ss << display(subl, cfg, curPrefix, left) << endl; // recursive call!
     } else {
-      ss << display_static(l->a[j], cfg) << endl;
+      ss << display_static(l->a[j], cfg, --left) << endl;
     }
     ss << endl;
+  }
+  if (j < l->size()) {
+    ss << " [ reached getOption(""max.print"") -- omitted "
+       << l->size() - j << " list entries ]" << endl;
   }
   return ss.str().substr(0, ss.str().length()-1); // pull out trailing line break
 }
 
 
-string val::to_string(const arr::zts& ts, const cfg::CfgMap& cfg, bool fast) {
-  // v[0] is pretty dangerous!!! LLL
-  return display(ts.getArray(), ts.getIndex().getcol(0), cfg); 
+string val::to_string(const arr::zts& ts, const cfg::CfgMap& cfg) {
+  size_t left = static_cast<arr::idx_type>(get<int64_t>(cfg.get("max.print")));
+  return display(ts.getArray(), ts.getIndex().getcol(0), cfg, left); 
 }
-string val::to_string(const val::SpZts& ts, const cfg::CfgMap& cfg, bool fast) {
-  return display(ts->getArray(), ts->getIndex().getcol(0), cfg); 
+string val::to_string(const val::SpZts& ts, const cfg::CfgMap& cfg) {
+  size_t left = static_cast<arr::idx_type>(get<int64_t>(cfg.get("max.print")));
+  return display(ts->getArray(), ts->getIndex().getcol(0), cfg, left);
 }
-string val::to_string(const val::VCode& v, const cfg::CfgMap& cfg, bool fast) { 
+string val::to_string(const val::VCode& v, const cfg::CfgMap& cfg) { 
   return "expression(" + to_string(*v.expr) + ')'; 
 }
-string val::to_string(const shared_ptr<val::VClos>& v, const cfg::CfgMap& cfg, bool fast) { 
+string val::to_string(const shared_ptr<val::VClos>& v, const cfg::CfgMap& cfg) { 
   return to_string(*v->f); 
 }
-string val::to_string(const val::VClos& v, const cfg::CfgMap& cfg, bool fast) { 
+string val::to_string(const val::VClos& v, const cfg::CfgMap& cfg) { 
   return to_string(*v.f); 
 }
-string val::to_string(const val::VNull& v, const cfg::CfgMap& cfg, bool fast) { 
+string val::to_string(const val::VNull& v, const cfg::CfgMap& cfg) { 
   return "NULL"; 
 }
-string val::to_string(const std::shared_ptr<val::VBuiltinG>& v, const cfg::CfgMap& cfg, bool fast) { 
+string val::to_string(const std::shared_ptr<val::VBuiltinG>& v, const cfg::CfgMap& cfg) { 
   return "native: " + to_string(*v->signature); 
 }
-string val::to_string(const val::SpFuture& v, const cfg::CfgMap& cfg, bool fast) { 
+string val::to_string(const val::SpFuture& v, const cfg::CfgMap& cfg) { 
   return v->to_string();  
 }
-string val::to_string(const val::VConn& v, const cfg::CfgMap& cfg, bool fast) { 
+string val::to_string(const val::VConn& v, const cfg::CfgMap& cfg) { 
   return v.ip + ":" + std::to_string(v.port) + " [" + std::to_string(v.id) + ']';
 }
-string val::to_string(const val::SpTimer& v, const cfg::CfgMap& cfg, bool fast) { 
+string val::to_string(const val::SpTimer& v, const cfg::CfgMap& cfg) { 
   return std::to_string(v->fd) + " : " + std::to_string(v->nanosecs) + 
     " \nloop:\n"  + to_string(*v->loop) + "\nonce:\n"  + to_string(*v->once);
 }
 // this one is a quick and dirty display for debugging:
-string val::to_string(const VList& v, const cfg::CfgMap& cfg, bool fast) {
+string val::to_string(const VList& v, const cfg::CfgMap& cfg) {
   stringstream ss;
   ss << "list(";
   for (size_t i = 0; i<v.size(); ++i) {
@@ -476,23 +492,23 @@ string val::to_string(const VList& v, const cfg::CfgMap& cfg, bool fast) {
   ss << ")";
   return ss.str();
 }
-string val::to_string(const SpVList& l, const cfg::CfgMap& cfg, bool fast) {
-  return val::to_string(*l, cfg, fast);
+string val::to_string(const SpVList& l, const cfg::CfgMap& cfg) {
+  return val::to_string(*l, cfg);
 }
-string val::to_string(const val::VNamed& v, const cfg::CfgMap& cfg, bool fast) {
+string val::to_string(const val::VNamed& v, const cfg::CfgMap& cfg) {
   return val::to_string(v.name) + "=" + val::to_string(v.val);
 }
-string val::to_string(double d, const cfg::CfgMap& cfg, bool fast) {
+string val::to_string(double d, const cfg::CfgMap& cfg) {
   auto digits = static_cast<size_t>(get<int64_t>(cfg.get("digits"s)));
   return ztsdb::to_string(d, digits);
 }
-string val::to_string(const string& s, const cfg::CfgMap& cfg, bool fast) {
-  return fast ? s : '"' + s + '"';
+string val::to_string(const string& s, const cfg::CfgMap& cfg, bool unquoted) {
+  return unquoted ? s : '"' + s + '"';
 }
-string val::to_string(const val::integer_t& i, const cfg::CfgMap& cfg, bool fast) {
+string val::to_string(const val::integer_t& i, const cfg::CfgMap& cfg) {
   return std::to_string(i);
 }
-string val::to_string(const val::SpVI& s, const cfg::CfgMap& cfg, bool fast) {
+string val::to_string(const val::SpVI& s, const cfg::CfgMap& cfg) {
   stringstream ss;
   ss << "[";
   for (size_t j=0; j<s->size()-1; ++j) {
@@ -502,34 +518,34 @@ string val::to_string(const val::SpVI& s, const cfg::CfgMap& cfg, bool fast) {
   ss << "]";
   return ss.str();
 }
-string val::to_string(bool b, const cfg::CfgMap& cfg, bool fast) {
+string val::to_string(bool b, const cfg::CfgMap& cfg) {
   return b ? "TRUE" : "FALSE";
 }
-string val::to_string(Global::dtime dt, const cfg::CfgMap& cfg, bool fast) {
+string val::to_string(Global::dtime dt, const cfg::CfgMap& cfg, bool unquoted) {
   auto timezone = get<std::string>(cfg.get("timezone"s));
   // no format for the time being, so pass "", but we're covered if we
   // want to add it later:
   return tz::to_string(dt, "", tzones.find(timezone), timezone, true);
 }
-string val::to_string(Global::dtime::duration d, const cfg::CfgMap& cfg, bool fast) {
+string val::to_string(Global::dtime::duration d, const cfg::CfgMap& cfg) {
   return tz::to_string(d);
 }
-string val::to_string(tz::interval i, const cfg::CfgMap& cfg, bool fast) {
+string val::to_string(tz::interval i, const cfg::CfgMap& cfg) {
   auto timezone = get<std::string>(cfg.get("timezone"s));
   // no format for the time being, so pass "", but we're covered if we
   // want to add it later:
   return tz::to_string(i, "", tzones.find(timezone), timezone, true); // true == use the abbreviation
 }
-string val::to_string(tz::period p, const cfg::CfgMap& cfg, bool fast) {
+string val::to_string(tz::period p, const cfg::CfgMap& cfg) {
   return tz::to_string(p);
 }
-string val::to_string(const arr::zstring& s, const cfg::CfgMap& cfg, bool fast) {
-  return fast ? s : "\"" + s + "\"";
+string val::to_string(const arr::zstring& s, const cfg::CfgMap& cfg, bool unquoted) {
+  return unquoted ? s : "\"" + s + "\"";
 }
-string val::to_string(const VError& e, const cfg::CfgMap& cfg, bool fast) {
+string val::to_string(const VError& e, const cfg::CfgMap& cfg) {
   return e.what;
 }
-string val::to_string(const VPtr& p, const cfg::CfgMap& cfg, bool fast) {
+string val::to_string(const VPtr& p, const cfg::CfgMap& cfg) {
   return p.p == nullptr ? "vptr(null)" : to_string(*p.p);
 }
 

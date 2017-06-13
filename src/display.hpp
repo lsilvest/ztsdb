@@ -31,32 +31,32 @@
 namespace val {
 
   template<typename T>
-  string to_string(T t, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(const VCode& v, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(const std::shared_ptr<VClos>& v, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(const VClos& v, const cfg::CfgMap& cfg=cfg::cfgmap, bool fast=false);
-  string to_string(const VNull& v, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(const std::shared_ptr<VBuiltinG>& v, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(const SpFuture& v, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(const VNamed& v, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(const VConn& conn, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(const SpTimer& v, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(const VList& l, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(const SpVList& l, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(double d, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(bool, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(const arr::zts& ts, const cfg::CfgMap& cfg, bool fast);
-  string to_string(const SpZts& ts, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(Global::dtime dt, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(Global::dtime::duration d, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(tz::interval i, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(tz::period p, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(const string& s, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(const val::integer_t& s, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(const val::SpVI& s, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(const arr::zstring& s, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(const VError& e, const cfg::CfgMap& cfg, bool fast=false);
-  string to_string(const VPtr& p, const cfg::CfgMap& cfg, bool fast=false);
+  string to_string(T t, const cfg::CfgMap& cfg);
+  string to_string(const VCode& v, const cfg::CfgMap& cfg);
+  string to_string(const std::shared_ptr<VClos>& v, const cfg::CfgMap& cfg);
+  string to_string(const VClos& v, const cfg::CfgMap& cfg=cfg::cfgmap);
+  string to_string(const VNull& v, const cfg::CfgMap& cfg);
+  string to_string(const std::shared_ptr<VBuiltinG>& v, const cfg::CfgMap& cfg);
+  string to_string(const SpFuture& v, const cfg::CfgMap& cfg);
+  string to_string(const VNamed& v, const cfg::CfgMap& cfg);
+  string to_string(const VConn& conn, const cfg::CfgMap& cfg);
+  string to_string(const SpTimer& v, const cfg::CfgMap& cfg);
+  string to_string(const VList& l, const cfg::CfgMap& cfg);
+  string to_string(const SpVList& l, const cfg::CfgMap& cfg);
+  string to_string(double d, const cfg::CfgMap& cfg);
+  string to_string(bool, const cfg::CfgMap& cfg);
+  string to_string(const arr::zts& ts, const cfg::CfgMap& cfg);
+  string to_string(const SpZts& ts, const cfg::CfgMap& cfg);
+  string to_string(Global::dtime dt, const cfg::CfgMap& cfg, bool unquoted=false);
+  string to_string(Global::dtime::duration d, const cfg::CfgMap& cfg);
+  string to_string(tz::interval i, const cfg::CfgMap& cfg);
+  string to_string(tz::period p, const cfg::CfgMap& cfg);
+  string to_string(const string& s, const cfg::CfgMap& cfg, bool unquoted=false);
+  string to_string(const val::integer_t& s, const cfg::CfgMap& cfg);
+  string to_string(const val::SpVI& s, const cfg::CfgMap& cfg);
+  string to_string(const arr::zstring& s, const cfg::CfgMap& cfg, bool unquoted=false);
+  string to_string(const VError& e, const cfg::CfgMap& cfg);
+  string to_string(const VPtr& p, const cfg::CfgMap& cfg);
 
   using namespace std::string_literals;
 
@@ -449,7 +449,10 @@ namespace val {
 
 
   template<typename T, typename R>
-  string display(const Array<T>& a, const Vector<R>& rownames, const cfg::CfgMap& cfg) {
+  string display(const Array<T>& a,
+                 const Vector<R>& rownames,
+                 const cfg::CfgMap& cfg,
+                 size_t& left) {
     auto cfgMaxPrint = static_cast<size_t>(get<int64_t>(cfg.get("max.print")));
 
     stringstream ss;
@@ -470,7 +473,7 @@ namespace val {
     // the one dimentional case really has a set of rules of its own,
     // so treat it separately:
     if (a.dim.size() == 1) {
-      return displayVector(a, cfg);
+      return displayVector(a, cfg); // give left/rows LLL
     }
 
     // if we have a 0 dimension somewhere but with other non 0
@@ -501,8 +504,8 @@ namespace val {
       ommittedSlices = totslices - nslices;
     }
 
-    auto nleft = min(tot, static_cast<idx_type>(cfgMaxPrint));
-    idx_type ommittedRows = tot <= cfgMaxPrint ? 0 : (dim1[0] - nleft % sliceSize / dim1[1]);
+    auto nleft = min(tot, left);
+    idx_type ommittedRows = tot <= left ? 0 : (dim1[0] - nleft % sliceSize / dim1[1]);
     if (cfgMaxPrint >= dim1[1]) {
       ommittedRows %= dim1[0];
     }
@@ -526,6 +529,8 @@ namespace val {
       }
       getNextVIndex(vi, dim1);
     }
+    left = tot < left ? left - tot : 0;
+      
 
     // if we didn't print everything, then let the user know
     if (ommittedRows && ommittedSlices) {
@@ -543,16 +548,19 @@ namespace val {
   }
 
 
-  string display(const SpVList& l, const cfg::CfgMap& cfg, string prefix);
+  string display(const SpVList& l, const cfg::CfgMap& cfg, string prefix, size_t& left);
 
   template<typename T>
-  const string to_string(const Array<T>& v, const cfg::CfgMap& cfg, bool fast=false) {
-    return display(v, v.names[0]->names, cfg); 
+  const string to_string(const Array<T>& v, const cfg::CfgMap& cfg) {
+    size_t left = static_cast<arr::idx_type>(get<int64_t>(cfg.get("max.print")));
+    return display(v, v.names[0]->names, cfg, left);
   }
 
   template<typename T>
-  const string to_string(const cow_ptr<Array<T>>& v, const cfg::CfgMap& cfg, bool fast=false) {
-    return display(*v, v->names[0]->names, cfg); 
+  const string to_string(const cow_ptr<Array<T>>& v,
+                         const cfg::CfgMap& cfg) {
+    size_t left = static_cast<arr::idx_type>(get<int64_t>(cfg.get("max.print")));
+    return display(*v, v->names[0]->names, cfg, left); 
   }
 
 
@@ -562,13 +570,13 @@ namespace val {
     typedef string result_type;
 
     template <typename T>
-    string operator()(const T& t, const cfg::CfgMap& cfg, bool fast=false) const { 
-      return to_string(t, cfg, fast); 
+    string operator()(const T& t, const cfg::CfgMap& cfg) const {
+      return to_string(t, cfg); 
     }
   };
 
-  inline string to_string(const val::Value& v, const cfg::CfgMap& cfg=cfg::cfgmap, bool fast=false) { 
-    return apply_visitor(to_string_v(), v, cfg, fast); 
+  inline string to_string(const val::Value& v, const cfg::CfgMap& cfg=cfg::cfgmap) { 
+    return apply_visitor(to_string_v(), v, cfg); 
   }
 
   string display(const val::Value& v);

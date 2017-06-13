@@ -300,17 +300,20 @@ val::Value funcs::print(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& ic) 
     switch (val::getVal(v[X]).which()) {
     case val::vt_time: {
       const auto& a = get<val::SpVADT>(val::getVal(v[X]));
-      cout << val::display(*a, a->getnames(0).names, localCfg) << endl;
+      size_t left = static_cast<arr::idx_type>(get<int64_t>(localCfg.get("max.print")));
+      cout << val::display(*a, a->getnames(0).names, localCfg, left) << endl;
     }
     break;
     case val::vt_interval: {
       const auto& a = get<val::SpVAIVL>(val::getVal(v[X]));
-      cout << val::display(*a, a->getnames(0).names, localCfg) << endl;
+      size_t left = static_cast<arr::idx_type>(get<int64_t>(localCfg.get("max.print")));
+      cout << val::display(*a, a->getnames(0).names, localCfg, left) << endl;
     }
     break;
     case val::vt_zts: {
       const auto& a = get<val::SpZts>(val::getVal(v[X]));
-      cout << val::display(a->getArray(), a->getIndex().getcol(0), localCfg) << endl;
+      size_t left = static_cast<arr::idx_type>(get<int64_t>(localCfg.get("max.print")));
+      cout << val::display(a->getArray(), a->getIndex().getcol(0), localCfg, left) << endl;
     }
     break;
     default:
@@ -1026,7 +1029,7 @@ static std::string extract_string_elt(const val::Value& a, size_t idx) {
   }
   case val::vt_list: {
     const auto ai = get<val::SpVList>(a);
-    return val::to_string((ai->a)[idx % ai->size()], cfg::cfgmap, true);
+    return val::to_string((ai->a)[idx % ai->size()], cfg::cfgmap);
   }
   case val::vt_bool: {
     const auto ai = get<val::SpVAB>(a);
@@ -1049,7 +1052,7 @@ static std::string extract_string_elt(const val::Value& a, size_t idx) {
     return arr::convert<std::string, std::string>((*ai)[idx % ai->size()]);
   }
   default:
-    return val::to_string(a, cfg::cfgmap, true);
+    return val::to_string(a, cfg::cfgmap);
   }
 }
 
