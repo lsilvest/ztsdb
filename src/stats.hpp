@@ -74,6 +74,8 @@ namespace zcore {
     std::atomic_uint_fast64_t nbInRSP;
     std::atomic_uint_fast64_t nbAppend;
     std::atomic_uint_fast64_t nbAppendVector;
+    std::atomic_uint_fast64_t nbAppendFail;
+    std::atomic_uint_fast64_t nbAppendVectorFail;
 
     inline void reset() {
       bytesOutREQ.store(0);      
@@ -86,6 +88,8 @@ namespace zcore {
       nbInRSP.store(0);       
       nbAppend.store(0);      
       nbAppendVector.store(0);
+      nbAppendFail.store(0);      
+      nbAppendVectorFail.store(0);
     }
   };
 

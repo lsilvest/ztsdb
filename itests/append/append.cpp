@@ -34,6 +34,7 @@
 static void loop_append(const std::string ip, 
                         int port,
                         size_t rate, 
+                        size_t nbpmsg,
                         const std::vector<std::string>& names, 
                         size_t ncols, 
                         size_t max_msg)
@@ -54,7 +55,10 @@ static void loop_append(const std::string ip,
     throw std::system_error(std::error_code(errno, std::system_category()), "connect");
   }
 
-  
+  // determine how many times per timer expiry we'll send a message
+  // (otherwise we can't got over 200k msg/sec):
+  unsigned nb_send = rate / 50000 + 1;
+
   // create and set msg_timerfd:
   int msg_timerfd = timerfd_create(CLOCK_MONOTONIC, 0);
   if (fd == -1) {
@@ -70,9 +74,9 @@ static void loop_append(const std::string ip,
   }
   else {
     tmr.it_value.tv_sec = 0;
-    tmr.it_value.tv_nsec = 1e9/rate;
+    tmr.it_value.tv_nsec = (1e9*nb_send)/rate;
     tmr.it_interval.tv_sec = 0;
-    tmr.it_interval.tv_nsec = 1e9/rate;
+    tmr.it_interval.tv_nsec = (1e9*nb_send)/rate;
   }
   if (timerfd_settime(msg_timerfd, 0, &tmr, NULL) == -1) {
     throw std::system_error(std::error_code(errno, std::system_category()), "timerfd_settime");
@@ -111,7 +115,8 @@ static void loop_append(const std::string ip,
 
 
   const auto firstnow = std::chrono::system_clock::now();
-  arr::Vector<double> data(ncols);
+  arr::Vector<Global::dtime> idx(arr::noinit_tag, nbpmsg);
+  arr::Vector<double> data(arr::noinit_tag, nbpmsg*ncols);
   
   // loop append:
   const size_t EPOLL_MAX_EVENTS = 10;
@@ -121,33 +126,38 @@ static void loop_append(const std::string ip,
   bool done = false;
   while (!done) {
     int nfds = epoll_wait(epollfd, events, EPOLL_MAX_EVENTS, -1);
-    for (int i = 0; i < nfds; ++i) { 
+    for (unsigned i = 0; i < nfds; ++i) { 
       if (events[i].data.fd == msg_timerfd) {
-        const auto now = std::chrono::system_clock::now();
-        
-        for (unsigned j=0; j<ncols; ++j) {
-          setv_nocheck(data, j, (now - firstnow).count()/1e9 + i/10.0);
-        }
-        
         uint64_t count;
         ssize_t rres = read(msg_timerfd, &count, sizeof(count));
         if (rres < 0) {
           throw std::system_error(std::error_code(errno, std::system_category()), "read");
         }
 
-        // create and send the append message:
-        auto msg = arr::make_append_msg(names, 
-                                        arr::Vector<Global::dtime>{now}, 
-                                        data);
-        nmsgs++;
-
-        ssize_t wres = write(fd, msg.first.get(), msg.second);
-        if (wres < 0) {
-          throw std::system_error(std::error_code(errno, std::system_category()), "write");
-        }
-
-        if (nmsgs == max_msg) {
-          done = true;
+        const auto now = std::chrono::system_clock::now();
+        auto d = std::chrono::system_clock::duration(1);
+        for (unsigned k=0; k<nb_send; ++k) {
+        
+          for (unsigned j=0; j<nbpmsg; ++j) {
+            setv_nocheck(idx, j, now + d++);
+          }
+          for (unsigned j=0; j<nbpmsg*ncols; ++j) {
+            setv_nocheck(data, j, (now - firstnow).count()/1e9 + i/10.0);
+          }
+        
+          // create and send the append message:
+          auto msg = arr::make_append_msg(names, idx, data);
+          nmsgs++;
+        
+          ssize_t wres = write(fd, msg.first.get(), msg.second);
+          if (wres < 0) {
+            throw std::system_error(std::error_code(errno, std::system_category()), "write");
+          }
+          
+          if (nmsgs == max_msg) {
+            done = true;
+            break;
+          }
         }
       }
       else if (events[i].data.fd == second_timerfd) {
@@ -163,6 +173,9 @@ static void loop_append(const std::string ip,
   }
   std::cout << "total nb of msgs sent: " << nmsgs << std::endl;
 
+  sleep(1);                     // let the ztsdb processing finish
+                                // before tearing down the TCP
+                                // connection
   if (close(fd) < 0) {
     throw std::system_error(std::error_code(errno, std::system_category()), "close");
   }
@@ -173,23 +186,25 @@ static void loop_append(const std::string ip,
 // 1. IP
 // 2. port
 // 3. a rate (# per seconds)
-// 4. name of variable to append to (assumed to be a zts)
-// 5. number of columns to append
-// 6. maximum number of messages to send
+// 4. nb of obs per message
+// 5. name of variable to append to (assumed to be a zts)
+// 6. number of columns to append
+// 7. maximum number of messages to send
 int main(int argc, char* argv[]) {
-  enum { IP=1, PORT, RATE, VARNAMES, NCOLS, MAX_MSG };
+  enum { IP=1, PORT, RATE, NBPMSG, VARNAMES, NCOLS, MAX_MSG };
 
   // grab a message rate (# per second)
-  if (argc < 6 || argc > 7) {
+  if (argc < 7 || argc > 8) {
     std::cerr << "usage: " << argv[0] 
-              << " <ip> <port> <rate> <varname[,name1,name2,...]> <ncols> [max-msgs]" << std::endl;
+              << " <ip> <port> <rate> <nb-per-msg> <varname[,name1,name2,...]> <ncols> [max-msgs]" << std::endl;
     return -1;
   }
   
   int port = std::stoi(argv[PORT]);
   size_t rate = std::stoull(argv[RATE]);
+  size_t nbpmsg = std::stoull(argv[NBPMSG]);
   size_t ncols = std::stoull(argv[NCOLS]);
-  size_t max_msg = argc == 6 ? std::numeric_limits<size_t>::max() :
+  size_t max_msg = argc == 7 ? std::numeric_limits<size_t>::max() :
     std::stoll(argv[MAX_MSG]); // -1 means run forever
 
   std::istringstream varnames_ss(argv[VARNAMES]);
@@ -198,7 +213,7 @@ int main(int argc, char* argv[]) {
   while (std::getline(varnames_ss, token, ',')) {
     names.push_back(token);
   }
-  loop_append(argv[IP], port, rate, names, ncols, max_msg);
+  loop_append(argv[IP], port, rate, nbpmsg, names, ncols, max_msg);
 
   return 0;
 }
