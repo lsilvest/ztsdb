@@ -181,7 +181,7 @@ TEST(comm_long_expression) {
   //
   // but the idea here is to test the breaking up of an expression in multiple packets:
   // const unsigned len = 5000; need a more recent version of make for this to run
-  const double len = 1000;
+  const double len = 500;
   string s;
   for (unsigned i=0; i<len-1; ++i) {
     s += "1+";
