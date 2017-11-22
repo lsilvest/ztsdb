@@ -19,7 +19,7 @@ one_second <- as.duration(1e9)
 one_minute <- 60*one_second
 one_hour   <- 60*one_minute
 
-## not naming convention for interval tests:
+## naming convention for interval tests:
 ## cc : start closed, end closed
 ## co : start closed, end open
 ## oc : etc.

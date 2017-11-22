@@ -725,7 +725,7 @@ RUnit_subset_time_vector_time_idx <- function() {
 RUnit_subset_time_vector_interval_idx <- function() {
     a <- seq(|.2012-12-12 12:12:12 UTC.|, length.out=10)
     idx <- |+2012-12-12 12:12:12 UTC -> 2012-12-12 12:12:14 UTC-|
-all(a[idx] == seq(|.2012-12-12 12:12:12 UTC.|, length.out=2))
+    all(a[idx] == seq(|.2012-12-12 12:12:12 UTC.|, length.out=2))
 }
 ## 2d
 RUnit_subset_time_2d_null_idx <- function() {
