@@ -270,7 +270,9 @@ int MsgHandler::run() {
               stats.bytesAppend += len;
               ++stats.nbAppend;
               try {
-                evalCtx.readAppendData(buf+8, len-8); // shouldn't throw
+                if (evalCtx.readAppendData(buf+8, len-8) != 0) { // shouldn't throw
+                  ++stats.nbAppendFail;
+                }
               }
               catch (std::exception& e) {
                 lg.log(zlog::SV_DEBUG, "unexpected exception: %s", e.what());
@@ -280,7 +282,9 @@ int MsgHandler::run() {
               stats.bytesAppendVector += len;
               ++stats.nbAppendVector;
               try {
-                evalCtx.readAppendVectorData(buf+8, len-8);
+                if (evalCtx.readAppendVectorData(buf+8, len-8) != 0) {
+                  ++stats.nbAppendVectorFail;                  
+                }
               }
               catch (std::exception& e) {
                 lg.log(zlog::SV_DEBUG, "unexpected exception: %s", e.what());

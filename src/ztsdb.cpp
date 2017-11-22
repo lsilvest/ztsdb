@@ -200,7 +200,9 @@ int main(int argc, char *argv[]) {
                                 "eventfd failed for sig_com_ir");
       }
     
-      net::NetHandler com(address, lport, data_com_ir, sig_com_ir);
+      net::NetHandler com(address, lport, data_com_ir, sig_com_ir,
+                          static_cast<size_t>(get<int64_t>(cfg::cfgmap.get("data.q.size"))),
+                          static_cast<size_t>(get<int64_t>(cfg::cfgmap.get("sig.q.size"))));
 
       // load predefined functions in global env:
       core::loadBuiltinFunctions(base.get());

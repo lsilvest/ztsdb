@@ -193,7 +193,9 @@ size_t net::BufferMgt::gc() {
       i = readybuflist.erase(i);
     }
     else {
-      ++i;
+      // the buffer list's timestamp is ordered, so we can stop
+      // searching as soon as a non-expired buffer is found:
+      break;
     }
   }
   mx.unlock();

@@ -651,7 +651,7 @@ val::Value funcs::stats_msg(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& 
   // create a vector with the obtained values:
   auto a = arr::make_cow<arr::Array<double>>
     (false,
-     arr::Vector<arr::idx_type>{10,1},
+     arr::Vector<arr::idx_type>{12,1},
      arr::Vector<double>{
        static_cast<double>(stats.bytesOutREQ),      
        static_cast<double>(stats.bytesOutRSP),      
@@ -662,7 +662,9 @@ val::Value funcs::stats_msg(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& 
        static_cast<double>(stats.nbInREQ),          
        static_cast<double>(stats.nbInRSP),          
        static_cast<double>(stats.nbAppend),         
-       static_cast<double>(stats.nbAppendVector)   
+       static_cast<double>(stats.nbAppendVector),   
+       static_cast<double>(stats.nbAppendFail),         
+       static_cast<double>(stats.nbAppendVectorFail)   
      }, 
      std::vector<arr::Vector<arr::zstring>> {
        {
@@ -675,7 +677,9 @@ val::Value funcs::stats_msg(vector<val::VBuiltinG::arg_t>& v, zcore::InterpCtx& 
          "nb incoming req buffers",
          "nb incoming rsp buffers",
          "nb append", 
-         "nb vector append"
+         "nb vector append",
+         "nb append failed", 
+         "nb vector append failed"
        }, 
        {"value"}
      }

@@ -46,7 +46,7 @@ grid_align <<- function(z,                         # time-series
     }
   }
   else stop("invalid type for 'by', must be 'duration' or 'period'")
-   
+
   align(z, grid, -ival, as.duration(0), method=method, tz=tz)
 }
 
