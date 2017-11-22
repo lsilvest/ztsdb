@@ -126,7 +126,7 @@ static void loop_append(const std::string ip,
   bool done = false;
   while (!done) {
     int nfds = epoll_wait(epollfd, events, EPOLL_MAX_EVENTS, -1);
-    for (unsigned i = 0; i < nfds; ++i) { 
+    for (int i = 0; i < nfds; ++i) { 
       if (events[i].data.fd == msg_timerfd) {
         uint64_t count;
         ssize_t rres = read(msg_timerfd, &count, sizeof(count));
