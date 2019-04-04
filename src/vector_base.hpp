@@ -137,7 +137,7 @@ namespace arr {
         throw std::invalid_argument("Vector<T>: null allocator");
       }
       c = new (alloc->allocate(getTotalSize<T>(capacity))) RawVector<T>;
-      memcpy(c, v.c, sizeof(RawVector<T>));
+      memcpy((void*)c, v.c, sizeof(RawVector<T>));
       for (size_t j=0; j<v.c->n; ++j) {
         c->v[j] = v.c->v[j];
       }
@@ -426,7 +426,7 @@ namespace arr {
         capacity = growCapacity(n);
         RawVector<T> rv = *c;
         c = new (alloc->reallocate((char*)c + from*sizeof(T), memsize(capacity))) RawVector<T>;
-        memcpy(c, &rv, sizeof(RawVector<T>));
+        memcpy((void*)c, &rv, sizeof(RawVector<T>));
         c->n = n;
       }
       return *this; 

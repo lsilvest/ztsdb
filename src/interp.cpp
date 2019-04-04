@@ -87,7 +87,7 @@ static val::Value evalAtom(const E* e,
       }
       return val::VPtr(val);
     }
-    catch (interp::FutureException) {
+    catch (interp::FutureException&) {
       throw;
     }
     catch (std::out_of_range& e) {
